@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%">
+  <defs>
+    <style>{`
+      @keyframes beam-draw {
+        0% { stroke-dashoffset: 120; opacity: 0.1; }
+        50% { stroke-dashoffset: 0; opacity: 1; }
+        100% { stroke-dashoffset: 120; opacity: 0.1; }
+      }
+      @keyframes pulse-dot {
+        0%, 100% { transform: scale(1); opacity: 0.3; }
+        50% { transform: scale(1.3); opacity: 1; fill: #f59e0b; }
+      }
+      @keyframes grid-glow {
+        0%, 100% { opacity: 0.15; }
+        50% { opacity: 0.4; }
+      }
+      @keyframes build-rise {
+        0% { transform: scaleY(0.75) translateY(10px); opacity: 0.6; }
+        50% { transform: scaleY(1) translateY(0); opacity: 1; }
+        100% { transform: scaleY(0.75) translateY(10px); opacity: 0.6; }
+      }
+      @keyframes scanner-move {
+        0% { transform: translateY(15px); opacity: 0; }
+        15% { opacity: 1; }
+        85% { opacity: 1; }
+        100% { transform: translateY(68px); opacity: 0; }
+      }
+      .grid-line { stroke: #334155; stroke-width: 0.5; animation: grid-glow 4s ease-in-out infinite; }
+      .beam { stroke: #f59e0b; stroke-width: 1.5; stroke-linecap: round; stroke-dasharray: 120; animation: beam-draw 6s ease-in-out infinite; }
+      .beam-blue { stroke: #3b82f6; stroke-width: 1.5; stroke-linecap: round; stroke-dasharray: 120; animation: beam-draw 6s ease-in-out infinite; animation-delay: -2s; }
+      .beam-emerald { stroke: #10b981; stroke-width: 1.5; stroke-linecap: round; stroke-dasharray: 120; animation: beam-draw 6s ease-in-out infinite; animation-delay: -4s; }
+      .building-block { fill: #1e293b; stroke: #475569; stroke-width: 1; stroke-linejoin: round; transform-origin: bottom center; animation: build-rise 8s ease-in-out infinite; }
+      .building-block-center { fill: #0f172a; stroke: #f59e0b; stroke-width: 1.5; stroke-linejoin: round; transform-origin: bottom center; animation: build-rise 8s ease-in-out infinite; animation-delay: -1.5s; }
+      .active-dot { fill: #f59e0b; transform-origin: center; animation: pulse-dot 2s ease-in-out infinite; }
+      .scanner-line { stroke: #f59e0b; stroke-width: 1; stroke-dasharray: 4 2; animation: scanner-move 4s linear infinite; transform-origin: center; }
+    `}</style>
+  </defs>
+  <path class="grid-line" d="M 10,0 L 10,100 M 30,0 L 30,100 M 50,0 L 50,100 M 70,0 L 70,100 M 90,0 L 90,100 M 0,10 L 100,10 M 0,30 L 100,30 M 0,50 L 100,50 M 0,70 L 100,70 M 0,90 L 100,90" />
+  <rect class="building-block" x="20" y="45" width="15" height="35" rx="1" />
+  <rect class="building-block" x="65" y="40" width="15" height="40" rx="1" style="animation-delay: -3s;" />
+  <rect class="building-block-center" x="43" y="25" width="14" height="55" rx="1.5" />
+  <line class="beam" x1="15" y1="80" x2="85" y2="80" />
+  <line class="beam-blue" x1="43" y1="25" x2="57" y2="25" />
+  <line class="beam-emerald" x1="20" y1="45" x2="43" y2="45" />
+  <line class="beam" x1="57" y1="40" x2="80" y2="40" />
+  <path class="grid-line" d="M 43,25 L 57,40 M 57,25 L 43,40 M 20,45 L 43,60 M 43,45 L 20,60 M 57,40 L 80,55 M 80,40 L 57,55" />
+  <line class="scanner-line" x1="10" y1="21" x2="90" y2="21" />
+  <circle class="active-dot" cx="50" cy="35" r="2.5" />
+  <circle class="active-dot" cx="27.5" cy="55" r="1.5" style="animation-delay: -0.5s;" />
+  <circle class="active-dot" cx="72.5" cy="50" r="1.5" style="animation-delay: -1s;" />
+</svg>
