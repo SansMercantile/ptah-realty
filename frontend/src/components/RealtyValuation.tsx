@@ -66,6 +66,7 @@ export default function RealtyValuation() {
   const [isIngesting, setIsIngesting] = useState(false);
   const [ingestCount, setIngestCount] = useState<number | null>(null);
   const [ingestError, setIngestError] = useState<string | null>(null);
+  const [ingestStatusLabel, setIngestStatusLabel] = useState<string | null>(null);
 
   // Step 1: property form
   const [propertyId, setPropertyId] = useState<string | null>(null);
@@ -113,19 +114,57 @@ export default function RealtyValuation() {
     setIsIngesting(true);
     setIngestError(null);
     setIngestCount(null);
+    setIngestStatusLabel("Starting...");
     try {
+      // /comparables/ingest kicks off a background job and returns
+      // immediately (see backend api/routes.py for why -- Property24 can
+      // currently take 90s+ per actor call, which was exceeding the
+      // Vercel/Cloudflare/ALB proxy timeouts and surfacing as a 502 even
+      // though the backend request eventually succeeded). We poll the
+      // job status instead of waiting on one long request.
       const res = await fetch("/api/v1/realty/comparables/ingest", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ search_location: searchLocation, property_type: form.propertyType }),
       });
       const data = await res.json();
-      if (res.ok) setIngestCount(data.upserted);
-      else setIngestError(data.detail || "Ingestion failed.");
+      if (!res.ok || !data.job_id) {
+        setIngestError(data.detail || "Ingestion failed to start.");
+        setIsIngesting(false);
+        return;
+      }
+
+      const jobId = data.job_id;
+      const POLL_INTERVAL_MS = 3000;
+      const MAX_POLLS = 60; // ~3 minutes
+      for (let i = 0; i < MAX_POLLS; i++) {
+        await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
+        const statusRes = await fetch(`/api/v1/realty/comparables/ingest/${jobId}`);
+        const statusData = await statusRes.json();
+        const job = statusData.job;
+        if (!statusRes.ok || !job) {
+          setIngestError(statusData.detail || "Lost track of the ingestion job.");
+          break;
+        }
+        if (job.status === "succeeded") {
+          setIngestCount(job.upserted_count);
+          setIngestStatusLabel(null);
+          break;
+        }
+        if (job.status === "failed") {
+          setIngestError(job.error || "Ingestion failed.");
+          setIngestStatusLabel(null);
+          break;
+        }
+        setIngestStatusLabel(
+          job.status === "running" ? "Searching Property24 (this can take a minute or two)..." : "Queued..."
+        );
+      }
     } catch (e: any) {
       setIngestError(e.message || "Could not reach the ingestion service.");
     } finally {
       setIsIngesting(false);
+      setIngestStatusLabel(null);
     }
   };
 
@@ -300,6 +339,11 @@ export default function RealtyValuation() {
             Pull Comparables
           </button>
         </div>
+        {ingestStatusLabel && (
+          <p className="text-[11px] text-slate-400 font-mono flex items-center gap-1.5">
+            <Loader2 className="w-3 h-3 animate-spin" /> {ingestStatusLabel}
+          </p>
+        )}
         {ingestCount !== null && (
           <p className="text-[11px] text-emerald-400 font-mono">Upserted {ingestCount} comparable sales.</p>
         )}
