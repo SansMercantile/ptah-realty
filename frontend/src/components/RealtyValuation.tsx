@@ -5,6 +5,7 @@
  */
 
 import React, { useState } from "react";
+import { apiFetch } from "../lib/api";
 import {
   Home,
   Calculator,
@@ -122,7 +123,7 @@ export default function RealtyValuation() {
       // Vercel/Cloudflare/ALB proxy timeouts and surfacing as a 502 even
       // though the backend request eventually succeeded). We poll the
       // job status instead of waiting on one long request.
-      const res = await fetch("/api/v1/realty/comparables/ingest", {
+      const res = await apiFetch("/api/v1/realty/comparables/ingest", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ search_location: searchLocation, property_type: form.propertyType }),
@@ -139,7 +140,7 @@ export default function RealtyValuation() {
       const MAX_POLLS = 60; // ~3 minutes
       for (let i = 0; i < MAX_POLLS; i++) {
         await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
-        const statusRes = await fetch(`/api/v1/realty/comparables/ingest/${jobId}`);
+        const statusRes = await apiFetch(`/api/v1/realty/comparables/ingest/${jobId}`);
         const statusData = await statusRes.json();
         const job = statusData.job;
         if (!statusRes.ok || !job) {
@@ -171,7 +172,7 @@ export default function RealtyValuation() {
   const handleSaveProperty = async () => {
     setIsSavingProperty(true);
     try {
-      const res = await fetch("/api/v1/realty/properties", {
+      const res = await apiFetch("/api/v1/realty/properties", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -208,7 +209,7 @@ export default function RealtyValuation() {
       if (conditionNotesInput) body.append("condition_notes", conditionNotesInput);
       body.append("sort_order", String(mediaList.length));
 
-      const res = await fetch(`/api/v1/realty/properties/${propertyId}/media`, {
+      const res = await apiFetch(`/api/v1/realty/properties/${propertyId}/media`, {
         method: "POST",
         body,
       });
@@ -228,7 +229,7 @@ export default function RealtyValuation() {
 
   const handleDeleteMedia = async (mediaId: string) => {
     try {
-      await fetch(`/api/v1/realty/media/${mediaId}`, { method: "DELETE" });
+      await apiFetch(`/api/v1/realty/media/${mediaId}`, { method: "DELETE" });
       setMediaList((prev) => prev.filter((m) => m.id !== mediaId));
     } catch (e) {
       console.error(e);
@@ -241,7 +242,7 @@ export default function RealtyValuation() {
     setValuationError(null);
     setValuation(null);
     try {
-      const res = await fetch("/api/v1/realty/valuation", {
+      const res = await apiFetch("/api/v1/realty/valuation", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ property_id: propertyId, method, radius_m: radiusM }),
@@ -261,7 +262,7 @@ export default function RealtyValuation() {
     setReportStatus("rendering");
     setReportError(null);
     try {
-      const res = await fetch("/api/v1/realty/reports/generate", {
+      const res = await apiFetch("/api/v1/realty/reports/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ property_id: propertyId, valuation_snapshot_id: valuation.id }),
@@ -283,7 +284,7 @@ export default function RealtyValuation() {
     setIsPublishing(true);
     setPublishResult(null);
     try {
-      const res = await fetch("/api/v1/realty/listings/publish", {
+      const res = await apiFetch("/api/v1/realty/listings/publish", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

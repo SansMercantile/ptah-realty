@@ -12,11 +12,18 @@
  * set) keeps today's PTAH Realty branding unchanged. Footer format
  * matches the convention used across other Sans Mercantile applications
  * (see e.g. the main Ptah repo's LandingPage.tsx footer).
+ *
+ * Auth (Phase 1c, 2026-08-22): every route except /branding now requires
+ * a session (see backend auth.py). Gates the main app behind Login until
+ * a valid stored session exists -- see lib/api.ts for session storage
+ * and the apiFetch() wrapper the rest of the app uses.
  */
 
 import React, { useEffect, useState } from "react";
-import { Home } from "lucide-react";
+import { Home, LogOut } from "lucide-react";
 import RealtyValuation from "./components/RealtyValuation";
+import Login from "./components/Login";
+import { getStoredAuth, logout, StoredUser } from "./lib/api";
 
 interface Branding {
   display_name: string;
@@ -36,6 +43,8 @@ const DEFAULT_BRANDING: Branding = {
 
 export default function App() {
   const [branding, setBranding] = useState<Branding>(DEFAULT_BRANDING);
+  const [user, setUser] = useState<StoredUser | null>(null);
+  const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
     fetch("/api/v1/realty/branding")
@@ -47,6 +56,10 @@ export default function App() {
         // Network hiccup or unregistered domain -- keep the default
         // branding rather than leaving the header/footer blank.
       });
+
+    const stored = getStoredAuth();
+    setUser(stored?.user ?? null);
+    setAuthChecked(true);
   }, []);
 
   const hasTenantLogo = Boolean(branding.logo_url);
@@ -90,7 +103,7 @@ export default function App() {
               <div className="w-9 h-9">
                 <img src="/logo.svg" alt="Ptah" className="w-full h-full" />
               </div>
-              <div>
+              <div className="flex-1">
                 <h1 className="font-display font-bold text-lg text-slate-900 dark:text-white leading-tight">
                   PTAH <span style={{ color: "var(--brand-accent)" }}>Realty</span>
                 </h1>
@@ -100,11 +113,29 @@ export default function App() {
               </div>
             </>
           )}
+          {user && (
+            <div className="flex items-center gap-3">
+              <span className="text-[11px] font-mono text-slate-600 dark:text-slate-500 hidden sm:block">
+                {user.name}
+              </span>
+              <button
+                onClick={logout}
+                title="Log out"
+                className="flex items-center gap-1.5 text-[11px] font-mono text-slate-600 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-800 rounded px-2 py-1 transition-colors"
+              >
+                <LogOut className="w-3 h-3" /> Log out
+              </button>
+            </div>
+          )}
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto px-6 py-8">
-        <RealtyValuation />
+        {!authChecked ? null : user ? (
+          <RealtyValuation />
+        ) : (
+          <Login tenantDisplayName={branding.display_name} onLogin={() => setUser(getStoredAuth()?.user ?? null)} />
+        )}
       </main>
 
       <footer className="border-t border-slate-200 dark:border-slate-900 mt-12">
