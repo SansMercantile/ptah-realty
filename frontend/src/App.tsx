@@ -22,6 +22,7 @@
 import React, { useEffect, useState } from "react";
 import { Home, LogOut } from "lucide-react";
 import RealtyValuation from "./components/RealtyValuation";
+import IntelligenceWorkspace from "./IntelligenceWorkspace";
 import Login from "./components/Login";
 import { getStoredAuth, logout, StoredUser } from "./lib/api";
 
@@ -45,6 +46,7 @@ export default function App() {
   const [branding, setBranding] = useState<Branding>(DEFAULT_BRANDING);
   const [user, setUser] = useState<StoredUser | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
+  const [workspace, setWorkspace] = useState<"intelligence" | "valuation">("intelligence");
 
   useEffect(() => {
     fetch("/api/v1/realty/branding")
@@ -130,13 +132,36 @@ export default function App() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-6 py-8">
-        {!authChecked ? null : user ? (
-          <RealtyValuation />
-        ) : (
+      {!authChecked ? null : user ? (
+        <>
+          <div className="border-b border-slate-200 dark:border-slate-900 bg-slate-50 dark:bg-slate-950 px-6 py-2">
+            <div className="max-w-7xl mx-auto flex items-center justify-end gap-2">
+              <span className="text-[10px] font-mono uppercase tracking-wider text-slate-500">Workspace</span>
+              <button
+                onClick={() => setWorkspace("intelligence")}
+                className={"rounded px-3 py-1 text-[11px] font-mono transition-colors " + (workspace === "intelligence" ? "bg-cyan-700 text-white" : "border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-400")}
+              >
+                Realty Intelligence
+              </button>
+              <button
+                onClick={() => setWorkspace("valuation")}
+                className={"rounded px-3 py-1 text-[11px] font-mono transition-colors " + (workspace === "valuation" ? "bg-amber-500 text-slate-950" : "border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-400")}
+              >
+                Valuation & Publishing
+              </button>
+            </div>
+          </div>
+          {workspace === "intelligence" ? <IntelligenceWorkspace /> : (
+            <main className="max-w-7xl mx-auto px-6 py-8">
+              <RealtyValuation />
+            </main>
+          )}
+        </>
+      ) : (
+        <main className="max-w-7xl mx-auto px-6 py-8">
           <Login tenantDisplayName={branding.display_name} onLogin={() => setUser(getStoredAuth()?.user ?? null)} />
-        )}
-      </main>
+        </main>
+      )}
 
       <footer className="border-t border-slate-200 dark:border-slate-900 mt-12">
         <div className="max-w-7xl mx-auto px-6 py-4 flex flex-col md:flex-row justify-between items-center text-[10px] font-mono text-slate-500 dark:text-slate-600 gap-2">

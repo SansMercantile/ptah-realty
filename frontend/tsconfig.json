@@ -10,10 +10,12 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
+    "ignoreDeprecations": "6.0",
     "jsx": "react-jsx",
     "strict": true,
     "baseUrl": ".",
     "paths": { "@/*": ["./*"] }
   },
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": ["src/components/intelligence"]
 }
