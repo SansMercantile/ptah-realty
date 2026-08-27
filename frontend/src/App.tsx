@@ -51,6 +51,22 @@ export function App() {
   // tenant has none yet (brand new), seed it with this demo's rich Cape
   // Town dataset as real records -- so the app has real, valuable data
   // from day one instead of only-ever-local mock state.
+  //
+  // BUG FIX (2026-08-27): this used to call setProperties(real) +
+  // setSelectedProperty(real[0]) unconditionally, replacing the rich
+  // local PROPERTIES_DATA wholesale and yanking the selection to
+  // whatever the backend's newest-created property happened to be
+  // (list_properties sorts by created_at desc) -- causing a jarring
+  // "flash" from a fully-populated demo listing to a barely-populated
+  // one the instant this effect resolved. Two separate problems, fixed
+  // together: (1) the backend's flatter Property schema round-trips
+  // lossily (see services/api.ts's docstring -- no cadastral polygon, no
+  // Property24 listing/photos, no owner ID), so it should never *replace*
+  // the rich local seed data for display; (2) selection should never be
+  // silently reassigned out from under whatever the user (or the demo
+  // default) already has open. Now: merge additively (only add backend
+  // properties not already represented locally, matched by
+  // address+suburb) and never touch selectedProperty here.
   useEffect(() => {
     if (!user) return;
     setIsLoadingProperties(true);
@@ -63,9 +79,10 @@ export function App() {
           }
           real = await listProperties();
         }
-        if (real.length > 0) {
-          setProperties(real);
-          setSelectedProperty(real[0]);
+        const localKeys = new Set(PROPERTIES_DATA.map(p => `${p.address}|${p.suburb}`.toLowerCase()));
+        const newFromBackend = real.filter(r => !localKeys.has(`${r.address}|${r.suburb}`.toLowerCase()));
+        if (newFromBackend.length > 0) {
+          setProperties([...PROPERTIES_DATA, ...newFromBackend]);
         }
       } catch (err) {
         console.error('Failed to load real properties, staying on local dataset:', err);
