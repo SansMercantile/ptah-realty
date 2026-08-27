@@ -393,12 +393,27 @@ export const RealCadastreMap: React.FC<RealCadastreMapProps> = ({
   const handleMouseUp = () => setIsDragging(false);
 
   // Handle Zoom Wheel
-  const handleWheel = (e: React.WheelEvent) => {
-    e.preventDefault();
-    const zoomDelta = e.deltaY < 0 ? 0.25 : -0.25;
-    const nextZoom = Math.min(Math.max(zoomLevel + zoomDelta, 14.5), 19.5);
-    setZoomLevel(nextZoom);
-  };
+  //
+  // React attaches its synthetic wheel listener as passive (for scroll
+  // perf), so an onWheel={...} JSX prop calling e.preventDefault() throws
+  // "Unable to preventDefault inside passive event listener invocation"
+  // on every scroll tick -- and doesn't actually stop the page from also
+  // scrolling behind the map while the user scroll-zooms. A native
+  // { passive: false } listener attached directly to the canvas element
+  // is the only way to make preventDefault() take effect here; see the
+  // useEffect below. Functional setZoomLevel update so this listener
+  // (attached once) never reads a stale zoomLevel from closure.
+  useEffect(() => {
+    const node = canvasRef.current;
+    if (!node) return;
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const zoomDelta = e.deltaY < 0 ? 0.25 : -0.25;
+      setZoomLevel((z) => Math.min(Math.max(z + zoomDelta, 14.5), 19.5));
+    };
+    node.addEventListener('wheel', onWheel, { passive: false });
+    return () => node.removeEventListener('wheel', onWheel);
+  }, []);
 
   // Convert property record into geo polygon points
   const getPropertyGeoPolygon = (prop: PropertyRecord): Array<[number, number]> => {
@@ -452,7 +467,6 @@ export const RealCadastreMap: React.FC<RealCadastreMapProps> = ({
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
-      onWheel={handleWheel}
     >
       {/* 1. RASTER TILE LAYER (OpenStreetMap / CartoDB Dark / Esri High-Res Satellite) */}
       <div className="absolute inset-0 pointer-events-none">
