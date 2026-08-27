@@ -235,7 +235,7 @@ export const PDFReportModal: React.FC<PDFReportModalProps> = ({
               <div className="text-right text-xs text-slate-600">
                 <div className="font-bold text-slate-900">Date: {new Date().toLocaleDateString('en-ZA')}</div>
                 <div>Ref: PTAH-CMA-{property.erfNo}-{property.id.toUpperCase()}</div>
-                <div>Prepared By: Ronald Read (Director)</div>
+                <div>Prepared By: Mezzoforte Privilege (Director)</div>
               </div>
             </div>
 
@@ -391,7 +391,7 @@ export const PDFReportModal: React.FC<PDFReportModalProps> = ({
                 <p>This report has been compiled in accordance with South African Property Practitioners Regulatory Authority (PPRA) standards.</p>
               </div>
               <div className="text-right">
-                <div className="font-bold text-slate-800">Ronald Read</div>
+                <div className="font-bold text-slate-800">Mezzoforte Privilege</div>
                 <div>Principal Practitioner (FFC Valid)</div>
               </div>
             </div>

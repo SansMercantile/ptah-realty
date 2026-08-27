@@ -184,7 +184,7 @@ export const Header: React.FC<HeaderProps> = ({
             <div className="w-6 h-6 rounded-full bg-cyan-900 border border-cyan-700 flex items-center justify-center text-cyan-200 font-bold text-[10px]">
               RR
             </div>
-            <span className="font-semibold text-slate-200 text-xs">Ronald Read (Director)</span>
+            <span className="font-semibold text-slate-200 text-xs">Mezzoforte Privilege (Director)</span>
           </div>
 
           <button
