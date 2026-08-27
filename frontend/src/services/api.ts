@@ -497,3 +497,33 @@ export async function pullProperty24RadiusListings(
     }),
   });
 }
+
+// ---------------------------------------------------------------------
+// CRM (leads pipeline, automation rules, connectors, sync events) --
+// tenant-scoped, whole-state sync (see api/crm.py on the backend for why
+// a single JSON blob rather than granular per-lead endpoints).
+// ---------------------------------------------------------------------
+
+export interface CrmState {
+  initialized: boolean;
+  leads: any[];
+  automationRules: any[];
+  connectors: any[];
+  connectorSyncEvents: any[];
+}
+
+export async function getCrmState(): Promise<CrmState> {
+  return authJson<CrmState>('/crm/state', { method: 'GET' });
+}
+
+export async function saveCrmState(state: {
+  leads: any[];
+  automationRules: any[];
+  connectors: any[];
+  connectorSyncEvents: any[];
+}): Promise<{ saved: boolean }> {
+  return authJson<{ saved: boolean }>('/crm/state', {
+    method: 'PUT',
+    body: JSON.stringify(state),
+  });
+}

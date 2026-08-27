@@ -16,6 +16,7 @@ import { CMAEngineModal } from './components/modals/CMAEngineModal';
 import { MediaManagementModal } from './components/modals/MediaManagementModal';
 import { PDFReportModal } from './components/modals/PDFReportModal';
 import { PortalSyncModal } from './components/modals/PortalSyncModal';
+import CRMApp from './crm/CRMApp';
 import { LoginScreen } from './components/LoginScreen';
 import { PROPERTIES_DATA } from './services/mockData';
 import { PropertyRecord, AccommodationDetails } from './types';
@@ -156,18 +157,16 @@ export function App() {
         onOpenPDFReport={() => setIsPDFReportOpen(true)}
         onOpenPortalSync={() => setIsPortalSyncOpen(true)}
         onOpenDocuments={() => setIsDocumentsModalOpen(true)}
+        userEmail={user.email}
+        onLogout={() => { logout(); setUser(null); }}
         selectedPropertyAddress={selectedProperty?.address}
       />
-      <button
-        onClick={() => { logout(); setUser(null); }}
-        className="fixed top-2 right-2 z-50 text-[10px] px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded"
-        title={user.email}
-      >
-        Sign out
-      </button>
-
       {/* Main Workspace Area (Google Maps & Cadastral Vector Canvas + Property Title Panel) */}
-      <main className="flex-1 flex flex-row overflow-hidden relative">
+      <main className={`flex-1 overflow-hidden relative ${activeNavTab === 'crm' ? 'overflow-y-auto' : 'flex flex-row'}`}>
+        {activeNavTab === 'crm' ? (
+          <CRMApp />
+        ) : (
+          <>
         {/* Cadastral Map View */}
         <CadastralMap
           properties={properties}
@@ -198,6 +197,8 @@ export function App() {
             onOpenPortalSync={() => setIsPortalSyncOpen(true)}
             onOpenContactOwner={handleOpenContactOwner}
           />
+        )}
+          </>
         )}
       </main>
 

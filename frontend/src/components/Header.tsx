@@ -13,10 +13,15 @@ import {
   Globe, 
   Share2, 
   LogOut,
-  Layers
+  Layers,
+  ChevronDown,
+  Settings,
+  Languages,
+  CircleHelp,
+  Puzzle
 } from 'lucide-react';
 
-export type ActiveTab = 'suburb' | 'search' | 'cma' | 'media' | 'pdf' | 'portals' | 'sales' | 'prospecting' | 'kyc';
+export type ActiveTab = 'suburb' | 'search' | 'cma' | 'media' | 'pdf' | 'portals' | 'sales' | 'prospecting' | 'kyc' | 'crm';
 
 interface HeaderProps {
   activeTab: ActiveTab | null;
@@ -27,6 +32,8 @@ interface HeaderProps {
   onOpenPDFReport: () => void;
   onOpenPortalSync: () => void;
   onOpenDocuments: () => void;
+  userEmail: string;
+  onLogout: () => void;
   selectedPropertyAddress?: string;
 }
 
@@ -39,8 +46,12 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenPDFReport,
   onOpenPortalSync,
   onOpenDocuments,
-  selectedPropertyAddress
+  selectedPropertyAddress,
+  userEmail,
+  onLogout
 }) => {
+  const [isAccountMenuOpen, setIsAccountMenuOpen] = React.useState(false);
+
   return (
     <header className="bg-slate-900 text-slate-100 shadow-md select-none border-b border-slate-800 z-30 shrink-0">
       {/* Top Main Navigation Bar */}
@@ -176,19 +187,61 @@ export const Header: React.FC<HeaderProps> = ({
             <UserCheck className="w-3.5 h-3.5 text-emerald-300" />
             <span>KYC</span>
           </button>
+
+          <button
+            id="nav-tab-crm"
+            onClick={() => onSelectTab('crm')}
+            className={`px-2.5 py-1 rounded text-xs font-semibold flex items-center gap-1.5 transition-all ${
+              activeTab === 'crm'
+                ? 'bg-emerald-600 text-white shadow-sm ring-1 ring-emerald-300'
+                : 'bg-slate-800/90 text-slate-300 hover:bg-slate-700 hover:text-white'
+            }`}
+          >
+            <Puzzle className="w-3.5 h-3.5 text-emerald-300" />
+            <span>CRM</span>
+          </button>
         </nav>
 
         {/* User Profile & Quick Actions */}
-        <div className="flex items-center gap-3 text-xs">
-          <div className="hidden sm:flex items-center gap-1.5 text-slate-300">
+        <div className="relative flex items-center gap-3 text-xs">
+          <button
+            type="button"
+            onClick={() => setIsAccountMenuOpen((open) => !open)}
+            className="hidden sm:flex items-center gap-1.5 text-slate-300 hover:text-white"
+            aria-expanded={isAccountMenuOpen}
+            aria-haspopup="menu"
+          >
             <div className="w-6 h-6 rounded-full bg-cyan-900 border border-cyan-700 flex items-center justify-center text-cyan-200 font-bold text-[10px]">
               RR
             </div>
-            <span className="font-semibold text-slate-200 text-xs">Mezzoforte Privilege (Admin)</span>
-          </div>
+            <span className="font-semibold text-slate-200 text-xs">{userEmail}</span>
+            <ChevronDown className="w-3.5 h-3.5" />
+          </button>
+
+          {isAccountMenuOpen && (
+            <div className="absolute right-0 top-8 z-50 w-52 rounded border border-slate-700 bg-slate-900 py-1 shadow-xl" role="menu">
+              <button className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-slate-200 hover:bg-slate-800" role="menuitem">
+                <Settings className="w-3.5 h-3.5 text-slate-400" /> Settings
+              </button>
+              <button className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-slate-200 hover:bg-slate-800" role="menuitem">
+                <Languages className="w-3.5 h-3.5 text-slate-400" /> Language
+              </button>
+              <button className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-slate-200 hover:bg-slate-800" role="menuitem">
+                <CircleHelp className="w-3.5 h-3.5 text-slate-400" /> Support
+              </button>
+              <button className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-slate-200 hover:bg-slate-800" role="menuitem">
+                <Puzzle className="w-3.5 h-3.5 text-slate-400" /> Apps and Extensions
+              </button>
+              <div className="my-1 border-t border-slate-800" />
+              <button onClick={onLogout} className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-rose-300 hover:bg-slate-800" role="menuitem">
+                <LogOut className="w-3.5 h-3.5" /> Log out
+              </button>
+            </div>
+          )}
 
           <button
             id="btn-logout"
+            onClick={onLogout}
             className="text-slate-400 hover:text-rose-300 flex items-center gap-1 transition-colors text-xs"
             title="Log out"
           >
