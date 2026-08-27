@@ -443,101 +443,124 @@ export const ValuationModal: React.FC<ValuationModalProps> = ({
 
                   {/* Right Column: Comparative Micro-Market Card */}
                   <div className="space-y-4">
-                    {/* Street Variance Card */}
-                    <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-2xs space-y-3">
-                      <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                        <span className="text-xs font-bold text-slate-900 flex items-center gap-1">
-                          <MapPin className="w-3.5 h-3.5 text-cyan-700" />
-                          Street Benchmark
-                        </span>
-                        <span className={`text-[11px] font-bold px-2 py-0.5 rounded ${
-                          aiValuationData.streetBenchmark.varianceVsStreetPercent >= 0 
-                            ? 'bg-emerald-100 text-emerald-900' 
-                            : 'bg-amber-100 text-amber-900'
-                        }`}>
-                          {aiValuationData.streetBenchmark.varianceVsStreetPercent >= 0 ? '+' : ''}
-                          {aiValuationData.streetBenchmark.varianceVsStreetPercent}% vs Street Avg
-                        </span>
-                      </div>
-
-                      <div className="space-y-2 text-xs">
-                        <div className="flex items-center justify-between">
-                          <span className="text-slate-500">Street Name:</span>
-                          <span className="font-bold text-slate-800">{aiValuationData.streetBenchmark.streetName}</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-slate-500">Street Avg Rate:</span>
-                          <span className="font-bold text-cyan-900">{formatZar(aiValuationData.streetBenchmark.streetAveragePricePerM2)} / m²</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-slate-500">Properties in Street:</span>
-                          <span className="font-semibold text-slate-700">{aiValuationData.streetBenchmark.propertiesInStreetCount} Cadastral Lots</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-slate-500">Prestige Rating:</span>
-                          <span className="text-[10px] bg-slate-100 text-slate-800 px-2 py-0.5 rounded font-semibold">
-                            {aiValuationData.streetBenchmark.streetPrestigeRating}
+                    {/* Street Variance Card -- streetBenchmark isn't computed by the
+                        backend yet (property-valuation always returns null here),
+                        so this renders a placeholder instead of crashing. */}
+                    {aiValuationData.streetBenchmark ? (
+                      <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-2xs space-y-3">
+                        <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                          <span className="text-xs font-bold text-slate-900 flex items-center gap-1">
+                            <MapPin className="w-3.5 h-3.5 text-cyan-700" />
+                            Street Benchmark
+                          </span>
+                          <span className={`text-[11px] font-bold px-2 py-0.5 rounded ${
+                            aiValuationData.streetBenchmark.varianceVsStreetPercent >= 0 
+                              ? 'bg-emerald-100 text-emerald-900' 
+                              : 'bg-amber-100 text-amber-900'
+                          }`}>
+                            {aiValuationData.streetBenchmark.varianceVsStreetPercent >= 0 ? '+' : ''}
+                            {aiValuationData.streetBenchmark.varianceVsStreetPercent}% vs Street Avg
                           </span>
                         </div>
-                      </div>
-                    </div>
 
-                    {/* Suburb Variance Card */}
-                    <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-2xs space-y-3">
-                      <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                        <span className="text-xs font-bold text-slate-900 flex items-center gap-1">
-                          <Layers className="w-3.5 h-3.5 text-cyan-700" />
-                          Suburb Benchmark
-                        </span>
-                        <span className={`text-[11px] font-bold px-2 py-0.5 rounded ${
-                          aiValuationData.suburbBenchmark.varianceVsSuburbPercent >= 0 
-                            ? 'bg-emerald-100 text-emerald-900' 
-                            : 'bg-amber-100 text-amber-900'
-                        }`}>
-                          {aiValuationData.suburbBenchmark.varianceVsSuburbPercent >= 0 ? '+' : ''}
-                          {aiValuationData.suburbBenchmark.varianceVsSuburbPercent}% vs Suburb Median
-                        </span>
+                        <div className="space-y-2 text-xs">
+                          <div className="flex items-center justify-between">
+                            <span className="text-slate-500">Street Name:</span>
+                            <span className="font-bold text-slate-800">{aiValuationData.streetBenchmark.streetName}</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-slate-500">Street Avg Rate:</span>
+                            <span className="font-bold text-cyan-900">{formatZar(aiValuationData.streetBenchmark.streetAveragePricePerM2)} / m²</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-slate-500">Properties in Street:</span>
+                            <span className="font-semibold text-slate-700">{aiValuationData.streetBenchmark.propertiesInStreetCount} Cadastral Lots</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-slate-500">Prestige Rating:</span>
+                            <span className="text-[10px] bg-slate-100 text-slate-800 px-2 py-0.5 rounded font-semibold">
+                              {aiValuationData.streetBenchmark.streetPrestigeRating}
+                            </span>
+                          </div>
+                        </div>
                       </div>
+                    ) : (
+                      <div className="bg-white p-4 rounded-lg border border-dashed border-slate-300 text-center">
+                        <MapPin className="w-4 h-4 text-slate-300 mx-auto mb-1" />
+                        <p className="text-[11px] text-slate-400">Street-level benchmark not yet available</p>
+                      </div>
+                    )}
 
-                      <div className="space-y-2 text-xs">
-                        <div className="flex items-center justify-between">
-                          <span className="text-slate-500">Suburb:</span>
-                          <span className="font-bold text-slate-800">{aiValuationData.suburbBenchmark.suburbName}</span>
+                    {/* Suburb Variance Card -- same caveat as streetBenchmark above */}
+                    {aiValuationData.suburbBenchmark ? (
+                      <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-2xs space-y-3">
+                        <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                          <span className="text-xs font-bold text-slate-900 flex items-center gap-1">
+                            <Layers className="w-3.5 h-3.5 text-cyan-700" />
+                            Suburb Benchmark
+                          </span>
+                          <span className={`text-[11px] font-bold px-2 py-0.5 rounded ${
+                            aiValuationData.suburbBenchmark.varianceVsSuburbPercent >= 0 
+                              ? 'bg-emerald-100 text-emerald-900' 
+                              : 'bg-amber-100 text-amber-900'
+                          }`}>
+                            {aiValuationData.suburbBenchmark.varianceVsSuburbPercent >= 0 ? '+' : ''}
+                            {aiValuationData.suburbBenchmark.varianceVsSuburbPercent}% vs Suburb Median
+                          </span>
                         </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-slate-500">Suburb Median:</span>
-                          <span className="font-bold text-slate-900">{formatZar(aiValuationData.suburbBenchmark.suburbMedianValuation)}</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-slate-500">Annual Appreciation:</span>
-                          <span className="font-bold text-emerald-700">+{aiValuationData.suburbBenchmark.annualAppreciationRate}% p.a.</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-slate-500">Avg Days on Market:</span>
-                          <span className="font-semibold text-slate-700">{aiValuationData.suburbBenchmark.averageDaysOnMarket} Days</span>
-                        </div>
-                      </div>
-                    </div>
 
-                    {/* Rental Yield Snippet */}
-                    <div className="bg-gradient-to-br from-emerald-50 to-teal-50/40 p-4 rounded-lg border border-emerald-200 shadow-2xs space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-emerald-950 uppercase tracking-wider flex items-center gap-1">
-                          <DollarSign className="w-3.5 h-3.5 text-emerald-700" />
-                          Projected Rental Yield
-                        </span>
-                        <span className="bg-emerald-200/80 text-emerald-900 font-extrabold text-xs px-2 py-0.5 rounded">
-                          {aiValuationData.investmentMetrics.grossYieldPercent}% Gross
-                        </span>
+                        <div className="space-y-2 text-xs">
+                          <div className="flex items-center justify-between">
+                            <span className="text-slate-500">Suburb:</span>
+                            <span className="font-bold text-slate-800">{aiValuationData.suburbBenchmark.suburbName}</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-slate-500">Suburb Median:</span>
+                            <span className="font-bold text-slate-900">{formatZar(aiValuationData.suburbBenchmark.suburbMedianValuation)}</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-slate-500">Annual Appreciation:</span>
+                            <span className="font-bold text-emerald-700">+{aiValuationData.suburbBenchmark.annualAppreciationRate}% p.a.</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-slate-500">Avg Days on Market:</span>
+                            <span className="font-semibold text-slate-700">{aiValuationData.suburbBenchmark.averageDaysOnMarket} Days</span>
+                          </div>
+                        </div>
                       </div>
-                      <h4 className="text-xl font-bold text-slate-900">
-                        {formatZar(aiValuationData.investmentMetrics.estimatedMonthlyRental)}
-                        <span className="text-xs text-slate-500 font-normal ml-1">/ month</span>
-                      </h4>
-                      <p className="text-[11px] text-emerald-800">
-                        Annual gross income: <strong>{formatZar(aiValuationData.investmentMetrics.annualGrossRental)}</strong>
-                      </p>
-                    </div>
+                    ) : (
+                      <div className="bg-white p-4 rounded-lg border border-dashed border-slate-300 text-center">
+                        <Layers className="w-4 h-4 text-slate-300 mx-auto mb-1" />
+                        <p className="text-[11px] text-slate-400">Suburb benchmark not yet available</p>
+                      </div>
+                    )}
+
+                    {/* Rental Yield Snippet -- same caveat as streetBenchmark above */}
+                    {aiValuationData.investmentMetrics ? (
+                      <div className="bg-gradient-to-br from-emerald-50 to-teal-50/40 p-4 rounded-lg border border-emerald-200 shadow-2xs space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-emerald-950 uppercase tracking-wider flex items-center gap-1">
+                            <DollarSign className="w-3.5 h-3.5 text-emerald-700" />
+                            Projected Rental Yield
+                          </span>
+                          <span className="bg-emerald-200/80 text-emerald-900 font-extrabold text-xs px-2 py-0.5 rounded">
+                            {aiValuationData.investmentMetrics.grossYieldPercent}% Gross
+                          </span>
+                        </div>
+                        <h4 className="text-xl font-bold text-slate-900">
+                          {formatZar(aiValuationData.investmentMetrics.estimatedMonthlyRental)}
+                          <span className="text-xs text-slate-500 font-normal ml-1">/ month</span>
+                        </h4>
+                        <p className="text-[11px] text-emerald-800">
+                          Annual gross income: <strong>{formatZar(aiValuationData.investmentMetrics.annualGrossRental)}</strong>
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="bg-white p-4 rounded-lg border border-dashed border-slate-300 text-center">
+                        <DollarSign className="w-4 h-4 text-slate-300 mx-auto mb-1" />
+                        <p className="text-[11px] text-slate-400">Rental yield estimate not yet available</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -547,44 +570,55 @@ export const ValuationModal: React.FC<ValuationModalProps> = ({
           {/* TAB 2: STREET & PRECINCT BENCHMARKS */}
           {activeTab === 'Street_Precinct' && aiValuationData && (
             <div className="space-y-4">
-              <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-2xs space-y-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-bold text-sm text-slate-900">
-                      Registered Properties & Sales in {aiValuationData.streetBenchmark.streetName}
-                    </h3>
-                    <p className="text-xs text-slate-500">
-                      Cadastral deeds register comparisons for street peer lots
-                    </p>
+              {aiValuationData.streetBenchmark ? (
+                <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-2xs space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-bold text-sm text-slate-900">
+                        Registered Properties & Sales in {aiValuationData.streetBenchmark.streetName}
+                      </h3>
+                      <p className="text-xs text-slate-500">
+                        Cadastral deeds register comparisons for street peer lots
+                      </p>
+                    </div>
+                    <span className="bg-cyan-50 text-cyan-900 border border-cyan-300 text-xs font-bold px-3 py-1 rounded">
+                      Street Avg: {formatZar(aiValuationData.streetBenchmark.streetAveragePricePerM2)} / m²
+                    </span>
                   </div>
-                  <span className="bg-cyan-50 text-cyan-900 border border-cyan-300 text-xs font-bold px-3 py-1 rounded">
-                    Street Avg: {formatZar(aiValuationData.streetBenchmark.streetAveragePricePerM2)} / m²
-                  </span>
-                </div>
 
-                <div className="overflow-x-auto">
-                  <table className="w-full text-xs text-left border border-slate-200">
-                    <thead className="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
-                      <tr>
-                        <th className="p-2.5">Street Address</th>
-                        <th className="p-2.5">Land Extent</th>
-                        <th className="p-2.5">Last Registered Value</th>
-                        <th className="p-2.5">Transfer Date</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {aiValuationData.streetBenchmark.comparativeProperties.map((p, idx) => (
-                        <tr key={idx} className="hover:bg-slate-50">
-                          <td className="p-2.5 font-bold text-slate-900">{p.address}</td>
-                          <td className="p-2.5 font-semibold text-slate-700">{p.extentM2} m²</td>
-                          <td className="p-2.5 font-bold text-cyan-900">{formatZar(p.lastPrice)}</td>
-                          <td className="p-2.5 text-slate-600 font-mono">{p.lastDate}</td>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs text-left border border-slate-200">
+                      <thead className="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
+                        <tr>
+                          <th className="p-2.5">Street Address</th>
+                          <th className="p-2.5">Land Extent</th>
+                          <th className="p-2.5">Last Registered Value</th>
+                          <th className="p-2.5">Transfer Date</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {aiValuationData.streetBenchmark.comparativeProperties.map((p, idx) => (
+                          <tr key={idx} className="hover:bg-slate-50">
+                            <td className="p-2.5 font-bold text-slate-900">{p.address}</td>
+                            <td className="p-2.5 font-semibold text-slate-700">{p.extentM2} m²</td>
+                            <td className="p-2.5 font-bold text-cyan-900">{formatZar(p.lastPrice)}</td>
+                            <td className="p-2.5 text-slate-600 font-mono">{p.lastDate}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="bg-white p-8 rounded-lg border border-dashed border-slate-300 text-center space-y-2">
+                  <Layers className="w-6 h-6 text-slate-300 mx-auto" />
+                  <p className="text-sm font-semibold text-slate-500">Street & suburb benchmarks aren't available yet</p>
+                  <p className="text-xs text-slate-400 max-w-sm mx-auto">
+                    This backend endpoint doesn't compute street/suburb comparables yet -- only the
+                    individual AI valuation tab is live. Check back once that's implemented.
+                  </p>
+                </div>
+              )}
             </div>
           )}
 

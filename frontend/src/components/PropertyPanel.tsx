@@ -349,29 +349,44 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
                     </div>
                   </div>
 
-                  {/* Micro-Market & Street Comparison */}
+                  {/* Micro-Market & Street Comparison -- streetBenchmark/suburbBenchmark
+                      aren't computed by the backend yet (property-valuation always
+                      returns null for both), so each falls back to a placeholder
+                      instead of crashing. */}
                   <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div className="p-2 bg-slate-50 rounded border border-slate-200">
-                      <span className="text-slate-500 text-[10px] block font-semibold">Street Baseline ({streetName})</span>
-                      <div className="font-bold text-slate-800 text-xs">
-                        {formatZar(aiValuation.streetBenchmark.streetAveragePricePerM2)} / m²
+                    {aiValuation.streetBenchmark ? (
+                      <div className="p-2 bg-slate-50 rounded border border-slate-200">
+                        <span className="text-slate-500 text-[10px] block font-semibold">Street Baseline ({streetName})</span>
+                        <div className="font-bold text-slate-800 text-xs">
+                          {formatZar(aiValuation.streetBenchmark.streetAveragePricePerM2)} / m²
+                        </div>
+                        <span className={`text-[10px] font-bold ${aiValuation.streetBenchmark.varianceVsStreetPercent >= 0 ? 'text-emerald-700' : 'text-amber-700'}`}>
+                          {aiValuation.streetBenchmark.varianceVsStreetPercent >= 0 ? '+' : ''}
+                          {aiValuation.streetBenchmark.varianceVsStreetPercent}% vs Street Avg
+                        </span>
                       </div>
-                      <span className={`text-[10px] font-bold ${aiValuation.streetBenchmark.varianceVsStreetPercent >= 0 ? 'text-emerald-700' : 'text-amber-700'}`}>
-                        {aiValuation.streetBenchmark.varianceVsStreetPercent >= 0 ? '+' : ''}
-                        {aiValuation.streetBenchmark.varianceVsStreetPercent}% vs Street Avg
-                      </span>
-                    </div>
+                    ) : (
+                      <div className="p-2 bg-slate-50 rounded border border-dashed border-slate-300 flex items-center justify-center">
+                        <span className="text-slate-400 text-[10px]">Street baseline unavailable</span>
+                      </div>
+                    )}
 
-                    <div className="p-2 bg-slate-50 rounded border border-slate-200">
-                      <span className="text-slate-500 text-[10px] block font-semibold">Suburb Median ({property.suburb})</span>
-                      <div className="font-bold text-slate-800 text-xs">
-                        {formatZar(aiValuation.suburbBenchmark.suburbMedianValuation)}
+                    {aiValuation.suburbBenchmark ? (
+                      <div className="p-2 bg-slate-50 rounded border border-slate-200">
+                        <span className="text-slate-500 text-[10px] block font-semibold">Suburb Median ({property.suburb})</span>
+                        <div className="font-bold text-slate-800 text-xs">
+                          {formatZar(aiValuation.suburbBenchmark.suburbMedianValuation)}
+                        </div>
+                        <span className={`text-[10px] font-bold ${aiValuation.suburbBenchmark.varianceVsSuburbPercent >= 0 ? 'text-emerald-700' : 'text-amber-700'}`}>
+                          {aiValuation.suburbBenchmark.varianceVsSuburbPercent >= 0 ? '+' : ''}
+                          {aiValuation.suburbBenchmark.varianceVsSuburbPercent}% vs Suburb Median
+                        </span>
                       </div>
-                      <span className={`text-[10px] font-bold ${aiValuation.suburbBenchmark.varianceVsSuburbPercent >= 0 ? 'text-emerald-700' : 'text-amber-700'}`}>
-                        {aiValuation.suburbBenchmark.varianceVsSuburbPercent >= 0 ? '+' : ''}
-                        {aiValuation.suburbBenchmark.varianceVsSuburbPercent}% vs Suburb Median
-                      </span>
-                    </div>
+                    ) : (
+                      <div className="p-2 bg-slate-50 rounded border border-dashed border-slate-300 flex items-center justify-center">
+                        <span className="text-slate-400 text-[10px]">Suburb median unavailable</span>
+                      </div>
+                    )}
                   </div>
 
                   {/* Key Valuation Drivers */}
