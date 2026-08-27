@@ -1,3 +1,7 @@
+import dotenv from "dotenv";
+// Mirror Vite's env precedence for the Node server: .env.local overrides .env.
+dotenv.config({ path: ".env" });
+dotenv.config({ path: ".env.local", override: true });
 import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
