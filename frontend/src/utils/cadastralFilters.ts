@@ -170,7 +170,7 @@ export function filterPropertiesByStreet(
       return prop.category === 'Freehold';
     }
     if (categoryFilter === 'SECTIONAL') {
-      return prop.category === 'Sectional Title' || !!prop.sectionalTitleScheme;
+      return prop.category === 'Sectional Title' || !!prop.isSectionalTitle;
     }
 
     return true;

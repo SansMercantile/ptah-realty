@@ -188,7 +188,7 @@ export const CadastralMap: React.FC<CadastralMapProps> = ({
             }`}
           >
             <MapIcon className="w-3.5 h-3.5 text-cyan-300" />
-            <span>Google Maps Platform</span>
+            <span>Google Maps</span>
           </button>
 
           <button
@@ -299,8 +299,8 @@ export const CadastralMap: React.FC<CadastralMapProps> = ({
             onClose={() => setShowPopupCard(false)}
             onOpenCMA={onOpenCMAEngine}
             onOpenPDF={onOpenPDFReport}
-            onContactOwner={() => onOpenContactOwner?.(selectedProperty)}
-            onPortalSync={onOpenPortalSync}
+            onOpenContact={() => onOpenContactOwner?.(selectedProperty)}
+            onOpenPortalSync={onOpenPortalSync}
           />
         </div>
       )}

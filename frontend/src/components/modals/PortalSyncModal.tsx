@@ -230,21 +230,21 @@ export const PortalSyncModal: React.FC<PortalSyncModalProps> = ({
                     <div className="flex items-center justify-between">
                       <span className="font-bold text-slate-100 text-xs">{portal.portalName}</span>
                       <span className={`px-2 py-0.5 rounded text-[10px] font-bold flex items-center gap-1 ${
-                        portal.syncStatus === 'LIVE' 
+                        portal.status === 'LIVE' 
                           ? 'bg-emerald-950 text-emerald-300 border border-emerald-700'
-                          : portal.syncStatus === 'SYNCING'
+                          : portal.status === 'SYNCING'
                           ? 'bg-cyan-950 text-cyan-300 border border-cyan-700 animate-pulse'
                           : 'bg-amber-950 text-amber-300 border border-amber-700'
                       }`}>
-                        {portal.syncStatus === 'LIVE' && <CheckCircle2 className="w-2.5 h-2.5" />}
-                        {portal.syncStatus === 'SYNCING' && <RefreshCw className="w-2.5 h-2.5 animate-spin" />}
-                        {portal.syncStatus}
+                        {portal.status === 'LIVE' && <CheckCircle2 className="w-2.5 h-2.5" />}
+                        {portal.status === 'SYNCING' && <RefreshCw className="w-2.5 h-2.5 animate-spin" />}
+                        {portal.status}
                       </span>
                     </div>
 
                     <div className="flex items-center justify-between mt-2 text-[10px] text-slate-400">
-                      <span>Listing ID: {portal.externalListingId || 'Pending'}</span>
-                      <span>Synced: {new Date(portal.lastSyncTimestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                      <span>Listing ID: {portal.listingIdOnPortal || 'Pending'}</span>
+                      <span>Synced: {portal.lastSyncedAt ? new Date(portal.lastSyncedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Not synced'}</span>
                     </div>
                   </div>
                 );
@@ -257,9 +257,9 @@ export const PortalSyncModal: React.FC<PortalSyncModalProps> = ({
                 <div className="flex items-center justify-between border-b border-slate-700 pb-2">
                   <div className="flex items-center gap-2">
                     <span className="font-bold text-slate-100 text-sm">{selectedPortal.portalName} API Feed</span>
-                    {selectedPortal.listingUrl && (
+                    {selectedPortal.liveUrl && (
                       <a
-                        href={selectedPortal.listingUrl}
+                        href={selectedPortal.liveUrl}
                         target="_blank"
                         rel="noreferrer"
                         className="text-cyan-400 hover:text-cyan-300 flex items-center gap-1 text-[11px] font-semibold"
@@ -290,7 +290,7 @@ export const PortalSyncModal: React.FC<PortalSyncModalProps> = ({
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
                   <div className="bg-slate-900 p-2 rounded border border-slate-700">
                     <span className="text-slate-400 block text-[10px]">Portal State</span>
-                    <span className="font-bold text-emerald-400">{selectedPortal.syncStatus}</span>
+                    <span className="font-bold text-emerald-400">{selectedPortal.status}</span>
                   </div>
                   <div className="bg-slate-900 p-2 rounded border border-slate-700">
                     <span className="text-slate-400 block text-[10px]">Images Included</span>
