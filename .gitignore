@@ -5,7 +5,13 @@ node_modules/
 dist/
 __pycache__/
 *.pyc
-data/
+# Anchored to repo root only -- an unanchored "data/" here previously
+# matched ANY directory named "data" anywhere in the tree, which silently
+# excluded the real source folder frontend/src/crm/data/ (mockData.ts)
+# from every commit. That file never made it into git at all, so Vercel's
+# build failed with "Could not resolve './data/mockData'" even though it
+# existed locally and tsc/npm run build passed on this machine.
+/data/
 *.log
 .vercel/
 
