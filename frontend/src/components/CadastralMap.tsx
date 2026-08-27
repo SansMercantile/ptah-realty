@@ -7,7 +7,9 @@ import {
   Layers, 
   Map as MapIcon, 
   Navigation, 
-  SlidersHorizontal
+  SlidersHorizontal,
+  RefreshCw,
+  Loader2
 } from 'lucide-react';
 import { APIProvider, Map, AdvancedMarker, Pin, InfoWindow } from '@vis.gl/react-google-maps';
 import { PropertyRecord } from '../types';
@@ -17,6 +19,7 @@ import { RealCadastreMap, extractHouseNumber } from './RealCadastreMap';
 import { PropertyPopupCard } from './PropertyPopupCard';
 import { StreetFilterControls } from './StreetFilterControls';
 import { CADASTRAL_STREETS, filterPropertiesByStreet } from '../utils/cadastralFilters';
+import { pullProperty24RadiusListings, Property24RadiusResponse } from '../services/api';
 
 interface CadastralMapProps {
   properties: PropertyRecord[];
@@ -58,6 +61,13 @@ export const CadastralMap: React.FC<CadastralMapProps> = ({
   const [showPopupCard, setShowPopupCard] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showStreetFilters, setShowStreetFilters] = useState(false);
+
+  // Live Property24 radius pull (Apify, includeFullDetails -- real
+  // prices, descriptions and every listing photo within the current CMA
+  // radius of the selected property or map center).
+  const [isPullingListings, setIsPullingListings] = useState(false);
+  const [radiusPullResult, setRadiusPullResult] = useState<Property24RadiusResponse | null>(null);
+  const [radiusPullError, setRadiusPullError] = useState<string | null>(null);
 
   // Catch Google Maps global auth or project map errors and gracefully
   // fall back to the vector cadastral engine instead of a blank map.
@@ -161,6 +171,33 @@ export const CadastralMap: React.FC<CadastralMapProps> = ({
     ? { lat: selectedProperty.gps.lat, lng: selectedProperty.gps.lng } 
     : { lat: -33.90876, lng: 18.401027 };
 
+  const handlePullRadiusListings = async () => {
+    setIsPullingListings(true);
+    setRadiusPullError(null);
+    try {
+      const searchLocation = selectedProperty
+        ? `${selectedProperty.suburb}, ${selectedProperty.province || 'Western Cape'}`
+        : 'Camps Bay, Cape Town';
+      const propType = selectedProperty?.accommodation?.type?.toLowerCase().includes('apartment')
+        || selectedProperty?.accommodation?.type?.toLowerCase().includes('sectional')
+        ? 'apartment'
+        : 'house';
+      const result = await pullProperty24RadiusListings(
+        currentCenter.lat,
+        currentCenter.lng,
+        radiusMeters,
+        searchLocation,
+        propType,
+        40
+      );
+      setRadiusPullResult(result);
+    } catch (err: any) {
+      setRadiusPullError(err?.message || 'Property24 radius pull failed.');
+    } finally {
+      setIsPullingListings(false);
+    }
+  };
+
   return (
     <div
       ref={containerRef}
@@ -257,6 +294,21 @@ export const CadastralMap: React.FC<CadastralMapProps> = ({
           </select>
         </div>
 
+        {/* Live Property24 Radius Pull (Apify -- real prices, descriptions, photos) */}
+        <button
+          onClick={handlePullRadiusListings}
+          disabled={isPullingListings}
+          className="flex items-center gap-1.5 bg-slate-900/90 backdrop-blur-md px-3 py-1.5 rounded-lg border border-slate-700 shadow-lg text-xs font-bold text-slate-200 hover:text-white disabled:opacity-60 transition-colors"
+          title="Pull live Property24 listings (price, description, photos) within the CMA radius"
+        >
+          {isPullingListings ? (
+            <Loader2 className="w-3.5 h-3.5 animate-spin text-cyan-400" />
+          ) : (
+            <RefreshCw className="w-3.5 h-3.5 text-cyan-400" />
+          )}
+          <span>Pull Live Property24 Data</span>
+        </button>
+
         {/* Street / Precinct Filter Toggle */}
         <button
           onClick={() => setShowStreetFilters((prev) => !prev)}
@@ -302,6 +354,26 @@ export const CadastralMap: React.FC<CadastralMapProps> = ({
             onOpenContact={() => onOpenContactOwner?.(selectedProperty)}
             onOpenPortalSync={onOpenPortalSync}
           />
+        </div>
+      )}
+
+      {/* Property24 radius pull result / error banner */}
+      {(radiusPullResult || radiusPullError) && (
+        <div className={`absolute top-14 right-3 z-30 backdrop-blur-md px-3 py-2 rounded-lg shadow-xl flex items-center gap-2 max-w-md animate-fade-in pointer-events-auto text-xs ${
+          radiusPullError ? 'bg-red-950/90 border border-red-500/80 text-red-200' : 'bg-emerald-950/90 border border-emerald-500/80 text-emerald-200'
+        }`}>
+          <RefreshCw className="w-4 h-4 shrink-0" />
+          <span className="flex-1 text-[11px]">
+            {radiusPullError
+              ? radiusPullError
+              : `Pulled ${radiusPullResult?.count ?? 0} live Property24 listing(s) within ${((radiusPullResult?.radiusMeters ?? 0) / 1000).toFixed(2)} km.`}
+          </span>
+          <button
+            onClick={() => { setRadiusPullResult(null); setRadiusPullError(null); }}
+            className="hover:text-white font-bold text-xs ml-1"
+          >
+            ✕
+          </button>
         </div>
       )}
 

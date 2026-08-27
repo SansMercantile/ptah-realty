@@ -442,3 +442,58 @@ export async function generateReport(propertyId: string, valuationSnapshotId: st
 export function reportDownloadUrl(reportId: string): string {
   return `/api/v1/realty/reports/${reportId}/download`;
 }
+
+// ---------------------------------------------------------------------
+// Property24 live radius pull (Apify, includeFullDetails -- real prices,
+// descriptions, and every listing photo within a radius of a map center)
+// ---------------------------------------------------------------------
+
+export interface Property24RadiusListing {
+  listingId: string;
+  listingUrl?: string;
+  headline?: string;
+  description?: string;
+  address?: string;
+  suburb?: string;
+  city?: string;
+  propertyType?: string;
+  price?: number;
+  bedrooms?: number;
+  bathrooms?: number;
+  floorSizeSqm?: number;
+  erfSizeSqm?: number;
+  features?: string[];
+  images?: string[];
+  latitude?: number;
+  longitude?: number;
+  datePosted?: string;
+  distanceM?: number;
+}
+
+export interface Property24RadiusResponse {
+  count: number;
+  radiusMeters: number;
+  center: { lat: number; lng: number };
+  listings: Property24RadiusListing[];
+}
+
+export async function pullProperty24RadiusListings(
+  lat: number,
+  lng: number,
+  radiusMeters: number,
+  searchLocation: string,
+  propertyType: string = 'house',
+  maxItems: number = 40
+): Promise<Property24RadiusResponse> {
+  return authJson<Property24RadiusResponse>('/ai/property24/radius-listings', {
+    method: 'POST',
+    body: JSON.stringify({
+      lat,
+      lng,
+      radiusMeters,
+      searchLocation,
+      propertyType,
+      maxItems,
+    }),
+  });
+}

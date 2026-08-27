@@ -37,11 +37,17 @@ interface RealCadastreMapProps {
   showHouseNumbers?: boolean;
 }
 
-// CARTO's basemaps.cartocdn.com raster tiles now require an API key (else
-// tiles render with a repeated "API key required" watermark -- see
-// https://carto.com/basemaps/apikey). Appended as a `key` query param per
-// CARTO's own integration docs, using the Ptah-Realty-scoped key from env.
-const CARTO_MAPS_API_KEY = import.meta.env.VITE_CARTO_MAPS_API_KEY as string | undefined;
+// CARTO's basemaps.cartocdn.com raster tiles now require a dedicated,
+// free "Basemaps API key" (request one at https://carto.com/basemaps/apikey)
+// appended as a `key` query param, or tiles render with a repeated
+// "API key required" watermark. NOTE: this is a different credential from
+// VITE_CARTO_MAPS_API_KEY in .env -- that one is a CARTO Cloud Native v3
+// API Access Token (JWT, scoped to a specific connection/dataset for the
+// Maps/SQL/Tilesets APIs at gcp-us-east1.api.carto.com) and is NOT valid
+// against the basemaps.cartocdn.com raster endpoint, so it won't clear the
+// watermark on the Cadastral Dark / Deeds Plan Light basemaps below.
+// Street GIS (OpenStreetMap) needs no key at all and is the default.
+const CARTO_MAPS_API_KEY = import.meta.env.VITE_CARTO_BASEMAPS_API_KEY as string | undefined;
 const CARTO_TILE_KEY_PARAM = CARTO_MAPS_API_KEY ? `?key=${CARTO_MAPS_API_KEY}` : '';
 
 // Extract house number from address string (e.g., "5 RICHMOND ROAD" -> "5", "219 MAIN ROAD" -> "219")
@@ -248,7 +254,11 @@ export const RealCadastreMap: React.FC<RealCadastreMapProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [dragCenterStart, setDragCenterStart] = useState<{ lat: number; lng: number }>(center);
-  const [activeTileSource, setActiveTileSource] = useState<'carto-dark' | 'esri-satellite' | 'osm-standard' | 'carto-light'>('carto-dark');
+  // Street GIS (OpenStreetMap) is the default/primary basemap -- it needs
+  // no API key at all, so it always renders cleanly regardless of Carto
+  // key/token state. The Carto raster basemaps (Cadastral Dark, Deeds Plan
+  // Light) remain available as an explicit switch.
+  const [activeTileSource, setActiveTileSource] = useState<'carto-dark' | 'esri-satellite' | 'osm-standard' | 'carto-light'>('osm-standard');
   const [showSurveyGrid, setShowSurveyGrid] = useState(true);
   const [showLotDimensions, setShowLotDimensions] = useState(true);
   const [hoveredErfNo, setHoveredErfNo] = useState<string | null>(null);
@@ -710,13 +720,13 @@ export const RealCadastreMap: React.FC<RealCadastreMapProps> = ({
           <Layers className="w-3 h-3 text-cyan-400" /> Basemap:
         </span>
         <button
-          id="layer-carto-dark"
-          onClick={() => setActiveTileSource('carto-dark')}
+          id="layer-osm-standard"
+          onClick={() => setActiveTileSource('osm-standard')}
           className={`px-2.5 py-1 rounded text-[11px] font-semibold transition-all ${
-            activeTileSource === 'carto-dark' ? 'bg-[#006980] text-white shadow-xs' : 'text-slate-400 hover:text-slate-200'
+            activeTileSource === 'osm-standard' ? 'bg-[#006980] text-white shadow-xs' : 'text-slate-400 hover:text-slate-200'
           }`}
         >
-          Cadastral Dark
+          Street GIS
         </button>
         <button
           id="layer-esri-satellite"
@@ -728,6 +738,15 @@ export const RealCadastreMap: React.FC<RealCadastreMapProps> = ({
           High-Res Satellite
         </button>
         <button
+          id="layer-carto-dark"
+          onClick={() => setActiveTileSource('carto-dark')}
+          className={`px-2.5 py-1 rounded text-[11px] font-semibold transition-all ${
+            activeTileSource === 'carto-dark' ? 'bg-[#006980] text-white shadow-xs' : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          Cadastral Dark
+        </button>
+        <button
           id="layer-carto-light"
           onClick={() => setActiveTileSource('carto-light')}
           className={`px-2.5 py-1 rounded text-[11px] font-semibold transition-all ${
@@ -735,15 +754,6 @@ export const RealCadastreMap: React.FC<RealCadastreMapProps> = ({
           }`}
         >
           Deeds Plan Light
-        </button>
-        <button
-          id="layer-osm-standard"
-          onClick={() => setActiveTileSource('osm-standard')}
-          className={`px-2.5 py-1 rounded text-[11px] font-semibold transition-all ${
-            activeTileSource === 'osm-standard' ? 'bg-[#006980] text-white shadow-xs' : 'text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          Street GIS
         </button>
       </div>
 
