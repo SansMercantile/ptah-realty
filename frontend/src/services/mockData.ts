@@ -41,6 +41,33 @@ export const PROVINCES_LIST = [
 export const PROPERTIES_DATA: PropertyRecord[] = [
   {
     id: 'prop-1681',
+    imageUrl: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1600&q=85',
+    images: [
+      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1600&q=85",
+      "https://images.unsplash.com/photo-1600566753376-12c8ab7fb75b?auto=format&fit=crop&w=1600&q=85",
+      "https://images.unsplash.com/photo-1600585152220-90363fe7e115?auto=format&fit=crop&w=1600&q=85",
+      "https://images.unsplash.com/photo-1600566752355-35792bedcfea?auto=format&fit=crop&w=1600&q=85",
+      "https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=1600&q=85"
+],
+    property24Listing: {
+      "listingNumber": "P24-11849201",
+      "url": "https://www.property24.com/for-sale/three-anchor-bay/cape-town/western-cape/11849201",
+      "title": "Architectural 3-Bed Heritage Home with Plunge Pool",
+      "askingPrice": 7750000,
+      "headline": "Sensational Three Anchor Bay Sanctuary | Seamless Indoor-Outdoor Flow",
+      "description": "Nestled on coveted Richmond Road, this meticulously updated 3-bedroom Victorian residence combines classical period elegance with contemporary Atlantic Seaboard luxury. Features high ceilings, gourmet chef kitchen, and private plunge pool courtyard.",
+      "keyFeatures": [
+            "3 En-Suite Bedrooms",
+            "Plunge Pool & Deck",
+            "Secure Garage with Direct Access",
+            "Solar Inverter Backup Ready",
+            "Walk to Sea Point Promenade"
+      ],
+      "agentName": "Sarah Jenkins",
+      "agentAgency": "Sotheby’s International Realty",
+      "agentPhone": "+27 82 491 8820",
+      "agencyLogo": "https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=80&q=80"
+},
     erfNo: '1681',
     lpiCode: 'C01600210000168100000',
     deedsOffice: 'CAPE TOWN',
@@ -70,7 +97,31 @@ export const PROPERTIES_DATA: PropertyRecord[] = [
       titleDeed: 'T78896/2007',
       bondHolder: undefined,
       bondAmount: 0,
-      saleType: 'PRIVATE TREATY'
+      saleType: 'PRIVATE TREATY',
+      contacts: {
+        primaryPhone: '+27 82 491 8820',
+        secondaryPhone: '+27 21 434 2200',
+        email: 'piermane.trust@capeproperty.co.za',
+        secondaryEmail: 'trustees@piermane.co.za',
+        representativeName: 'Dr. Michael Pier (Trustee)',
+        postalAddress: 'P.O. Box 44102, Sea Point, 8060',
+        preferredChannel: 'PHONE',
+        verifiedStatus: 'VERIFIED',
+        lastContactedDate: '2026-08-10',
+        notes: 'Owner is interested in an updated individual AI CMA report. Best to call before 11am.'
+      }
+    },
+    contacts: {
+      primaryPhone: '+27 82 491 8820',
+      secondaryPhone: '+27 21 434 2200',
+      email: 'piermane.trust@capeproperty.co.za',
+      secondaryEmail: 'trustees@piermane.co.za',
+      representativeName: 'Dr. Michael Pier (Trustee)',
+      postalAddress: 'P.O. Box 44102, Sea Point, 8060',
+      preferredChannel: 'PHONE',
+      verifiedStatus: 'VERIFIED',
+      lastContactedDate: '2026-08-10',
+      notes: 'Owner is interested in an updated individual AI CMA report. Best to call before 11am.'
     },
     historicalSales: [
       {
@@ -127,6 +178,33 @@ export const PROPERTIES_DATA: PropertyRecord[] = [
   },
   {
     id: 'prop-2093',
+    imageUrl: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1600&q=85',
+    images: [
+      "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1600&q=85",
+      "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1600&q=85",
+      "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=1600&q=85",
+      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1600&q=85",
+      "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=1600&q=85"
+],
+    property24Listing: {
+      "listingNumber": "P24-10029381",
+      "url": "https://www.property24.com/for-sale/three-anchor-bay/cape-town/western-cape/10029381",
+      "title": "Trophy Main Road High-Density Redevelopment Site",
+      "askingPrice": 350000000,
+      "headline": "Unparalleled Atlantic Seaboard Commercial / Residential Footprint",
+      "description": "Major mixed-use residential development parcel with 1,441m² site extent and GR5 high-density zoning envelope. Unmatched location with sea views from upper levels.",
+      "keyFeatures": [
+            "1,441 m² Extent",
+            "GR5 Zoning",
+            "Underground Parking for 42 Bays",
+            "Full Title Block",
+            "High Rental Yield Profile"
+      ],
+      "agentName": "Gregory Smith",
+      "agentAgency": "Knight Frank Commercial",
+      "agentPhone": "+27 83 555 9012",
+      "agencyLogo": "https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=80&q=80"
+},
     erfNo: '2093',
     lpiCode: 'C01600210000209300000',
     deedsOffice: 'CAPE TOWN',
@@ -156,7 +234,27 @@ export const PROPERTIES_DATA: PropertyRecord[] = [
       titleDeed: 'T29887/2026',
       bondHolder: 'A B S A BANK LTD',
       bondAmount: 500000000,
-      saleType: 'PRIVATE TREATY'
+      saleType: 'PRIVATE TREATY',
+      contacts: {
+        primaryPhone: '+27 83 555 9012',
+        secondaryPhone: '+27 21 425 8000',
+        email: 'investments@sbgrealestate.co.za',
+        secondaryEmail: 'greg.smith@sbgcapetown.co.za',
+        representativeName: 'Gregory Smith (Managing Director)',
+        postalAddress: 'Suite 401, The Terraces, 34 Bree St, Cape Town',
+        preferredChannel: 'EMAIL',
+        verifiedStatus: 'VERIFIED'
+      }
+    },
+    contacts: {
+      primaryPhone: '+27 83 555 9012',
+      secondaryPhone: '+27 21 425 8000',
+      email: 'investments@sbgrealestate.co.za',
+      secondaryEmail: 'greg.smith@sbgcapetown.co.za',
+      representativeName: 'Gregory Smith (Managing Director)',
+      postalAddress: 'Suite 401, The Terraces, 34 Bree St, Cape Town',
+      preferredChannel: 'EMAIL',
+      verifiedStatus: 'VERIFIED'
     },
     municipalValuation: {
       totalValue: 245000000,
@@ -200,6 +298,33 @@ export const PROPERTIES_DATA: PropertyRecord[] = [
   },
   {
     id: 'prop-1797',
+    imageUrl: 'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?auto=format&fit=crop&w=1600&q=85',
+    images: [
+      "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?auto=format&fit=crop&w=1600&q=85",
+      "https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=1600&q=85",
+      "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=1600&q=85",
+      "https://images.unsplash.com/photo-1616137466211-f939a420be84?auto=format&fit=crop&w=1600&q=85",
+      "https://images.unsplash.com/photo-1507089947368-19c1da9775ae?auto=format&fit=crop&w=1600&q=85"
+],
+    property24Listing: {
+      "listingNumber": "P24-11294801",
+      "url": "https://www.property24.com/for-sale/three-anchor-bay/cape-town/western-cape/11294801",
+      "title": "Romantic 3-Bed Freehold Cottage with Signal Hill Views",
+      "askingPrice": 6850000,
+      "headline": "Rare Freehold Opportunity in Quiet Coastal Cul-de-Sac",
+      "description": "Charming 3-bedroom, 2-bathroom double-storey Victorian cottage at 1 Law Road. Features original Oregon pine floors, sunny north-facing entertainment deck, secure garage, and mountain views.",
+      "keyFeatures": [
+            "3 Bedrooms",
+            "2 Bathrooms",
+            "Secure Garage + Off-Street",
+            "North-Facing Deck",
+            "Original Victorian Fireplace"
+      ],
+      "agentName": "Douglas Allen & Co",
+      "agentAgency": "Jawitz Properties Atlantic Seaboard",
+      "agentPhone": "+27 82 774 3190",
+      "agencyLogo": "https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=80&q=80"
+},
     erfNo: '1797',
     lpiCode: 'C01600210000179700000',
     deedsOffice: 'CAPE TOWN',
@@ -229,7 +354,27 @@ export const PROPERTIES_DATA: PropertyRecord[] = [
       titleDeed: 'T76363/2004 50%; T40343/2001 50%',
       bondHolder: undefined,
       bondAmount: 0,
-      saleType: 'PRIVATE TREATY'
+      saleType: 'PRIVATE TREATY',
+      contacts: {
+        primaryPhone: '+27 82 774 3190',
+        secondaryPhone: '+27 21 439 1102',
+        email: 'doug.allen@netactive.co.za',
+        representativeName: 'Douglas J. Allen',
+        postalAddress: '1 Law Road, Three Anchor Bay, Cape Town, 8005',
+        preferredChannel: 'PHONE',
+        verifiedStatus: 'VERIFIED',
+        notes: 'Long-term owner (22+ yrs), highly receptive to individual property valuation insights.'
+      }
+    },
+    contacts: {
+      primaryPhone: '+27 82 774 3190',
+      secondaryPhone: '+27 21 439 1102',
+      email: 'doug.allen@netactive.co.za',
+      representativeName: 'Douglas J. Allen',
+      postalAddress: '1 Law Road, Three Anchor Bay, Cape Town, 8005',
+      preferredChannel: 'PHONE',
+      verifiedStatus: 'VERIFIED',
+      notes: 'Long-term owner (22+ yrs), highly receptive to individual property valuation insights.'
     },
     municipalValuation: {
       totalValue: 5800000,
@@ -272,6 +417,33 @@ export const PROPERTIES_DATA: PropertyRecord[] = [
   },
   {
     id: 'prop-974',
+    imageUrl: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1600&q=85',
+    images: [
+      "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1600&q=85",
+      "https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?auto=format&fit=crop&w=1600&q=85",
+      "https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=1600&q=85",
+      "https://images.unsplash.com/photo-1600573472591-ee6b68d14c68?auto=format&fit=crop&w=1600&q=85",
+      "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=1600&q=85"
+],
+    property24Listing: {
+      "listingNumber": "P24-11339182",
+      "url": "https://www.property24.com/for-sale/three-anchor-bay/cape-town/western-cape/11339182",
+      "title": "Boutique Sectional Title Duplex at 17 On St Bedes",
+      "askingPrice": 11500000,
+      "headline": "Ultra-Modern Atlantic Oasis with Private Rooftop Sun Lounge",
+      "description": "Exclusive 2-unit scheme featuring bespoke minimalist interiors, high-spec imported Italian kitchen, automated tandem garages, and private rooftop views.",
+      "keyFeatures": [
+            "4 Bedrooms Total",
+            "4 Bathrooms",
+            "4 Garages",
+            "Private Rooftop Terrace",
+            "Biometric Security"
+      ],
+      "agentName": "Christian Sawyer",
+      "agentAgency": "RE/MAX Premier",
+      "agentPhone": "+27 84 920 4411",
+      "agencyLogo": "https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=80&q=80"
+},
     erfNo: '974',
     schemeName: '17 ON ST BEDES',
     isSectionalTitle: true,
@@ -301,7 +473,27 @@ export const PROPERTIES_DATA: PropertyRecord[] = [
       saleDate: '2024/02/10',
       registeredDate: '2024/05/20',
       titleDeed: 'ST250/2024',
-      saleType: 'PRIVATE TREATY'
+      saleType: 'PRIVATE TREATY',
+      contacts: {
+        primaryPhone: '+27 84 920 4411',
+        secondaryPhone: '+27 21 434 7780',
+        email: 'bodycorp@17onstbedes.co.za',
+        secondaryEmail: 'managingagent@propmanage.co.za',
+        representativeName: 'Christian Sawyer (Trustee)',
+        postalAddress: '17 St Bedes Road, Three Anchor Bay, 8005',
+        preferredChannel: 'EMAIL',
+        verifiedStatus: 'VERIFIED'
+      }
+    },
+    contacts: {
+      primaryPhone: '+27 84 920 4411',
+      secondaryPhone: '+27 21 434 7780',
+      email: 'bodycorp@17onstbedes.co.za',
+      secondaryEmail: 'managingagent@propmanage.co.za',
+      representativeName: 'Christian Sawyer (Trustee)',
+      postalAddress: '17 St Bedes Road, Three Anchor Bay, 8005',
+      preferredChannel: 'EMAIL',
+      verifiedStatus: 'VERIFIED'
     },
     sectionalUnits: [
       {
@@ -353,6 +545,33 @@ export const PROPERTIES_DATA: PropertyRecord[] = [
   },
   {
     id: 'prop-63',
+    imageUrl: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1600&q=85',
+    images: [
+      "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1600&q=85",
+      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1600&q=85",
+      "https://images.unsplash.com/photo-1600566753376-12c8ab7fb75b?auto=format&fit=crop&w=1600&q=85",
+      "https://images.unsplash.com/photo-1600585152220-90363fe7e115?auto=format&fit=crop&w=1600&q=85",
+      "https://images.unsplash.com/photo-1600607687644-c7171b42498f?auto=format&fit=crop&w=1600&q=85"
+],
+    property24Listing: {
+      "listingNumber": "P24-10772910",
+      "url": "https://www.property24.com/for-sale/three-anchor-bay/cape-town/western-cape/10772910",
+      "title": "Masterpiece 3-Bed Designer Villa on Blackheath",
+      "askingPrice": 9200000,
+      "headline": "Elevated Coastal Living with Expansive Sun Deck and Pool",
+      "description": "Perched on high-demand Blackheath Road, this contemporary villa enjoys natural illumination, open plan dining and lounge, rim-flow plunge pool, and garaging for 2 vehicles.",
+      "keyFeatures": [
+            "3 Bed, 3 Bath",
+            "Double Garage",
+            "Swimming Pool",
+            "Signal Hill Backdrop",
+            "Full Inverter Backup"
+      ],
+      "agentName": "Stephan Muller",
+      "agentAgency": "Chas Everitt Atlantic Seaboard",
+      "agentPhone": "+27 82 331 9901",
+      "agencyLogo": "https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=80&q=80"
+},
     erfNo: '63',
     lpiCode: 'C01600510000006300000',
     deedsOffice: 'CAPE TOWN',
@@ -382,7 +601,23 @@ export const PROPERTIES_DATA: PropertyRecord[] = [
       titleDeed: 'T117440/2003',
       bondHolder: undefined,
       bondAmount: 0,
-      saleType: 'PRIVATE TREATY'
+      saleType: 'PRIVATE TREATY',
+      contacts: {
+        primaryPhone: '+27 82 610 8834',
+        email: 'stephan.muller@mullerarch.co.za',
+        representativeName: 'Stephan F. Muller',
+        postalAddress: '3 Blackheath Road, Three Anchor Bay, 8005',
+        preferredChannel: 'WHATSAPP',
+        verifiedStatus: 'VERIFIED'
+      }
+    },
+    contacts: {
+      primaryPhone: '+27 82 610 8834',
+      email: 'stephan.muller@mullerarch.co.za',
+      representativeName: 'Stephan F. Muller',
+      postalAddress: '3 Blackheath Road, Three Anchor Bay, 8005',
+      preferredChannel: 'WHATSAPP',
+      verifiedStatus: 'VERIFIED'
     },
     municipalValuation: {
       totalValue: 6200000,
@@ -411,6 +646,33 @@ export const PROPERTIES_DATA: PropertyRecord[] = [
   },
   {
     id: 'prop-100',
+    imageUrl: 'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=1600&q=85',
+    images: [
+      "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=1600&q=85",
+      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1600&q=85",
+      "https://images.unsplash.com/photo-1600566753376-12c8ab7fb75b?auto=format&fit=crop&w=1600&q=85",
+      "https://images.unsplash.com/photo-1600566752355-35792bedcfea?auto=format&fit=crop&w=1600&q=85",
+      "https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=1600&q=85"
+],
+    property24Listing: {
+      "listingNumber": "P24-10663819",
+      "url": "https://www.property24.com/for-sale/three-anchor-bay/cape-town/western-cape/10663819",
+      "title": "Grand 806m² Double Erf Estate on Mutley Road",
+      "askingPrice": 7100000,
+      "headline": "Substantial Parcel with Lush Landscaped Gardens",
+      "description": "An expansive 806m² property providing immense privacy, mature trees, entertainer patio, and spacious master suite in central Three Anchor Bay.",
+      "keyFeatures": [
+            "806 m² Erf",
+            "3 Bedrooms",
+            "2 Bathrooms",
+            "Lush Mature Garden",
+            "Double Carport"
+      ],
+      "agentName": "Giovanni Bowman",
+      "agentAgency": "Pam Golding Properties",
+      "agentPhone": "+27 71 884 9201",
+      "agencyLogo": "https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=80&q=80"
+},
     erfNo: '100',
     lpiCode: 'C01600510000010000000',
     deedsOffice: 'CAPE TOWN',
@@ -440,7 +702,27 @@ export const PROPERTIES_DATA: PropertyRecord[] = [
       titleDeed: 'T48077/2023',
       bondHolder: 'INVESTEC BANK LTD',
       bondAmount: 9200000,
-      saleType: 'PRIVATE TREATY'
+      saleType: 'PRIVATE TREATY',
+      contacts: {
+        primaryPhone: '+27 79 388 2901',
+        secondaryPhone: '+27 83 220 1845',
+        email: 'giovanni.bowman@investec.co.za',
+        secondaryEmail: 'harvey.foster@fosterdesign.co.za',
+        representativeName: 'Giovanni Bowman & Harvey Foster',
+        postalAddress: '11 Mutley Road, Three Anchor Bay, 8005',
+        preferredChannel: 'PHONE',
+        verifiedStatus: 'VERIFIED'
+      }
+    },
+    contacts: {
+      primaryPhone: '+27 79 388 2901',
+      secondaryPhone: '+27 83 220 1845',
+      email: 'giovanni.bowman@investec.co.za',
+      secondaryEmail: 'harvey.foster@fosterdesign.co.za',
+      representativeName: 'Giovanni Bowman & Harvey Foster',
+      postalAddress: '11 Mutley Road, Three Anchor Bay, 8005',
+      preferredChannel: 'PHONE',
+      verifiedStatus: 'VERIFIED'
     },
     municipalValuation: {
       totalValue: 11000000,
@@ -473,6 +755,33 @@ export const PROPERTIES_DATA: PropertyRecord[] = [
   },
   {
     id: 'prop-152',
+    imageUrl: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1600&q=85',
+    images: [
+      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1600&q=85",
+      "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1600&q=85",
+      "https://images.unsplash.com/photo-1600566753376-12c8ab7fb75b?auto=format&fit=crop&w=1600&q=85",
+      "https://images.unsplash.com/photo-1600585152220-90363fe7e115?auto=format&fit=crop&w=1600&q=85",
+      "https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=1600&q=85"
+],
+    property24Listing: {
+      "listingNumber": "P24-11119283",
+      "url": "https://www.property24.com/for-sale/sea-point/cape-town/western-cape/11119283",
+      "title": "Stately 4-Bed Family Residence on Hofmeyr",
+      "askingPrice": 8800000,
+      "headline": "Timeless Elegance in Prestigious Sea Point East",
+      "description": "Expansive 497m² erf property featuring high ceilings, timber floorboards, family swimming pool, and double direct-access garaging.",
+      "keyFeatures": [
+            "497 m² Erf",
+            "4 Bedrooms",
+            "3 Bathrooms",
+            "Double Garage",
+            "Swimming Pool"
+      ],
+      "agentName": "Johann Louw",
+      "agentAgency": "Seeff Atlantic Seaboard",
+      "agentPhone": "+27 84 772 1933",
+      "agencyLogo": "https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=80&q=80"
+},
     erfNo: '152',
     lpiCode: 'C01600510000015200000',
     deedsOffice: 'CAPE TOWN',
@@ -502,7 +811,27 @@ export const PROPERTIES_DATA: PropertyRecord[] = [
       titleDeed: 'T61118/2014',
       bondHolder: 'INVESTEC BANK LTD',
       bondAmount: 3950000,
-      saleType: 'PRIVATE TREATY'
+      saleType: 'PRIVATE TREATY',
+      contacts: {
+        primaryPhone: '+27 82 901 4455',
+        secondaryPhone: '+27 21 439 6020',
+        email: 'johann.louw@louwlaw.co.za',
+        secondaryEmail: 'liezel.louw@sun.ac.za',
+        representativeName: 'Johann & Liezel Louw',
+        postalAddress: '33 Hofmeyr Road, Sea Point, 8005',
+        preferredChannel: 'EMAIL',
+        verifiedStatus: 'VERIFIED'
+      }
+    },
+    contacts: {
+      primaryPhone: '+27 82 901 4455',
+      secondaryPhone: '+27 21 439 6020',
+      email: 'johann.louw@louwlaw.co.za',
+      secondaryEmail: 'liezel.louw@sun.ac.za',
+      representativeName: 'Johann & Liezel Louw',
+      postalAddress: '33 Hofmeyr Road, Sea Point, 8005',
+      preferredChannel: 'EMAIL',
+      verifiedStatus: 'VERIFIED'
     },
     municipalValuation: {
       totalValue: 8700000,
@@ -530,6 +859,33 @@ export const PROPERTIES_DATA: PropertyRecord[] = [
   },
   {
     id: 'prop-1485',
+    imageUrl: 'https://images.unsplash.com/photo-1600573472591-ee6b68d14c68?auto=format&fit=crop&w=1600&q=85',
+    images: [
+      "https://images.unsplash.com/photo-1600573472591-ee6b68d14c68?auto=format&fit=crop&w=1600&q=85",
+      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1600&q=85",
+      "https://images.unsplash.com/photo-1600566753376-12c8ab7fb75b?auto=format&fit=crop&w=1600&q=85",
+      "https://images.unsplash.com/photo-1600585152220-90363fe7e115?auto=format&fit=crop&w=1600&q=85",
+      "https://images.unsplash.com/photo-1600566752355-35792bedcfea?auto=format&fit=crop&w=1600&q=85"
+],
+    property24Listing: {
+      "listingNumber": "P24-10554920",
+      "url": "https://www.property24.com/for-sale/sea-point/cape-town/western-cape/10554920",
+      "title": "Chic 3-Bed Mount Nelson Sanctuary",
+      "askingPrice": 6950000,
+      "headline": "Sunlit Living Just Moments from Sea Point Promenade",
+      "description": "Immaculate semi-detached Victorian sanctuary with private courtyard, secure single garage, and modern open-plan dining and kitchen.",
+      "keyFeatures": [
+            "3 Bed, 2 Bath",
+            "Garage",
+            "Private Courtyard",
+            "Walk to Promenade",
+            "High Security"
+      ],
+      "agentName": "Jinty Jackson",
+      "agentAgency": "Rawson Properties",
+      "agentPhone": "+27 83 412 0093",
+      "agencyLogo": "https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=80&q=80"
+},
     erfNo: '1485',
     lpiCode: 'C01600510000148500000',
     deedsOffice: 'CAPE TOWN',
@@ -559,7 +915,27 @@ export const PROPERTIES_DATA: PropertyRecord[] = [
       titleDeed: 'T71383/2016',
       bondHolder: 'INVESTEC BANK LTD',
       bondAmount: 4500000,
-      saleType: 'PRIVATE TREATY'
+      saleType: 'PRIVATE TREATY',
+      contacts: {
+        primaryPhone: '+27 83 412 8890',
+        secondaryPhone: '+27 72 190 3340',
+        email: 'jinty.jackson@gmail.com',
+        secondaryEmail: 'benoit.renard@capemarketing.com',
+        representativeName: 'Jinty Jackson & Benoit Renard',
+        postalAddress: '8 Mount Nelson Road, Sea Point, 8005',
+        preferredChannel: 'WHATSAPP',
+        verifiedStatus: 'VERIFIED'
+      }
+    },
+    contacts: {
+      primaryPhone: '+27 83 412 8890',
+      secondaryPhone: '+27 72 190 3340',
+      email: 'jinty.jackson@gmail.com',
+      secondaryEmail: 'benoit.renard@capemarketing.com',
+      representativeName: 'Jinty Jackson & Benoit Renard',
+      postalAddress: '8 Mount Nelson Road, Sea Point, 8005',
+      preferredChannel: 'WHATSAPP',
+      verifiedStatus: 'VERIFIED'
     },
     reportedSale: {
       price: 6850000,
@@ -593,6 +969,33 @@ export const PROPERTIES_DATA: PropertyRecord[] = [
   },
   {
     id: 'prop-aurum',
+    imageUrl: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1600&q=85',
+    images: [
+      "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1600&q=85",
+      "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=1600&q=85",
+      "https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?auto=format&fit=crop&w=1600&q=85",
+      "https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=1600&q=85",
+      "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=1600&q=85"
+],
+    property24Listing: {
+      "listingNumber": "P24-10118833",
+      "url": "https://www.property24.com/for-sale/bantry-bay/cape-town/western-cape/10118833",
+      "title": "Presidential Oceanside Penthouse at Aurum",
+      "askingPrice": 75000000,
+      "headline": "The Ultimate Oceanfront Architectural Icon on Victoria Road",
+      "description": "650m² ultra-luxury penthouse featuring private rim-flow pool hanging over the Atlantic Ocean, private funicular elevator, and 24-hour concierge.",
+      "keyFeatures": [
+            "650 m² Floor Extent",
+            "Private Rim-Flow Pool",
+            "4 En-Suite Suites",
+            "4 Undercover Parking Bays",
+            "Direct Beach Access"
+      ],
+      "agentName": "Wilhelm Von Berg",
+      "agentAgency": "Dogon Group Properties",
+      "agentPhone": "+27 82 300 7700",
+      "agencyLogo": "https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=80&q=80"
+},
     erfNo: '1988',
     schemeName: 'AURUM PRESIDENTIAL RESIDENCES',
     isSectionalTitle: true,
@@ -623,7 +1026,27 @@ export const PROPERTIES_DATA: PropertyRecord[] = [
       saleDate: '2019/04/18',
       registeredDate: '2019/09/25',
       titleDeed: 'ST112/2019',
-      saleType: 'COMPANY TRANSFER'
+      saleType: 'COMPANY TRANSFER',
+      contacts: {
+        primaryPhone: '+27 21 430 8900',
+        secondaryPhone: '+27 82 300 7700',
+        email: 'concierge@aurumbantrybay.com',
+        secondaryEmail: 'trustees@aurumbantrybay.com',
+        representativeName: 'Wilhelm Von Berg (Body Corporate Chair)',
+        postalAddress: 'Victoria Road, Bantry Bay, 8005',
+        preferredChannel: 'EMAIL',
+        verifiedStatus: 'VERIFIED'
+      }
+    },
+    contacts: {
+      primaryPhone: '+27 21 430 8900',
+      secondaryPhone: '+27 82 300 7700',
+      email: 'concierge@aurumbantrybay.com',
+      secondaryEmail: 'trustees@aurumbantrybay.com',
+      representativeName: 'Wilhelm Von Berg (Body Corporate Chair)',
+      postalAddress: 'Victoria Road, Bantry Bay, 8005',
+      preferredChannel: 'EMAIL',
+      verifiedStatus: 'VERIFIED'
     },
     sectionalUnits: [
       {
@@ -687,6 +1110,33 @@ export const PROPERTIES_DATA: PropertyRecord[] = [
   },
   {
     id: 'prop-portswood',
+    imageUrl: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1600&q=85',
+    images: [
+      "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1600&q=85",
+      "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1600&q=85",
+      "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1600&q=85",
+      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1600&q=85",
+      "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=1600&q=85"
+],
+    property24Listing: {
+      "listingNumber": "P24-10009922",
+      "url": "https://www.property24.com/for-sale/green-point/cape-town/western-cape/10009922",
+      "title": "Prime Mixed-Use Precinct Adjacent to V&A Waterfront",
+      "askingPrice": 195000000,
+      "headline": "Prestigious Portswood Road Commercial & Hospitality Block",
+      "description": "48,500m² site with GB2 zoning, established commercial blue-chip tenancies, underground parking for 280 vehicles, and prime tourism corridor frontage.",
+      "keyFeatures": [
+            "48,500 m² Site Extent",
+            "GB2 Commercial Zoning",
+            "280 Undercover Parking Bays",
+            "Walk to V&A Waterfront",
+            "AAA-Grade Office/Retail"
+      ],
+      "agentName": "Clive Henderson",
+      "agentAgency": "Broll Commercial Property",
+      "agentPhone": "+27 82 990 1200",
+      "agencyLogo": "https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=80&q=80"
+},
     erfNo: '127',
     lpiCode: 'C01600210000012700000',
     deedsOffice: 'CAPE TOWN',
@@ -717,7 +1167,25 @@ export const PROPERTIES_DATA: PropertyRecord[] = [
       titleDeed: 'T44521/2015',
       bondHolder: 'NEDBANK LTD',
       bondAmount: 120000000,
-      saleType: 'COMPANY TRANSFER'
+      saleType: 'COMPANY TRANSFER',
+      contacts: {
+        primaryPhone: '+27 21 408 7600',
+        secondaryPhone: '+27 82 990 1200',
+        email: 'assetmanagement@portswoodholdings.co.za',
+        representativeName: 'Clive Henderson (Chief Investment Officer)',
+        postalAddress: '127 Portswood Road, Green Point, 8005',
+        preferredChannel: 'EMAIL',
+        verifiedStatus: 'VERIFIED'
+      }
+    },
+    contacts: {
+      primaryPhone: '+27 21 408 7600',
+      secondaryPhone: '+27 82 990 1200',
+      email: 'assetmanagement@portswoodholdings.co.za',
+      representativeName: 'Clive Henderson (Chief Investment Officer)',
+      postalAddress: '127 Portswood Road, Green Point, 8005',
+      preferredChannel: 'EMAIL',
+      verifiedStatus: 'VERIFIED'
     },
     municipalValuation: {
       totalValue: 310000000,
@@ -740,6 +1208,477 @@ export const PROPERTIES_DATA: PropertyRecord[] = [
       [710, 240],
       [600, 310],
       [310, 280]
+    ]
+  }
+,
+  {
+    id: 'prop-1680',
+    erfNo: '1680',
+    lpiCode: 'C01600210000168000000',
+    deedsOffice: 'CAPE TOWN',
+    township: 'GREEN POINT',
+    address: '3 RICHMOND ROAD',
+    suburb: 'THREE ANCHOR BAY',
+    municipality: 'CITY OF CAPE TOWN',
+    province: 'WESTERN CAPE',
+    gps: {
+      lat: -33.90865,
+      lng: 18.40112,
+      formatted: "18.401120°E 33.908650°S"
+    },
+    extentM2: 198,
+    cadastralExtentM2: 198,
+    category: 'Freehold',
+    usage: 'Residential',
+    zoning: 'GR4',
+    zoningDescription: 'General Residential 4',
+    servitudes: false,
+    imageUrl: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1600&q=85',
+    images: [
+      'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1600&q=85',
+      'https://images.unsplash.com/photo-1600566753376-12c8ab7fb75b?auto=format&fit=crop&w=1600&q=85',
+      'https://images.unsplash.com/photo-1600585152220-90363fe7e115?auto=format&fit=crop&w=1600&q=85',
+      'https://images.unsplash.com/photo-1600566752355-35792bedcfea?auto=format&fit=crop&w=1600&q=85',
+      'https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=1600&q=85'
+    ],
+    property24Listing: {
+      listingNumber: 'P24-10948291',
+      url: 'https://www.property24.com/for-sale/three-anchor-bay/cape-town/western-cape/10948291',
+      title: '3 Bedroom Freestanding Victorian House For Sale',
+      askingPrice: 7450000,
+      headline: 'Charming Character Home with Contemporary Upgrades',
+      description: 'Step into refined Atlantic Seaboard living in this restored 3-bedroom Victorian cottage featuring original wooden floors, sash windows, and an ambient private patio.',
+      keyFeatures: ['3 Bedrooms', '2 Bathrooms', 'Secure Garage', 'Private Courtyard', 'High Ceilings'],
+      agentName: 'David Kitching',
+      agentAgency: 'Pam Golding Properties',
+      agentPhone: '+27 82 554 9011',
+      agencyLogo: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=80&q=80'
+    },
+    currentSale: {
+      owner: 'KLEIN BRUCE EDWARD',
+      ownersId: '7203145028087',
+      salePrice: 7450000,
+      saleDate: '2025/11/14',
+      registeredDate: '2026/02/10',
+      titleDeed: 'T11409/2026',
+      saleType: 'PRIVATE TREATY',
+      contacts: {
+        primaryPhone: '+27 82 554 9011',
+        secondaryPhone: '+27 21 439 8810',
+        email: 'bruce.klein@capeholdings.co.za',
+        representativeName: 'Bruce Klein',
+        postalAddress: '3 Richmond Road, Three Anchor Bay, 8005',
+        preferredChannel: 'PHONE',
+        verifiedStatus: 'VERIFIED'
+      }
+    },
+    contacts: {
+      primaryPhone: '+27 82 554 9011',
+      secondaryPhone: '+27 21 439 8810',
+      email: 'bruce.klein@capeholdings.co.za',
+      representativeName: 'Bruce Klein',
+      postalAddress: '3 Richmond Road, Three Anchor Bay, 8005',
+      preferredChannel: 'PHONE',
+      verifiedStatus: 'VERIFIED'
+    },
+    municipalValuation: {
+      totalValue: 6100000,
+      valuationYear: 2025,
+      ratesEstimateMonthly: 3280.00
+    },
+    accommodation: {
+      type: 'House (2 storey)',
+      usage: 'Residential',
+      condition: 'EXCELLENT',
+      buildingM2: 210,
+      bedRooms: 3,
+      bathRooms: 2,
+      garages: 1,
+      alarm: true,
+      perimSecurity: true
+    },
+    polygonPoints: [
+      [430, 310],
+      [500, 310],
+      [500, 340],
+      [430, 340]
+    ]
+  },
+  {
+    id: 'prop-1682',
+    erfNo: '1682',
+    lpiCode: 'C01600210000168200000',
+    deedsOffice: 'CAPE TOWN',
+    township: 'GREEN POINT',
+    address: '7 RICHMOND ROAD',
+    suburb: 'THREE ANCHOR BAY',
+    municipality: 'CITY OF CAPE TOWN',
+    province: 'WESTERN CAPE',
+    gps: {
+      lat: -33.90890,
+      lng: 18.40095,
+      formatted: "18.400950°E 33.908900°S"
+    },
+    extentM2: 215,
+    cadastralExtentM2: 215,
+    category: 'Freehold',
+    usage: 'Residential',
+    zoning: 'GR4',
+    zoningDescription: 'General Residential 4',
+    servitudes: false,
+    imageUrl: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1600&q=85',
+    images: [
+      'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1600&q=85',
+      'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1600&q=85',
+      'https://images.unsplash.com/photo-1600566753376-12c8ab7fb75b?auto=format&fit=crop&w=1600&q=85',
+      'https://images.unsplash.com/photo-1600585152220-90363fe7e115?auto=format&fit=crop&w=1600&q=85',
+      'https://images.unsplash.com/photo-1600607687644-c7171b42498f?auto=format&fit=crop&w=1600&q=85'
+    ],
+    property24Listing: {
+      listingNumber: 'P24-11029384',
+      url: 'https://www.property24.com/for-sale/three-anchor-bay/cape-town/western-cape/11029384',
+      title: 'Luxury 3 Bedroom Home with Rooftop Deck',
+      askingPrice: 7900000,
+      headline: 'Exceptional Position in Quiet Tree-Lined Cul-de-Sac',
+      description: 'Modern luxury meets classic charm in this renovated Three Anchor Bay home featuring 3 ensuite bedrooms, double garage, and elevated Signal Hill outlooks.',
+      keyFeatures: ['3 En-Suite Bedrooms', '2.5 Bathrooms', 'Double Garage', 'Rooftop Sundeck', 'Air Conditioning'],
+      agentName: 'Jessica Stern',
+      agentAgency: 'Seeff Atlantic Seaboard',
+      agentPhone: '+27 83 992 4110',
+      agencyLogo: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=80&q=80'
+    },
+    currentSale: {
+      owner: 'STERN PROPERTIES TRUST',
+      ownersId: 'IT4490/2012',
+      salePrice: 7900000,
+      saleDate: '2025/08/22',
+      registeredDate: '2025/11/30',
+      titleDeed: 'T88291/2025',
+      saleType: 'PRIVATE TREATY',
+      contacts: {
+        primaryPhone: '+27 83 992 4110',
+        secondaryPhone: '+27 21 434 9000',
+        email: 'jessica@sterntrust.co.za',
+        representativeName: 'Jessica Stern',
+        postalAddress: '7 Richmond Road, Three Anchor Bay, 8005',
+        preferredChannel: 'EMAIL',
+        verifiedStatus: 'VERIFIED'
+      }
+    },
+    contacts: {
+      primaryPhone: '+27 83 992 4110',
+      secondaryPhone: '+27 21 434 9000',
+      email: 'jessica@sterntrust.co.za',
+      representativeName: 'Jessica Stern',
+      postalAddress: '7 Richmond Road, Three Anchor Bay, 8005',
+      preferredChannel: 'EMAIL',
+      verifiedStatus: 'VERIFIED'
+    },
+    municipalValuation: {
+      totalValue: 6450000,
+      valuationYear: 2025,
+      ratesEstimateMonthly: 3470.00
+    },
+    accommodation: {
+      type: 'House (2 storey)',
+      usage: 'Residential',
+      condition: 'EXCELLENT',
+      buildingM2: 235,
+      bedRooms: 3,
+      bathRooms: 3,
+      garages: 2,
+      alarm: true,
+      perimSecurity: true
+    },
+    polygonPoints: [
+      [570, 310],
+      [640, 310],
+      [640, 340],
+      [570, 340]
+    ]
+  },
+  {
+    id: 'prop-1675',
+    erfNo: '1675',
+    lpiCode: 'C01600210000167500000',
+    deedsOffice: 'CAPE TOWN',
+    township: 'GREEN POINT',
+    address: '4 RICHMOND ROAD',
+    suburb: 'THREE ANCHOR BAY',
+    municipality: 'CITY OF CAPE TOWN',
+    province: 'WESTERN CAPE',
+    gps: {
+      lat: -33.90880,
+      lng: 18.40115,
+      formatted: "18.401150°E 33.908800°S"
+    },
+    extentM2: 205,
+    cadastralExtentM2: 205,
+    category: 'Freehold',
+    usage: 'Residential',
+    zoning: 'GR4',
+    zoningDescription: 'General Residential 4',
+    servitudes: false,
+    imageUrl: 'https://images.unsplash.com/photo-1600573472591-ee6b68d14c68?auto=format&fit=crop&w=1600&q=85',
+    images: [
+      'https://images.unsplash.com/photo-1600573472591-ee6b68d14c68?auto=format&fit=crop&w=1600&q=85',
+      'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1600&q=85',
+      'https://images.unsplash.com/photo-1600566753376-12c8ab7fb75b?auto=format&fit=crop&w=1600&q=85',
+      'https://images.unsplash.com/photo-1600585152220-90363fe7e115?auto=format&fit=crop&w=1600&q=85',
+      'https://images.unsplash.com/photo-1600566752355-35792bedcfea?auto=format&fit=crop&w=1600&q=85'
+    ],
+    property24Listing: {
+      listingNumber: 'P24-10884920',
+      url: 'https://www.property24.com/for-sale/three-anchor-bay/cape-town/western-cape/10884920',
+      title: 'Architectural Designer Cottage with Pool',
+      askingPrice: 7600000,
+      headline: 'Sun-drenched North Facing Living in Prime Location',
+      description: 'Exquisite single-level sanctuary boasting seamless indoor/outdoor entertainment flow, solar backup power, and low maintenance garden with plunge pool.',
+      keyFeatures: ['3 Bedrooms', '2 Bathrooms', 'Plunge Pool', 'Solar Inverter System', 'Security Beams'],
+      agentName: 'Liam O’Connor',
+      agentAgency: 'Greeff Christie’s Real Estate',
+      agentPhone: '+27 82 110 9944',
+      agencyLogo: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=80&q=80'
+    },
+    currentSale: {
+      owner: 'OCONNOR LIAM PATRICK',
+      ownersId: '8005125019082',
+      salePrice: 7600000,
+      saleDate: '2025/12/01',
+      registeredDate: '2026/02/20',
+      titleDeed: 'T14902/2026',
+      saleType: 'PRIVATE TREATY',
+      contacts: {
+        primaryPhone: '+27 82 110 9944',
+        secondaryPhone: '+27 21 434 1100',
+        email: 'liam.oconnor@greeff.co.za',
+        representativeName: 'Liam O’Connor',
+        postalAddress: '4 Richmond Road, Three Anchor Bay, 8005',
+        preferredChannel: 'PHONE',
+        verifiedStatus: 'VERIFIED'
+      }
+    },
+    contacts: {
+      primaryPhone: '+27 82 110 9944',
+      secondaryPhone: '+27 21 434 1100',
+      email: 'liam.oconnor@greeff.co.za',
+      representativeName: 'Liam O’Connor',
+      postalAddress: '4 Richmond Road, Three Anchor Bay, 8005',
+      preferredChannel: 'PHONE',
+      verifiedStatus: 'VERIFIED'
+    },
+    municipalValuation: {
+      totalValue: 6250000,
+      valuationYear: 2025,
+      ratesEstimateMonthly: 3360.00
+    },
+    accommodation: {
+      type: 'House (Single storey)',
+      usage: 'Residential',
+      condition: 'EXCELLENT',
+      buildingM2: 195,
+      bedRooms: 3,
+      bathRooms: 2,
+      garages: 1,
+      pool: true,
+      alarm: true,
+      perimSecurity: true
+    },
+    polygonPoints: [
+      [500, 270],
+      [570, 270],
+      [570, 300],
+      [500, 300]
+    ]
+  },
+  {
+    id: 'prop-2092',
+    erfNo: '2092',
+    schemeName: 'THE SIGNATURE',
+    isSectionalTitle: true,
+    lpiCode: 'C01600210000209200000',
+    deedsOffice: 'CAPE TOWN',
+    township: 'GREEN POINT',
+    address: 'UNIT 4, 217 MAIN ROAD',
+    suburb: 'THREE ANCHOR BAY',
+    municipality: 'CITY OF CAPE TOWN',
+    province: 'WESTERN CAPE',
+    gps: {
+      lat: -33.90820,
+      lng: 18.40180,
+      formatted: "18.401800°E 33.908200°S"
+    },
+    extentM2: 95,
+    cadastralExtentM2: 95,
+    category: 'Sectional Title',
+    usage: 'Sectional title scheme',
+    zoning: 'GR5',
+    zoningDescription: 'General Residential 5',
+    servitudes: false,
+    imageUrl: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1600&q=85',
+    images: [
+      'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1600&q=85',
+      'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1600&q=85',
+      'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=1600&q=85',
+      'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1600&q=85',
+      'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=1600&q=85'
+    ],
+    property24Listing: {
+      listingNumber: 'P24-11448201',
+      url: 'https://www.property24.com/for-sale/three-anchor-bay/cape-town/western-cape/11448201',
+      title: 'Modern 2-Bed Luxury Apartment at The Signature',
+      askingPrice: 4200000,
+      headline: 'Airbnb Friendly Investment with Atlantic Ocean Horizon Views',
+      description: 'Prime investment opportunity in contemporary boutique development. High rental yield, 24-hr security, undercover parking bay, and short-term letting permission.',
+      keyFeatures: ['2 Bedrooms', '2 Bathrooms', '1 Secure Parking Bay', 'Short-Term Letting Allowed', '24-Hour Concierge'],
+      agentName: 'Claire Du Plessis',
+      agentAgency: 'RE/MAX Living Atlantic Seaboard',
+      agentPhone: '+27 82 884 1290',
+      agencyLogo: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=80&q=80'
+    },
+    currentSale: {
+      owner: 'DU PLESSIS CLAIRE MARIE',
+      ownersId: '8609185012089',
+      salePrice: 4200000,
+      saleDate: '2025/10/05',
+      registeredDate: '2025/12/18',
+      titleDeed: 'ST9912/2025',
+      saleType: 'PRIVATE TREATY',
+      contacts: {
+        primaryPhone: '+27 82 884 1290',
+        secondaryPhone: '+27 21 433 2200',
+        email: 'claire@remaxliving.co.za',
+        representativeName: 'Claire Du Plessis',
+        postalAddress: 'Unit 4, 217 Main Road, Three Anchor Bay, 8005',
+        preferredChannel: 'EMAIL',
+        verifiedStatus: 'VERIFIED'
+      }
+    },
+    contacts: {
+      primaryPhone: '+27 82 884 1290',
+      secondaryPhone: '+27 21 433 2200',
+      email: 'claire@remaxliving.co.za',
+      representativeName: 'Claire Du Plessis',
+      postalAddress: 'Unit 4, 217 Main Road, Three Anchor Bay, 8005',
+      preferredChannel: 'EMAIL',
+      verifiedStatus: 'VERIFIED'
+    },
+    municipalValuation: {
+      totalValue: 3950000,
+      valuationYear: 2025,
+      ratesEstimateMonthly: 1980.00
+    },
+    accommodation: {
+      type: 'Apartment',
+      usage: 'Residential',
+      condition: 'EXCELLENT',
+      buildingM2: 95,
+      bedRooms: 2,
+      bathRooms: 2,
+      garages: 1,
+      alarm: true,
+      perimSecurity: true
+    },
+    polygonPoints: [
+      [150, 240],
+      [240, 230],
+      [250, 350],
+      [160, 360]
+    ]
+  },
+  {
+    id: 'prop-2094',
+    erfNo: '2094',
+    schemeName: 'OCEAN CREST',
+    isSectionalTitle: true,
+    lpiCode: 'C01600210000209400000',
+    deedsOffice: 'CAPE TOWN',
+    township: 'GREEN POINT',
+    address: 'UNIT 12, 221 MAIN ROAD',
+    suburb: 'THREE ANCHOR BAY',
+    municipality: 'CITY OF CAPE TOWN',
+    province: 'WESTERN CAPE',
+    gps: {
+      lat: -33.90810,
+      lng: 18.40230,
+      formatted: "18.402300°E 33.908100°S"
+    },
+    extentM2: 110,
+    cadastralExtentM2: 110,
+    category: 'Sectional Title',
+    usage: 'Sectional title scheme',
+    zoning: 'GR5',
+    zoningDescription: 'General Residential 5',
+    servitudes: false,
+    imageUrl: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1600&q=85',
+    images: [
+      'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1600&q=85',
+      'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=1600&q=85',
+      'https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?auto=format&fit=crop&w=1600&q=85',
+      'https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=1600&q=85',
+      'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=1600&q=85'
+    ],
+    property24Listing: {
+      listingNumber: 'P24-11559302',
+      url: 'https://www.property24.com/for-sale/three-anchor-bay/cape-town/western-cape/11559302',
+      title: 'Corner Penthouse Suite at Ocean Crest',
+      askingPrice: 4950000,
+      headline: 'Panoramic Ocean & Mountain Views with Expansive Balcony',
+      description: 'Exclusive 2-bedroom corner apartment offering light-filled spaces, high-end SMEG appliances, double underground parking, and biometric building security.',
+      keyFeatures: ['2 Bedrooms', '2 Bathrooms', 'Double Tandem Parking', 'Private Balcony', 'Biometric Access Control'],
+      agentName: 'Marcus Venter',
+      agentAgency: 'Rawson Properties Atlantic Seaboard',
+      agentPhone: '+27 83 711 0033',
+      agencyLogo: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=80&q=80'
+    },
+    currentSale: {
+      owner: 'VENTER MARCUS ANDRE',
+      ownersId: '7911045091083',
+      salePrice: 4950000,
+      saleDate: '2025/11/20',
+      registeredDate: '2026/01/25',
+      titleDeed: 'ST1124/2026',
+      saleType: 'PRIVATE TREATY',
+      contacts: {
+        primaryPhone: '+27 83 711 0033',
+        secondaryPhone: '+27 21 434 8800',
+        email: 'marcus.venter@rawson.co.za',
+        representativeName: 'Marcus Venter',
+        postalAddress: 'Unit 12, 221 Main Road, Three Anchor Bay, 8005',
+        preferredChannel: 'PHONE',
+        verifiedStatus: 'VERIFIED'
+      }
+    },
+    contacts: {
+      primaryPhone: '+27 83 711 0033',
+      secondaryPhone: '+27 21 434 8800',
+      email: 'marcus.venter@rawson.co.za',
+      representativeName: 'Marcus Venter',
+      postalAddress: 'Unit 12, 221 Main Road, Three Anchor Bay, 8005',
+      preferredChannel: 'PHONE',
+      verifiedStatus: 'VERIFIED'
+    },
+    municipalValuation: {
+      totalValue: 4600000,
+      valuationYear: 2025,
+      ratesEstimateMonthly: 2350.00
+    },
+    accommodation: {
+      type: 'Penthouse Apartment',
+      usage: 'Residential',
+      condition: 'EXCELLENT',
+      buildingM2: 110,
+      bedRooms: 2,
+      bathRooms: 2,
+      garages: 2,
+      alarm: true,
+      perimSecurity: true
+    },
+    polygonPoints: [
+      [340, 220],
+      [430, 210],
+      [440, 330],
+      [350, 340]
     ]
   }
 ];

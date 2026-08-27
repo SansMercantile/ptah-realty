@@ -15,7 +15,7 @@
  * with no backend equivalent are marked "not yet on backend" below.
  */
 
-import { PropertyRecord, SaleRecord, AccommodationDetails, MunicipalValuation, CMAValuationCalculation, ComparativeSaleRecord } from '../types';
+import { PropertyRecord, SaleRecord, AccommodationDetails, MunicipalValuation, CMAValuationCalculation, ComparativeSaleRecord, AIPropertyValuationResponse } from '../types';
 
 const TOKEN_KEY = 'ptah_auth_token';
 const USER_KEY = 'ptah_auth_user';
@@ -359,6 +359,53 @@ export async function triggerComparablesIngest(searchLocation: string, propertyT
     body: JSON.stringify({ search_location: searchLocation, property_type: propertyType }),
   });
   return data.job_id;
+}
+
+// ---------------------------------------------------------------------
+// AI (individual valuation & outreach) -- backed by api/ai.py, authenticated
+// ---------------------------------------------------------------------
+
+export async function getIndividualValuation(
+  property: PropertyRecord,
+  condition: string,
+  buildingM2: number,
+  extentM2: number,
+  customAdjustments?: Record<string, unknown>
+): Promise<AIPropertyValuationResponse> {
+  return authJson<AIPropertyValuationResponse>('/ai/property-valuation', {
+    method: 'POST',
+    body: JSON.stringify({
+      propertyId: property.id,
+      property,
+      condition,
+      customBuildingM2: buildingM2,
+      customExtentM2: extentM2,
+      customAdjustments: customAdjustments || {},
+    }),
+  });
+}
+
+export interface OutreachEmailDraft {
+  subject: string;
+  body: string;
+  generatedBy: 'bedrock' | 'template_fallback';
+}
+
+export async function getOutreachEmail(
+  property: PropertyRecord,
+  template: 'valuation' | 'buyer' | 'mandate' | 'deeds',
+  ownerName?: string,
+  estimatedValue?: number
+): Promise<OutreachEmailDraft> {
+  return authJson<OutreachEmailDraft>('/ai/outreach-email', {
+    method: 'POST',
+    body: JSON.stringify({
+      property,
+      template,
+      owner_name: ownerName,
+      estimated_value: estimatedValue,
+    }),
+  });
 }
 
 // ---------------------------------------------------------------------

@@ -19,6 +19,7 @@ export type PropertyUsage =
 
 export type AccommodationType = 
   | 'House'
+  | 'House (Single storey)'
   | 'House (2 storey)'
   | 'House (3 storey)'
   | 'House (4 storey)'
@@ -31,6 +32,8 @@ export type AccommodationType =
   | 'Townhouse'
   | 'Townhouse (2 storey)'
   | 'Townhouse (3 storey)'
+  | 'Apartment'
+  | 'Penthouse Apartment'
   | 'Bungalow (wooden holiday/beach house)'
   | 'Garage (on own erf)'
   | 'Sectional title scheme'
@@ -80,6 +83,19 @@ export interface SectionalUnit {
   lastSaleDate?: string;
 }
 
+export interface OwnerContactDetails {
+  primaryPhone: string;
+  secondaryPhone?: string;
+  email: string;
+  secondaryEmail?: string;
+  postalAddress?: string;
+  preferredChannel?: 'PHONE' | 'EMAIL' | 'WHATSAPP';
+  representativeName?: string;
+  verifiedStatus?: 'VERIFIED' | 'UNVERIFIED' | 'UPDATED';
+  lastContactedDate?: string;
+  notes?: string;
+}
+
 export interface SaleRecord {
   owner: string;
   ownersId: string;
@@ -90,6 +106,7 @@ export interface SaleRecord {
   bondHolder?: string;
   bondAmount?: number;
   saleType: 'PRIVATE TREATY' | 'AUCTION' | 'COURT ORDER' | 'ESTATE TRANSFER' | 'COMPANY TRANSFER' | 'AGREEMENT';
+  contacts?: OwnerContactDetails;
 }
 
 export interface MunicipalValuation {
@@ -125,6 +142,23 @@ export interface PropertyRecord {
   servitudes: boolean;
   servitudeDetails?: string;
   imageUrl?: string;
+  images?: string[];
+  property24Listing?: {
+    listingId?: string;
+    listingNumber?: string;
+    title: string;
+    askingPrice: number;
+    url: string;
+    headline?: string;
+    features?: string[];
+    keyFeatures?: string[];
+    description?: string;
+    listedDate?: string;
+    agentName?: string;
+    agentAgency?: string;
+    agentPhone?: string;
+    agencyLogo?: string;
+  };
   
   // Sectional Title details if applicable
   schemeName?: string;
@@ -155,6 +189,9 @@ export interface PropertyRecord {
     source: string;
     status: 'ACTIVE' | 'PENDING' | 'SOLD';
   };
+
+  // Direct Owner Contact Details
+  contacts?: OwnerContactDetails;
   
   // Cadastral polygon coordinates for map drawing
   polygonPoints: [number, number][];
@@ -327,6 +364,85 @@ export interface CMAValuationCalculation {
   calculatedAt: string;
 }
 
+export interface AmenityValuationAddition {
+  name: string;
+  value: number;
+  rationale: string;
+}
+
+export interface AIPropertyValuationResponse {
+  propertyId: string;
+  address: string;
+  erfNo: string;
+  suburb: string;
+  
+  // 1. Individual Property Calculation (AI driven)
+  individualValuation: {
+    estimatedMarketValue: number;
+    pricePerM2: number;
+    valueRange: {
+      conservative: number;
+      target: number;
+      aggressive: number;
+    };
+    confidenceScore: number; // e.g. 98%
+    conditionMultiplier: number;
+    buildingSizeM2: number;
+    landExtentM2: number;
+    valuationBreakdown: {
+      landComponentValue: number;
+      buildingImprovementValue: number;
+      amenityValueAdditions: number;
+      conditionAdjustmentValue: number;
+      zoningBulkUpside: number;
+    };
+    amenityBreakdownList: AmenityValuationAddition[];
+    keyDrivers: string[];
+    aiAppraisalNarrative: string;
+  };
+  
+  // 2. Street-Level Benchmark
+  streetBenchmark: {
+    streetName: string;
+    propertiesInStreetCount: number;
+    streetAveragePricePerM2: number;
+    streetMedianValuation: number;
+    varianceVsStreetPercent: number; // e.g. +8.5%
+    streetPrestigeRating: string; // e.g. 'Prime Heritage Avenue'
+    recentSalesInStreetCount: number;
+    comparativeProperties: {
+      address: string;
+      extentM2: number;
+      lastPrice: number;
+      lastDate: string;
+    }[];
+  };
+  
+  // 3. Area / Suburb Benchmark
+  suburbBenchmark: {
+    suburbName: string;
+    suburbAveragePricePerM2: number;
+    suburbMedianValuation: number;
+    annualAppreciationRate: number; // e.g. 7.8%
+    varianceVsSuburbPercent: number; // e.g. +14.2%
+    marketLiquidity: 'HIGH' | 'MODERATE' | 'LOW';
+    averageDaysOnMarket: number;
+    totalStockCount: number;
+  };
+  
+  // 4. Investment & Yield Metrics
+  investmentMetrics: {
+    estimatedMonthlyRental: number;
+    annualGrossRental: number;
+    grossYieldPercent: number;
+    netYieldPercent: number;
+    capitalGrowth5YearForecast: number;
+  };
+  
+  calculatedAt: string;
+  modelUsed: string;
+}
+
 // ==========================================
 // 2. Property Media & Visual Asset Management
 // ==========================================
@@ -421,6 +537,7 @@ export type PortalPlatformId = 'property24' | 'privateproperty' | 'gumtree' | 'p
 export type PortalSyncStatus = 'LIVE' | 'SYNCING' | 'DRAFT' | 'NEEDS_REVIEW' | 'SYNC_FAILED' | 'PAUSED';
 
 export interface PortalListingPayload {
+  id?: string;
   portalId: PortalPlatformId;
   portalName: string;
   portalLogo: string;
@@ -429,6 +546,7 @@ export interface PortalListingPayload {
   liveUrl?: string;
   lastSyncedAt?: string;
   syncErrors?: string[];
+  payloadData?: any;
   title: string;
   askingPrice: number;
   monthlyRatesLevies: {

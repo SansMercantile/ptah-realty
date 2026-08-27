@@ -1,25 +1,22 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { 
   Maximize2, 
   Minimize2, 
   Plus, 
   Minus, 
-  Crosshair, 
   Layers, 
-  Ruler, 
-  Printer, 
-  Compass, 
   Map as MapIcon, 
-  Sparkles, 
-  Eye, 
-  Calculator, 
   Navigation, 
-  Info,
-  CheckCircle2,
-  Building2,
-  ExternalLink
+  SlidersHorizontal
 } from 'lucide-react';
+import { APIProvider, Map, AdvancedMarker, Pin, InfoWindow } from '@vis.gl/react-google-maps';
 import { PropertyRecord } from '../types';
+import { CadastralTooltip } from './CadastralTooltip';
+import { GoogleMapPolygons } from './GoogleMapPolygons';
+import { RealCadastreMap, extractHouseNumber } from './RealCadastreMap';
+import { PropertyPopupCard } from './PropertyPopupCard';
+import { StreetFilterControls } from './StreetFilterControls';
+import { CADASTRAL_STREETS, filterPropertiesByStreet } from '../utils/cadastralFilters';
 
 interface CadastralMapProps {
   properties: PropertyRecord[];
@@ -28,30 +25,9 @@ interface CadastralMapProps {
   isSidebarOpen: boolean;
   onOpenCMAEngine?: () => void;
   onOpenPDFReport?: () => void;
+  onOpenContactOwner?: (property: PropertyRecord) => void;
+  onOpenPortalSync?: () => void;
 }
-
-// Background surrounding cadastral lots for visual completeness in Vector Cadastre view
-const SURROUNDING_PARCELS = [
-  { erf: '1680', points: [[430, 310], [500, 310], [500, 340], [430, 340]], street: '3 Richmond Rd' },
-  { erf: '1682', points: [[570, 310], [640, 310], [640, 340], [570, 340]], street: '7 Richmond Rd' },
-  { erf: '1683', points: [[640, 310], [710, 310], [710, 340], [640, 340]], street: '9 Richmond Rd' },
-  { erf: '1675', points: [[500, 270], [570, 270], [570, 300], [500, 300]], street: '4 Richmond Rd' },
-  { erf: '1676', points: [[570, 270], [640, 270], [640, 300], [570, 300]], street: '6 Richmond Rd' },
-  { erf: '2092', points: [[150, 240], [240, 230], [250, 350], [160, 360]], street: '217 Main Rd' },
-  { erf: '2094', points: [[340, 220], [430, 210], [440, 330], [350, 340]], street: '221 Main Rd' },
-  { erf: '1796', points: [[70, 530], [140, 520], [140, 580], [70, 590]], street: '3 Law Rd' },
-  { erf: '1798', points: [[220, 510], [290, 500], [290, 560], [220, 570]], street: 'Law Lane' },
-  { erf: '973', points: [[290, 480], [360, 480], [360, 550], [290, 550]], street: '15 St Bedes Rd' },
-  { erf: '975', points: [[440, 480], [510, 480], [510, 550], [440, 550]], street: '19 St Bedes Rd' },
-  { erf: '62', points: [[460, 500], [510, 480], [540, 540], [490, 560]], street: '1 Blackheath Rd' },
-  { erf: '64', points: [[560, 460], [610, 440], [640, 500], [590, 520]], street: '5 Blackheath Rd' },
-  { erf: '99', points: [[410, 370], [470, 420], [430, 470], [370, 420]], street: '9 Mutley Rd' },
-  { erf: '101', points: [[540, 480], [600, 530], [560, 580], [500, 530]], street: '13 Mutley Rd' },
-  { erf: '151', points: [[50, 570], [110, 620], [70, 660], [20, 610]], street: '31 Hofmeyr Rd' },
-  { erf: '153', points: [[180, 680], [240, 730], [200, 770], [140, 720]], street: '35 Hofmeyr Rd' },
-  { erf: '1484', points: [[430, 610], [480, 560], [510, 590], [460, 640]], street: '6 Mount Nelson Rd' },
-  { erf: '1486', points: [[530, 510], [580, 460], [610, 490], [560, 540]], street: '10 Mount Nelson Rd' }
-];
 
 export const CadastralMap: React.FC<CadastralMapProps> = ({
   properties,
@@ -59,32 +35,92 @@ export const CadastralMap: React.FC<CadastralMapProps> = ({
   onSelectProperty,
   isSidebarOpen,
   onOpenCMAEngine,
-  onOpenPDFReport
+  onOpenPDFReport,
+  onOpenContactOwner,
+  onOpenPortalSync
 }) => {
-  // AWS-first default: vector cadastral mode has no third-party map key.
-  // An Amazon Location adapter can be enabled later without changing the
-  // property selection and radius interaction contracts.
-  const [mapEngine] = useState<'vector'>('vector');
+  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
+  // Only pass a mapId to the Google Map when one is explicitly configured --
+  // this is what avoids the ApiProjectMapError / "no valid Map ID" warning
+  // and gates AdvancedMarker usage below (no arbitrary DEMO_MAP_ID fallback).
+  const configuredMapId = import.meta.env.VITE_GOOGLE_MAPS_MAP_ID || undefined;
+
+  // AWS/GIS-first default: vector cadastral mode has no third-party map key
+  // requirement. Google Maps Platform remains available as a clean,
+  // explicit switch when a valid API key (and optionally Map ID) is supplied.
+  const [mapEngine, setMapEngine] = useState<'google' | 'vector'>('vector');
+  const [googleMapsError, setGoogleMapsError] = useState<string | null>(null);
+  const [googleMapType, setGoogleMapType] = useState<'roadmap' | 'satellite' | 'hybrid' | 'terrain'>('hybrid');
   const [showRadiusRing, setShowRadiusRing] = useState(true);
   const [radiusMeters, setRadiusMeters] = useState(500);
   const [showZoningLayer, setShowZoningLayer] = useState(true);
   const [infoWindowProperty, setInfoWindowProperty] = useState<PropertyRecord | null>(null);
+  const [showPopupCard, setShowPopupCard] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showStreetFilters, setShowStreetFilters] = useState(false);
+
+  // Catch Google Maps global auth or project map errors and gracefully
+  // fall back to the vector cadastral engine instead of a blank map.
+  useEffect(() => {
+    const handleGmAuthFailure = () => {
+      setGoogleMapsError('Google Maps API reported an authentication error. Switched to High-Precision Cadastral GIS Engine.');
+      setMapEngine('vector');
+    };
+
+    const prevHandler = (window as unknown as { gm_authFailure?: () => void }).gm_authFailure;
+    (window as unknown as { gm_authFailure?: () => void }).gm_authFailure = handleGmAuthFailure;
+
+    return () => {
+      (window as unknown as { gm_authFailure?: () => void }).gm_authFailure = prevHandler;
+    };
+  }, []);
+
+  // Street-level and cluster filtering state
+  const [visibleStreets, setVisibleStreets] = useState<Set<string>>(
+    () => new Set(CADASTRAL_STREETS.map((s) => s.name))
+  );
+  const [activeClusterId, setActiveClusterId] = useState<string>('all');
+  const [showSurroundingParcels, setShowSurroundingParcels] = useState<boolean>(true);
+  const [showHouseNumbers, setShowHouseNumbers] = useState<boolean>(true);
+  const [categoryFilter, setCategoryFilter] = useState<'ALL' | 'FREEHOLD' | 'SECTIONAL'>('ALL');
+
+  const handleToggleStreet = (streetName: string) => {
+    setVisibleStreets((prev) => {
+      const next = new Set(prev);
+      if (next.has(streetName)) {
+        next.delete(streetName);
+      } else {
+        next.add(streetName);
+      }
+      return next;
+    });
+    setActiveClusterId('custom');
+  };
+
+  // Filtered properties based on active street and category filters --
+  // this is what both map engines render, so toggling a street or the
+  // freehold/sectional filter actually declutters the canvas.
+  const filteredProperties = useMemo(() => {
+    return filterPropertiesByStreet(properties, visibleStreets, categoryFilter);
+  }, [properties, visibleStreets, categoryFilter]);
+
+  // Hover Tooltip States
+  const [hoveredProperty, setHoveredProperty] = useState<PropertyRecord | null>(null);
+  const [hoveredSurrounding, setHoveredSurrounding] = useState<{ erf: string; street: string } | null>(null);
+  const [tooltipPosition, setTooltipPosition] = useState<{ x: number; y: number } | null>(null);
+  const [containerBounds, setContainerBounds] = useState<DOMRect | null>(null);
 
   // Vector SVG Map States (Fallback & Cadastral Mode)
   const [zoom, setZoom] = useState(1.1);
   const [pan, setPan] = useState({ x: -120, y: -80 });
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [hoveredErf, setHoveredErf] = useState<string | null>(null);
-  const [hoverTooltip, setHoverTooltip] = useState<{ property: PropertyRecord; x: number; y: number } | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
-  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
 
   // Center vector canvas or Google map on selection
   useEffect(() => {
     if (selectedProperty) {
+      setShowPopupCard(true);
       if (selectedProperty.polygonPoints?.length > 0) {
         const avgX = selectedProperty.polygonPoints.reduce((acc, p) => acc + p[0], 0) / selectedProperty.polygonPoints.length;
         const avgY = selectedProperty.polygonPoints.reduce((acc, p) => acc + p[1], 0) / selectedProperty.polygonPoints.length;
@@ -94,27 +130,17 @@ export const CadastralMap: React.FC<CadastralMapProps> = ({
     }
   }, [selectedProperty]);
 
-  // Vector Pan/Zoom Handlers
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (e.button !== 0) return;
-    setIsDragging(true);
-    setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (isDragging) {
-      setPan({ x: e.clientX - dragStart.x, y: e.clientY - dragStart.y });
-    }
-  };
-
-  const handleMouseUp = () => setIsDragging(false);
-
-  const handleWheel = (e: React.WheelEvent) => {
-    e.preventDefault();
-    const zoomFactor = e.deltaY < 0 ? 1.15 : 0.85;
-    const newZoom = Math.min(Math.max(zoom * zoomFactor, 0.5), 3.5);
-    setZoom(newZoom);
-  };
+  // Update container bounding box on resize
+  useEffect(() => {
+    const updateBounds = () => {
+      if (containerRef.current) {
+        setContainerBounds(containerRef.current.getBoundingClientRect());
+      }
+    };
+    updateBounds();
+    window.addEventListener('resize', updateBounds);
+    return () => window.removeEventListener('resize', updateBounds);
+  }, []);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -126,10 +152,9 @@ export const CadastralMap: React.FC<CadastralMapProps> = ({
     }
   };
 
-  const formatZar = (amount?: number | { totalValue: number }) => {
-    const value = typeof amount === 'number' ? amount : amount?.totalValue;
-    if (!value) return '-';
-    return `R ${value.toLocaleString('en-ZA').replace(/,/g, ' ')}`;
+  const formatZar = (amount?: number) => {
+    if (!amount) return '-';
+    return `R ${amount.toLocaleString('en-ZA').replace(/,/g, ' ')}`;
   };
 
   const currentCenter = selectedProperty?.gps 
@@ -141,21 +166,33 @@ export const CadastralMap: React.FC<CadastralMapProps> = ({
       ref={containerRef}
       className="flex-1 h-full relative overflow-hidden select-none bg-slate-950 flex flex-col"
     >
+      {/* Floating Hover-State Tooltip for Cadastral Polygons */}
+      <CadastralTooltip
+        property={hoveredProperty}
+        surroundingParcel={hoveredSurrounding}
+        position={tooltipPosition}
+        containerBounds={containerBounds}
+      />
+
       {/* Top Map Engine Bar & Controls */}
       <div className="absolute top-3 left-3 z-20 flex flex-wrap items-center gap-2 pointer-events-auto">
-        
+
         {/* Engine Switcher */}
         <div className="flex items-center bg-slate-900/90 backdrop-blur-md p-1 rounded-lg border border-slate-700 shadow-lg text-xs">
           <button
-            disabled
-            title="Amazon Location is the production map target; vector cadastral mode is active in this build."
-            className="px-3 py-1 rounded font-bold flex items-center gap-1.5 text-slate-500 cursor-not-allowed"
+            onClick={() => setMapEngine('google')}
+            className={`px-3 py-1 rounded font-bold transition-all flex items-center gap-1.5 ${
+              mapEngine === 'google'
+                ? 'bg-[#006980] text-white shadow-xs'
+                : 'text-slate-300 hover:text-white'
+            }`}
           >
-            <MapIcon className="w-3.5 h-3.5 text-orange-300" />
-            <span>AWS Location (adapter)</span>
+            <MapIcon className="w-3.5 h-3.5 text-cyan-300" />
+            <span>Google Maps Platform</span>
           </button>
 
           <button
+            onClick={() => setMapEngine('vector')}
             className={`px-3 py-1 rounded font-bold transition-all flex items-center gap-1.5 ${
               mapEngine === 'vector'
                 ? 'bg-[#006980] text-white shadow-xs'
@@ -166,6 +203,36 @@ export const CadastralMap: React.FC<CadastralMapProps> = ({
             <span>Vector Cadastre (SG Diagram)</span>
           </button>
         </div>
+
+        {/* Google Map Type Switcher (When Google Maps Active) */}
+        {mapEngine === 'google' && (
+          <div className="flex items-center bg-slate-900/90 backdrop-blur-md p-1 rounded-lg border border-slate-700 shadow-lg text-xs">
+            <button
+              onClick={() => setGoogleMapType('hybrid')}
+              className={`px-2.5 py-1 rounded text-[11px] font-semibold transition-colors ${
+                googleMapType === 'hybrid' ? 'bg-cyan-700 text-white' : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              Satellite / Hybrid
+            </button>
+            <button
+              onClick={() => setGoogleMapType('roadmap')}
+              className={`px-2.5 py-1 rounded text-[11px] font-semibold transition-colors ${
+                googleMapType === 'roadmap' ? 'bg-cyan-700 text-white' : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              Cadastral Roadmap
+            </button>
+            <button
+              onClick={() => setGoogleMapType('terrain')}
+              className={`px-2.5 py-1 rounded text-[11px] font-semibold transition-colors ${
+                googleMapType === 'terrain' ? 'bg-cyan-700 text-white' : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              Topography
+            </button>
+          </div>
+        )}
 
         {/* Proximity Radius Toggle */}
         <div className="flex items-center gap-1.5 bg-slate-900/90 backdrop-blur-md px-3 py-1.5 rounded-lg border border-slate-700 shadow-lg text-xs">
@@ -190,220 +257,230 @@ export const CadastralMap: React.FC<CadastralMapProps> = ({
           </select>
         </div>
 
+        {/* Street / Precinct Filter Toggle */}
+        <button
+          onClick={() => setShowStreetFilters((prev) => !prev)}
+          className={`flex items-center gap-1.5 backdrop-blur-md px-3 py-1.5 rounded-lg border shadow-lg text-xs font-bold transition-colors ${
+            showStreetFilters
+              ? 'bg-[#006980] border-cyan-500 text-white'
+              : 'bg-slate-900/90 border-slate-700 text-slate-200 hover:text-white'
+          }`}
+        >
+          <SlidersHorizontal className="w-3.5 h-3.5" />
+          <span>Streets</span>
+        </button>
       </div>
 
-      {/* Floating Action Badge for Selected Property */}
-      {selectedProperty && (
-        <div className="absolute top-16 left-3 z-20 bg-slate-900/95 backdrop-blur-md border border-cyan-700/60 p-3 rounded-lg shadow-2xl max-w-sm text-xs space-y-2 pointer-events-auto">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
-              <span className="font-bold text-cyan-300 text-xs uppercase tracking-wide">
-                Active Cadastral Target
-              </span>
-            </div>
-            <span className="text-[10px] bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded font-mono">
-              Erf {selectedProperty.erfNo}
-            </span>
-          </div>
-
-          <div>
-            <div className="font-extrabold text-slate-100 text-sm">{selectedProperty.address}</div>
-            <div className="text-slate-400 text-[11px]">{selectedProperty.suburb}, {selectedProperty.township}</div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2 pt-1 border-t border-slate-800 text-[11px]">
-            <div>
-              <span className="text-slate-500 block">Extent:</span>
-              <span className="font-bold text-slate-200">{selectedProperty.extentM2} m²</span>
-            </div>
-            <div>
-              <span className="text-slate-500 block">Municipal Val:</span>
-              <span className="font-bold text-emerald-400">{formatZar(selectedProperty.municipalValuation)}</span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 pt-1">
-            {onOpenCMAEngine && (
-              <button
-                onClick={onOpenCMAEngine}
-                className="flex-1 py-1 bg-[#006980] hover:bg-cyan-600 text-white font-bold rounded text-[11px] flex items-center justify-center gap-1 transition-colors"
-              >
-                <Calculator className="w-3 h-3" />
-                <span>Calculate CMA</span>
-              </button>
-            )}
-            {onOpenPDFReport && (
-              <button
-                onClick={onOpenPDFReport}
-                className="flex-1 py-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded text-[11px] flex items-center justify-center gap-1 transition-colors"
-              >
-                <Sparkles className="w-3 h-3" />
-                <span>PDF Dossier</span>
-              </button>
-            )}
-          </div>
+      {/* Street & Precinct Filter Panel */}
+      {showStreetFilters && (
+        <div className="absolute top-14 right-3 z-30 pointer-events-auto animate-fade-in">
+          <StreetFilterControls
+            properties={properties}
+            visibleStreets={visibleStreets}
+            onToggleStreet={handleToggleStreet}
+            onSetVisibleStreets={setVisibleStreets}
+            activeClusterId={activeClusterId}
+            onSelectCluster={setActiveClusterId}
+            showSurroundingParcels={showSurroundingParcels}
+            onToggleSurroundingParcels={setShowSurroundingParcels}
+            showHouseNumbers={showHouseNumbers}
+            onToggleHouseNumbers={setShowHouseNumbers}
+            categoryFilter={categoryFilter}
+            onSetCategoryFilter={setCategoryFilter}
+          />
         </div>
       )}
 
-      {/* AWS-native vector cadastral canvas. Amazon Location can replace this
-          renderer later without changing property selection semantics. */}
-      {(
-        /* VECTOR CADASTRAL SVG CANVAS (SG DIAGRAM ACCURACY) */
-        <div
-          className="w-full h-full relative cursor-grab active:cursor-grabbing"
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
-          onWheel={handleWheel}
-        >
-          <svg
-            className="w-full h-full"
-            viewBox="0 0 800 600"
-            preserveAspectRatio="xMidYMid meet"
+      {/* Property Popup Card with Gallery Carousel & Property24 Details */}
+      {selectedProperty && showPopupCard && (
+        <div className="absolute top-14 left-3 z-30 pointer-events-auto animate-fade-in">
+          <PropertyPopupCard
+            property={selectedProperty}
+            onClose={() => setShowPopupCard(false)}
+            onOpenCMA={onOpenCMAEngine}
+            onOpenPDF={onOpenPDFReport}
+            onContactOwner={() => onOpenContactOwner?.(selectedProperty)}
+            onPortalSync={onOpenPortalSync}
+          />
+        </div>
+      )}
+
+      {/* Notification banner if Google Maps had an auth/project error */}
+      {googleMapsError && (
+        <div className="absolute top-14 right-3 z-30 bg-amber-950/90 border border-amber-500/80 text-amber-200 text-xs px-3 py-2 rounded-lg shadow-xl flex items-center gap-2 max-w-md animate-fade-in pointer-events-auto">
+          <Layers className="w-4 h-4 text-amber-400 shrink-0" />
+          <span className="flex-1 text-[11px]">{googleMapsError}</span>
+          <button
+            onClick={() => setGoogleMapsError(null)}
+            className="text-amber-400 hover:text-amber-100 font-bold text-xs ml-1"
           >
-            <g transform={`translate(${pan.x}, ${pan.y}) scale(${zoom})`}>
-              
-              {/* Surrounding cadastral lots */}
-              {SURROUNDING_PARCELS.map((parcel) => (
-                <g key={parcel.erf} className="transition-opacity opacity-70 hover:opacity-100">
-                  <polygon
-                    points={parcel.points.map(p => `${p[0]},${p[1]}`).join(' ')}
-                    fill="#0f172a"
-                    stroke="#334155"
-                    strokeWidth="1.2"
-                  />
-                  <text
-                    x={(parcel.points[0][0] + parcel.points[1][0]) / 2}
-                    y={(parcel.points[0][1] + parcel.points[2][1]) / 2}
-                    fill="#64748b"
-                    fontSize="9"
-                    fontWeight="bold"
-                    textAnchor="middle"
-                  >
-                    {parcel.erf}
-                  </text>
-                </g>
-              ))}
-
-              {/* Primary Interactive Property Lots */}
-              {properties.map((prop) => {
-                const isSelected = selectedProperty?.id === prop.id;
-                const isHovered = hoveredErf === prop.erfNo;
-                const pointsString = prop.polygonPoints?.map(p => `${p[0]},${p[1]}`).join(' ') || '';
-
-                return (
-                  <g
-                    key={prop.id}
-                    className="cursor-pointer transition-all"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onSelectProperty(prop);
-                    }}
-                    onMouseEnter={(e) => {
-                      setHoveredErf(prop.erfNo);
-                      const rect = containerRef.current?.getBoundingClientRect();
-                      setHoverTooltip({
-                        property: prop,
-                        x: e.clientX - (rect?.left ?? 0),
-                        y: e.clientY - (rect?.top ?? 0),
-                      });
-                    }}
-                    onMouseMove={(e) => {
-                      const rect = containerRef.current?.getBoundingClientRect();
-                      setHoverTooltip({
-                        property: prop,
-                        x: e.clientX - (rect?.left ?? 0),
-                        y: e.clientY - (rect?.top ?? 0),
-                      });
-                    }}
-                    onMouseLeave={() => {
-                      setHoveredErf(null);
-                      setHoverTooltip(null);
-                    }}
-                  >
-                    <polygon
-                      points={pointsString}
-                      fill={isSelected ? '#006980' : isHovered ? '#1e293b' : '#0284c715'}
-                      stroke={isSelected ? '#00bcd4' : '#0284c7'}
-                      strokeWidth={isSelected ? '2.5' : '1.5'}
-                      className="transition-colors"
-                    />
-
-                    {/* Cadastral Lot Number */}
-                    {prop.polygonPoints?.length > 0 && (
-                      <text
-                        x={prop.polygonPoints[0][0] + 30}
-                        y={prop.polygonPoints[0][1] + 25}
-                        fill={isSelected ? '#ffffff' : '#38bdf8'}
-                        fontSize="10"
-                        fontWeight="bold"
-                        textAnchor="middle"
-                      >
-                        {prop.erfNo}
-                      </text>
-                    )}
-                  </g>
-                );
-              })}
-
-              {/* Radius ring indicator if active */}
-              {showRadiusRing && selectedProperty && selectedProperty.polygonPoints?.length > 0 && (
-                <circle
-                  cx={selectedProperty.polygonPoints[0][0] + 30}
-                  cy={selectedProperty.polygonPoints[0][1] + 25}
-                  r={radiusMeters * 0.3}
-                  fill="none"
-                  stroke="#00bcd4"
-                  strokeWidth="1.5"
-                  strokeDasharray="4 4"
-                  className="animate-pulse"
-                />
-              )}
-
-            </g>
-          </svg>
+            ✕
+          </button>
         </div>
       )}
 
-      {/* Hover tooltip: quick property glance (price, extent, last sale
-          date) without needing the full selection panel/modal. Follows
-          the cursor via onMouseMove on the polygon, offset so it doesn't
-          sit directly under the pointer. */}
-      {hoverTooltip && (
-        <div
-          className="absolute z-30 pointer-events-none bg-slate-900/95 backdrop-blur-md border border-cyan-700/60 rounded-lg shadow-2xl px-3 py-2 text-xs space-y-1 min-w-[160px]"
-          style={{ left: hoverTooltip.x + 14, top: hoverTooltip.y + 14 }}
-        >
-          <div className="font-bold text-slate-100 text-[12px] flex items-center gap-1.5">
-            <Building2 className="w-3 h-3 text-cyan-400" />
-            Erf {hoverTooltip.property.erfNo}
+      {/* MAP ENGINE RENDER */}
+      {mapEngine === 'google' ? (
+        apiKey ? (
+          <div className="w-full h-full relative">
+            <APIProvider
+              apiKey={apiKey}
+              onError={(err) => {
+                console.warn('Google Maps API load error:', err);
+                setGoogleMapsError('Google Maps API reported an issue. Using High-Precision Cadastral GIS Engine.');
+                setMapEngine('vector');
+              }}
+            >
+              <Map
+                mapId={configuredMapId}
+                defaultCenter={currentCenter}
+                defaultZoom={16}
+                mapTypeId={googleMapType}
+                gestureHandling="greedy"
+                disableDefaultUI={false}
+                className="w-full h-full"
+              >
+                {/* Interactive Google Map Cadastral Polygons */}
+                <GoogleMapPolygons
+                  properties={filteredProperties}
+                  selectedProperty={selectedProperty}
+                  hoveredProperty={hoveredProperty}
+                  onSelectProperty={(prop) => {
+                    onSelectProperty(prop);
+                    setInfoWindowProperty(prop);
+                  }}
+                  onHoverProperty={(prop, pos) => {
+                    setHoveredProperty(prop);
+                    setHoveredSurrounding(null);
+                    setHoveredErf(prop ? prop.erfNo : null);
+                    if (containerRef.current) {
+                      setContainerBounds(containerRef.current.getBoundingClientRect());
+                    }
+                    setTooltipPosition(pos);
+                  }}
+                />
+
+                {/* Markers only render with AdvancedMarker when a verified
+                    Map ID is configured -- this is what avoids the
+                    "map is initialised without a valid Map ID" warning. */}
+                {configuredMapId && filteredProperties.map((prop) => {
+                  const isSelected = selectedProperty?.id === prop.id;
+                  const isHovered = hoveredProperty?.id === prop.id;
+                  const position = prop.gps ? { lat: prop.gps.lat, lng: prop.gps.lng } : null;
+                  if (!position) return null;
+
+                  return (
+                    <AdvancedMarker
+                      key={prop.id}
+                      position={position}
+                      onClick={() => {
+                        onSelectProperty(prop);
+                        setInfoWindowProperty(prop);
+                      }}
+                    >
+                      <div
+                        className="cursor-pointer transition-transform duration-150 hover:scale-110"
+                        onMouseEnter={(e) => {
+                          setHoveredProperty(prop);
+                          setHoveredSurrounding(null);
+                          setHoveredErf(prop.erfNo);
+                          if (containerRef.current) setContainerBounds(containerRef.current.getBoundingClientRect());
+                          setTooltipPosition({ x: e.clientX, y: e.clientY });
+                        }}
+                        onMouseMove={(e) => setTooltipPosition({ x: e.clientX, y: e.clientY })}
+                        onMouseLeave={() => {
+                          setHoveredProperty(null);
+                          setHoveredSurrounding(null);
+                          setHoveredErf(null);
+                          setTooltipPosition(null);
+                        }}
+                      >
+                        <Pin
+                          background={isSelected ? '#00bcd4' : isHovered ? '#38bdf8' : '#006980'}
+                          borderColor={isSelected ? '#ffffff' : '#003340'}
+                          glyph={extractHouseNumber(prop.address)}
+                          glyphColor="#ffffff"
+                          scale={isSelected ? 1.3 : isHovered ? 1.15 : 1.0}
+                        />
+                      </div>
+                    </AdvancedMarker>
+                  );
+                })}
+
+                {/* InfoWindow for Clicked Property */}
+                {infoWindowProperty && infoWindowProperty.gps && (
+                  <InfoWindow
+                    position={{ lat: infoWindowProperty.gps.lat, lng: infoWindowProperty.gps.lng }}
+                    onCloseClick={() => setInfoWindowProperty(null)}
+                  >
+                    <div className="p-2 text-slate-900 max-w-[220px]">
+                      <div className="font-bold text-xs text-[#006980]">{infoWindowProperty.address}</div>
+                      <div className="text-[11px] text-slate-600">Erf {infoWindowProperty.erfNo} • {infoWindowProperty.suburb}</div>
+                      <div className="mt-1 text-[11px] font-semibold text-emerald-700">
+                        Valuation: {formatZar(infoWindowProperty.municipalValuation?.totalValue)}
+                      </div>
+                      <div className="mt-1 flex items-center justify-between text-[10px] text-slate-500 pt-1 border-t border-slate-200">
+                        <span>{infoWindowProperty.extentM2} m²</span>
+                        <span className="font-bold text-cyan-800">{infoWindowProperty.category}</span>
+                      </div>
+                    </div>
+                  </InfoWindow>
+                )}
+              </Map>
+            </APIProvider>
           </div>
-          <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-[11px]">
-            <span className="text-slate-500">Price:</span>
-            <span className="text-emerald-400 font-semibold text-right">
-              {formatZar(hoverTooltip.property.currentSale?.salePrice)}
-            </span>
-            <span className="text-slate-500">Extent:</span>
-            <span className="text-slate-200 font-semibold text-right">
-              {hoverTooltip.property.extentM2} m²
-            </span>
-            <span className="text-slate-500">Last sale:</span>
-            <span className="text-slate-200 font-semibold text-right">
-              {hoverTooltip.property.currentSale?.saleDate
-                ? new Date(hoverTooltip.property.currentSale.saleDate).toLocaleDateString('en-ZA', {
-                    year: 'numeric', month: 'short', day: 'numeric',
-                  })
-                : '-'}
-            </span>
+        ) : (
+          <div className="w-full h-full flex flex-col items-center justify-center bg-slate-950 p-6 text-center">
+            <div className="p-4 bg-slate-900 border border-slate-700 rounded-xl max-w-md shadow-2xl space-y-3">
+              <div className="w-12 h-12 bg-cyan-950/80 border border-cyan-500/50 rounded-xl flex items-center justify-center mx-auto text-cyan-400">
+                <MapIcon className="w-6 h-6" />
+              </div>
+              <h3 className="text-sm font-bold text-white">Google Maps API Key Not Set</h3>
+              <p className="text-xs text-slate-400">
+                To use Google Maps JavaScript Platform, set <code className="text-cyan-300 font-mono bg-slate-800 px-1 py-0.5 rounded">VITE_GOOGLE_MAPS_API_KEY</code>.
+                Alternatively, enjoy our built-in Surveyor-General GIS Engine with full satellite imagery and cadastral overlays.
+              </p>
+              <button
+                onClick={() => setMapEngine('vector')}
+                className="w-full py-2 bg-[#006980] hover:bg-cyan-600 text-white font-bold text-xs rounded-lg transition-colors shadow-md flex items-center justify-center gap-2"
+              >
+                <Layers className="w-4 h-4" />
+                <span>Switch to GIS Cadastre Map</span>
+              </button>
+            </div>
           </div>
-        </div>
+        )
+      ) : (
+        /* VECTOR CADASTRAL ENGINE WITH REAL-WORLD MAP BASEMAP (SG DIAGRAM ACCURACY) */
+        <RealCadastreMap
+          properties={filteredProperties}
+          selectedProperty={selectedProperty}
+          hoveredProperty={hoveredProperty}
+          onSelectProperty={(prop) => {
+            onSelectProperty(prop);
+            setInfoWindowProperty(prop);
+          }}
+          onHoverProperty={(prop, pos) => {
+            setHoveredProperty(prop);
+            setHoveredSurrounding(null);
+            setHoveredErf(prop ? prop.erfNo : null);
+            if (containerRef.current) {
+              setContainerBounds(containerRef.current.getBoundingClientRect());
+            }
+            setTooltipPosition(pos);
+          }}
+          showZoningLayer={showZoningLayer}
+          showRadiusRing={showRadiusRing}
+          radiusMeters={radiusMeters}
+          containerBounds={containerBounds}
+          showSurroundingParcels={showSurroundingParcels}
+          showHouseNumbers={showHouseNumbers}
+        />
       )}
 
       {/* Bottom Map Toolbar */}
       <div className="absolute bottom-3 left-3 right-3 z-20 flex items-center justify-between pointer-events-none">
-        
+
         {/* Cadastral Coordinates Badge */}
         <div className="bg-slate-900/90 backdrop-blur-md px-3 py-1.5 rounded-lg border border-slate-700 text-[11px] text-slate-300 font-mono shadow-lg flex items-center gap-2 pointer-events-auto">
           <Navigation className="w-3.5 h-3.5 text-cyan-400" />

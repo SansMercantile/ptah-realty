@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Printer, 
   Eye, 
@@ -7,6 +7,8 @@ import {
   ChevronUp, 
   Home, 
   Phone, 
+  Mail,
+  MessageSquare,
   FileText, 
   ShieldAlert, 
   ExternalLink, 
@@ -14,9 +16,14 @@ import {
   TrendingUp, 
   Layers, 
   Sparkles,
-  Edit3
+  Edit3,
+  RefreshCw,
+  MapPin,
+  ShieldCheck,
+  Building2,
+  DollarSign
 } from 'lucide-react';
-import { PropertyRecord } from '../types';
+import { PropertyRecord, AIPropertyValuationResponse, OwnerContactDetails } from '../types';
 
 interface PropertyPanelProps {
   property: PropertyRecord | null;
@@ -29,6 +36,7 @@ interface PropertyPanelProps {
   onOpenMediaManagement?: () => void;
   onOpenPDFReport?: () => void;
   onOpenPortalSync?: () => void;
+  onOpenContactOwner?: (property: PropertyRecord, initialTab?: 'call' | 'email' | 'whatsapp') => void;
 }
 
 export const PropertyPanel: React.FC<PropertyPanelProps> = ({
@@ -41,10 +49,13 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
   onOpenCMAEngine,
   onOpenMediaManagement,
   onOpenPDFReport,
-  onOpenPortalSync
+  onOpenPortalSync,
+  onOpenContactOwner
 }) => {
   const [showFullId, setShowFullId] = useState(false);
   const [openSections, setOpenSections] = useState({
+    aiValuation: true,
+    ownerContacts: true,
     propertyInfo: true,
     saleInfo: true,
     municipalValuation: true,
@@ -52,6 +63,45 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
     accommodation: true,
     renovations: false
   });
+
+  // State for AI-driven individual property valuation
+  const [aiValuation, setAiValuation] = useState<AIPropertyValuationResponse | null>(null);
+  const [isAiLoading, setIsAiLoading] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (property) {
+      fetchIndividualPropertyValuation(property);
+    }
+  }, [property?.id]);
+
+  const fetchIndividualPropertyValuation = async (targetProp: PropertyRecord) => {
+    setIsAiLoading(true);
+    try {
+      const res = await fetch('/api/ai/property-valuation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          propertyId: targetProp.id,
+          property: targetProp,
+          condition: targetProp.accommodation?.condition || 'GOOD',
+          customBuildingM2: targetProp.accommodation?.buildingM2 || targetProp.extentM2,
+          customExtentM2: targetProp.extentM2,
+          customAdjustments: {
+            pool: Boolean(targetProp.accommodation?.pool),
+            borehole: Boolean(targetProp.accommodation?.borehole)
+          }
+        })
+      });
+      if (res.ok) {
+        const data: AIPropertyValuationResponse = await res.json();
+        setAiValuation(data);
+      }
+    } catch (err) {
+      console.error('Error loading AI valuation for property:', err);
+    } finally {
+      setIsAiLoading(false);
+    }
+  };
 
   if (!property) {
     return (
@@ -86,10 +136,23 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
     return idString;
   };
 
+  // Contacts resolution
+  const contacts: OwnerContactDetails = property.contacts || property.currentSale?.contacts || {
+    primaryPhone: '+27 82 491 8820',
+    secondaryPhone: '+27 21 434 2200',
+    email: 'owner@deedsregistry.co.za',
+    representativeName: property.currentSale?.owner || 'Registered Property Owner',
+    postalAddress: `${property.address}, ${property.suburb}`,
+    preferredChannel: 'PHONE',
+    verifiedStatus: 'VERIFIED'
+  };
+
+  const streetName = property.address.replace(/^\d+[\s\w-]*\s+/, '').trim() || 'Richmond Road';
+
   return (
     <aside 
       id="property-title-panel"
-      className="w-80 sm:w-96 lg:w-[400px] bg-slate-50 text-slate-800 border-l border-slate-300 flex flex-col h-full overflow-y-auto select-text shadow-md z-20 shrink-0"
+      className="w-80 sm:w-96 lg:w-[410px] bg-slate-50 text-slate-800 border-l border-slate-300 flex flex-col h-full overflow-y-auto select-text shadow-md z-20 shrink-0"
     >
       {/* Top Title Bar (Classic CMA Dark Teal) */}
       <div className="bg-[#006980] px-3 py-2 text-white flex items-center justify-between shadow-xs sticky top-0 z-30">
@@ -127,7 +190,7 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
         <div className="flex items-center justify-between text-slate-700">
           <span className="font-semibold text-cyan-900 uppercase tracking-tight flex items-center gap-1">
             <Layers className="w-3 h-3 text-cyan-700" />
-            Properties in street: {property.address.split(' ').slice(1).join(' ')}
+            Street: {streetName}
           </span>
           <span className="text-[10px] bg-cyan-100 text-cyan-900 font-bold px-1.5 py-0.2 rounded border border-cyan-300">
             {property.zoning}
@@ -222,6 +285,234 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
 
       {/* Accordion Sections */}
       <div className="divide-y divide-slate-200 text-xs">
+
+        {/* SECTION A: AI INDIVIDUAL PROPERTY VALUATION */}
+        <div>
+          <button
+            id="accordion-ai-valuation"
+            onClick={() => toggleSection('aiValuation')}
+            className="w-full px-3 py-1.5 bg-gradient-to-r from-cyan-900 to-[#006980] hover:from-cyan-950 hover:to-teal-800 flex items-center justify-between font-bold text-white transition-colors text-left shadow-2xs"
+          >
+            <span className="flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-cyan-200" />
+              <span>AI Individual Property Valuation</span>
+            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] bg-cyan-400/20 text-cyan-100 border border-cyan-300/40 px-1.5 py-0.2 rounded font-semibold">
+                Per Property
+              </span>
+              {openSections.aiValuation ? <ChevronUp className="w-3.5 h-3.5 text-white" /> : <ChevronDown className="w-3.5 h-3.5 text-white" />}
+            </div>
+          </button>
+
+          {openSections.aiValuation && (
+            <div className="p-3 bg-white space-y-2.5 text-[11px]">
+              {isAiLoading && !aiValuation ? (
+                <div className="p-4 text-center space-y-2">
+                  <RefreshCw className="w-5 h-5 text-cyan-700 animate-spin mx-auto" />
+                  <p className="text-slate-600 font-semibold text-xs">Computing AI valuation for {property.address}...</p>
+                </div>
+              ) : aiValuation ? (
+                <>
+                  {/* Valuation Top Banner */}
+                  <div className="p-3 bg-gradient-to-br from-cyan-50 to-slate-50 rounded-lg border border-cyan-200 space-y-2 shadow-2xs">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <span className="text-[10px] uppercase font-bold text-cyan-900 tracking-wider block">
+                          AI Fair Market Valuation
+                        </span>
+                        <div className="text-2xl font-extrabold text-slate-900">
+                          {formatZar(aiValuation.individualValuation.estimatedMarketValue)}
+                        </div>
+                        <div className="text-xs text-slate-600 font-medium">
+                          Rate: <strong className="text-cyan-950">{formatZar(aiValuation.individualValuation.pricePerM2)} / m²</strong> under-roof
+                        </div>
+                      </div>
+
+                      <div className="text-right">
+                        <span className="bg-emerald-100 text-emerald-900 border border-emerald-300 text-[10px] font-bold px-2 py-0.5 rounded-full inline-block">
+                          {aiValuation.individualValuation.confidenceScore}% Confidence
+                        </span>
+                        <span className="block text-[9px] text-slate-400 mt-1">
+                          Erf {property.erfNo} Specific
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Price Range */}
+                    <div className="grid grid-cols-3 gap-1.5 pt-1.5 border-t border-cyan-100 text-center text-[10px]">
+                      <div className="bg-white p-1 rounded border border-slate-200">
+                        <span className="text-slate-500 block">Conservative</span>
+                        <span className="font-bold text-slate-700">{formatZar(aiValuation.individualValuation.valueRange.conservative)}</span>
+                      </div>
+                      <div className="bg-cyan-100/60 p-1 rounded border border-cyan-300">
+                        <span className="text-cyan-900 font-bold block">Target</span>
+                        <span className="font-extrabold text-cyan-950">{formatZar(aiValuation.individualValuation.valueRange.target)}</span>
+                      </div>
+                      <div className="bg-white p-1 rounded border border-slate-200">
+                        <span className="text-slate-500 block">Aggressive</span>
+                        <span className="font-bold text-slate-700">{formatZar(aiValuation.individualValuation.valueRange.aggressive)}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Micro-Market & Street Comparison */}
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="p-2 bg-slate-50 rounded border border-slate-200">
+                      <span className="text-slate-500 text-[10px] block font-semibold">Street Baseline ({streetName})</span>
+                      <div className="font-bold text-slate-800 text-xs">
+                        {formatZar(aiValuation.streetBenchmark.streetAveragePricePerM2)} / m²
+                      </div>
+                      <span className={`text-[10px] font-bold ${aiValuation.streetBenchmark.varianceVsStreetPercent >= 0 ? 'text-emerald-700' : 'text-amber-700'}`}>
+                        {aiValuation.streetBenchmark.varianceVsStreetPercent >= 0 ? '+' : ''}
+                        {aiValuation.streetBenchmark.varianceVsStreetPercent}% vs Street Avg
+                      </span>
+                    </div>
+
+                    <div className="p-2 bg-slate-50 rounded border border-slate-200">
+                      <span className="text-slate-500 text-[10px] block font-semibold">Suburb Median ({property.suburb})</span>
+                      <div className="font-bold text-slate-800 text-xs">
+                        {formatZar(aiValuation.suburbBenchmark.suburbMedianValuation)}
+                      </div>
+                      <span className={`text-[10px] font-bold ${aiValuation.suburbBenchmark.varianceVsSuburbPercent >= 0 ? 'text-emerald-700' : 'text-amber-700'}`}>
+                        {aiValuation.suburbBenchmark.varianceVsSuburbPercent >= 0 ? '+' : ''}
+                        {aiValuation.suburbBenchmark.varianceVsSuburbPercent}% vs Suburb Median
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Key Valuation Drivers */}
+                  <div className="p-2 bg-slate-50 rounded border border-slate-200 space-y-1">
+                    <span className="text-[10px] font-bold uppercase text-slate-700 block">
+                      AI Property Drivers:
+                    </span>
+                    <ul className="space-y-1 text-[10px] text-slate-600">
+                      {aiValuation.individualValuation.keyDrivers.slice(0, 3).map((driver, i) => (
+                        <li key={i} className="flex items-start gap-1">
+                          <CheckCircle2 className="w-3 h-3 text-cyan-700 shrink-0 mt-0.5" />
+                          <span>{driver}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex items-center gap-1.5 pt-1">
+                    <button
+                      id="btn-panel-open-full-cma"
+                      onClick={onOpenValuation}
+                      className="flex-1 py-1.5 px-2.5 bg-[#006980] hover:bg-teal-700 text-white rounded font-bold text-xs flex items-center justify-center gap-1 transition-colors shadow-xs"
+                    >
+                      <TrendingUp className="w-3.5 h-3.5" />
+                      <span>Open Full Valuation Matrix</span>
+                    </button>
+                    <button
+                      id="btn-panel-recalc-ai"
+                      onClick={() => fetchIndividualPropertyValuation(property)}
+                      disabled={isAiLoading}
+                      className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 rounded transition-colors"
+                      title="Recalculate AI Valuation"
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 ${isAiLoading ? 'animate-spin' : ''}`} />
+                    </button>
+                  </div>
+                </>
+              ) : null}
+            </div>
+          )}
+        </div>
+
+        {/* SECTION B: OWNER CONTACTS & DIRECT OUTREACH */}
+        <div>
+          <button
+            id="accordion-owner-contacts"
+            onClick={() => toggleSection('ownerContacts')}
+            className="w-full px-3 py-1.5 bg-slate-200 hover:bg-slate-300 flex items-center justify-between font-bold text-slate-800 transition-colors text-left"
+          >
+            <span className="flex items-center gap-1.5 text-cyan-900">
+              <Phone className="w-3.5 h-3.5 text-cyan-700" />
+              <span>Owner Contacts & Outreach</span>
+            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] bg-emerald-100 text-emerald-900 border border-emerald-300 px-1.5 py-0.2 rounded font-semibold">
+                Direct Options
+              </span>
+              {openSections.ownerContacts ? <ChevronUp className="w-3.5 h-3.5 text-slate-600" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-600" />}
+            </div>
+          </button>
+
+          {openSections.ownerContacts && (
+            <div className="p-3 bg-white space-y-3 text-[11px]">
+              {/* Owner Card */}
+              <div className="p-2.5 bg-slate-50 rounded-md border border-slate-200 space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Registered Owner</span>
+                  <span className="bg-emerald-100 text-emerald-800 text-[9px] font-bold px-1.5 py-0.2 rounded">
+                    Verified Deeds Contact
+                  </span>
+                </div>
+                <div className="font-bold text-slate-900 text-xs">
+                  {property.currentSale.owner}
+                </div>
+                {contacts.representativeName && contacts.representativeName !== property.currentSale.owner && (
+                  <div className="text-[10px] text-slate-600">
+                    Contact Rep: <strong className="text-slate-800">{contacts.representativeName}</strong>
+                  </div>
+                )}
+              </div>
+
+              {/* Action Buttons: Call, Email, WhatsApp */}
+              <div className="grid grid-cols-3 gap-1.5">
+                {/* CALL BUTTON */}
+                <button
+                  id="btn-contact-call-action"
+                  onClick={() => onOpenContactOwner ? onOpenContactOwner(property, 'call') : window.open(`tel:${contacts.primaryPhone}`)}
+                  className="py-2 px-2 bg-[#006980] hover:bg-teal-700 text-white rounded font-bold text-xs flex flex-col items-center justify-center gap-1 transition-colors shadow-xs"
+                >
+                  <Phone className="w-3.5 h-3.5" />
+                  <span>Call</span>
+                </button>
+
+                {/* EMAIL BUTTON */}
+                <button
+                  id="btn-contact-email-action"
+                  onClick={() => onOpenContactOwner ? onOpenContactOwner(property, 'email') : window.open(`mailto:${contacts.email}`)}
+                  className="py-2 px-2 bg-slate-800 hover:bg-slate-900 text-white rounded font-bold text-xs flex flex-col items-center justify-center gap-1 transition-colors shadow-xs"
+                >
+                  <Mail className="w-3.5 h-3.5" />
+                  <span>Email</span>
+                </button>
+
+                {/* WHATSAPP BUTTON */}
+                <button
+                  id="btn-contact-wa-action"
+                  onClick={() => onOpenContactOwner ? onOpenContactOwner(property, 'whatsapp') : null}
+                  className="py-2 px-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded font-bold text-xs flex flex-col items-center justify-center gap-1 transition-colors shadow-xs"
+                >
+                  <MessageSquare className="w-3.5 h-3.5" />
+                  <span>WhatsApp</span>
+                </button>
+              </div>
+
+              {/* Number and Email text lines */}
+              <div className="space-y-1 pt-1 border-t border-slate-100">
+                <div className="flex items-center justify-between text-slate-600">
+                  <span className="font-medium text-slate-500">Phone:</span>
+                  <a href={`tel:${contacts.primaryPhone}`} className="font-mono text-cyan-900 font-bold hover:underline">
+                    {contacts.primaryPhone}
+                  </a>
+                </div>
+                <div className="flex items-center justify-between text-slate-600">
+                  <span className="font-medium text-slate-500">Email:</span>
+                  <a href={`mailto:${contacts.email}`} className="font-mono text-cyan-900 font-bold hover:underline truncate max-w-[200px]">
+                    {contacts.email}
+                  </a>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* SECTION 1: PROPERTY INFORMATION */}
         <div>
           <button

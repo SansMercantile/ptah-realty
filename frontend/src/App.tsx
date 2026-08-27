@@ -10,6 +10,7 @@ import { KYCModal } from './components/modals/KYCModal';
 import { AccommodationModal } from './components/modals/AccommodationModal';
 import { SectionalTitleModal } from './components/modals/SectionalTitleModal';
 import { ValuationModal } from './components/modals/ValuationModal';
+import { ContactOwnerModal } from './components/modals/ContactOwnerModal';
 import { DocumentsModal } from './components/modals/DocumentsModal';
 import { CMAEngineModal } from './components/modals/CMAEngineModal';
 import { MediaManagementModal } from './components/modals/MediaManagementModal';
@@ -36,7 +37,12 @@ export function App() {
   const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
   const [isPDFReportOpen, setIsPDFReportOpen] = useState(false);
   const [isPortalSyncOpen, setIsPortalSyncOpen] = useState(false);
-  
+
+  // Owner Contact Modal State
+  const [isContactOwnerModalOpen, setIsContactOwnerModalOpen] = useState(false);
+  const [contactOwnerProperty, setContactOwnerProperty] = useState<PropertyRecord | null>(null);
+  const [contactOwnerTab, setContactOwnerTab] = useState<'call' | 'email' | 'whatsapp'>('call');
+
   // KYC quick launch target
   const [kycTarget, setKycTarget] = useState<{ name: string; id: string }>({ name: '', id: '' });
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -105,6 +111,12 @@ export function App() {
     setActiveNavTab('kyc');
   };
 
+  const handleOpenContactOwner = (prop: PropertyRecord, initialTab: 'call' | 'email' | 'whatsapp' = 'call') => {
+    setContactOwnerProperty(prop);
+    setContactOwnerTab(initialTab);
+    setIsContactOwnerModalOpen(true);
+  };
+
   const handleSaveAccommodation = (updated: AccommodationDetails) => {
     if (!selectedProperty) return;
     const updatedProp = {
@@ -147,6 +159,8 @@ export function App() {
           isSidebarOpen={isSidebarOpen}
           onOpenCMAEngine={() => setIsCMAEngineOpen(true)}
           onOpenPDFReport={() => setIsPDFReportOpen(true)}
+          onOpenContactOwner={handleOpenContactOwner}
+          onOpenPortalSync={() => setIsPortalSyncOpen(true)}
         />
 
         {/* Right Collapsible Property & Title Information Sidebar */}
@@ -160,11 +174,12 @@ export function App() {
               setIsSectionalModalOpen(true);
             }}
             onOpenKYCForOwner={handleOpenKYCForOwner}
-            onOpenValuation={() => setIsCMAEngineOpen(true)}
+            onOpenValuation={() => setIsValuationModalOpen(true)}
             onOpenCMAEngine={() => setIsCMAEngineOpen(true)}
             onOpenMediaManagement={() => setIsMediaModalOpen(true)}
             onOpenPDFReport={() => setIsPDFReportOpen(true)}
             onOpenPortalSync={() => setIsPortalSyncOpen(true)}
+            onOpenContactOwner={handleOpenContactOwner}
           />
         )}
       </main>
@@ -275,6 +290,23 @@ export function App() {
         isOpen={isDocumentsModalOpen}
         onClose={() => setIsDocumentsModalOpen(false)}
         property={selectedProperty}
+      />
+
+      {/* 13. AI Property Valuation Suite Modal */}
+      <ValuationModal
+        isOpen={isValuationModalOpen}
+        onClose={() => setIsValuationModalOpen(false)}
+        property={selectedProperty}
+        onOpenContactOwner={handleOpenContactOwner}
+      />
+
+      {/* 14. Contact Property Owner & Outreach Modal */}
+      <ContactOwnerModal
+        isOpen={isContactOwnerModalOpen}
+        onClose={() => setIsContactOwnerModalOpen(false)}
+        property={contactOwnerProperty || selectedProperty}
+        initialTab={contactOwnerTab}
+        onOpenKYC={handleOpenKYCForOwner}
       />
     </div>
   );
