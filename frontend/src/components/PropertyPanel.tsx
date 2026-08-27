@@ -24,6 +24,7 @@ import {
   DollarSign
 } from 'lucide-react';
 import { PropertyRecord, AIPropertyValuationResponse, OwnerContactDetails } from '../types';
+import { getIndividualValuation } from '../services/api';
 
 interface PropertyPanelProps {
   property: PropertyRecord | null;
@@ -77,25 +78,17 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
   const fetchIndividualPropertyValuation = async (targetProp: PropertyRecord) => {
     setIsAiLoading(true);
     try {
-      const res = await fetch('/api/ai/property-valuation', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          propertyId: targetProp.id,
-          property: targetProp,
-          condition: targetProp.accommodation?.condition || 'GOOD',
-          customBuildingM2: targetProp.accommodation?.buildingM2 || targetProp.extentM2,
-          customExtentM2: targetProp.extentM2,
-          customAdjustments: {
-            pool: Boolean(targetProp.accommodation?.pool),
-            borehole: Boolean(targetProp.accommodation?.borehole)
-          }
-        })
-      });
-      if (res.ok) {
-        const data: AIPropertyValuationResponse = await res.json();
-        setAiValuation(data);
-      }
+      const data = await getIndividualValuation(
+        targetProp,
+        targetProp.accommodation?.condition || 'GOOD',
+        targetProp.accommodation?.buildingM2 || targetProp.extentM2,
+        targetProp.extentM2,
+        {
+          pool: Boolean(targetProp.accommodation?.pool),
+          borehole: Boolean(targetProp.accommodation?.borehole)
+        }
+      );
+      setAiValuation(data);
     } catch (err) {
       console.error('Error loading AI valuation for property:', err);
     } finally {

@@ -296,7 +296,7 @@ export const PDFReportModal: React.FC<PDFReportModalProps> = ({
               </div>
             )}
 
-            {/* 3. GEMINI AI MARKET COMMENTARY & STRATEGY */}
+            {/* 3. AWS BEDROCK AI MARKET COMMENTARY & STRATEGY */}
             {sections.aiNarrative && (
               <div className="space-y-2 border-t border-slate-200 pt-4">
                 <div className="flex items-center gap-2">

@@ -37,6 +37,13 @@ interface RealCadastreMapProps {
   showHouseNumbers?: boolean;
 }
 
+// CARTO's basemaps.cartocdn.com raster tiles now require an API key (else
+// tiles render with a repeated "API key required" watermark -- see
+// https://carto.com/basemaps/apikey). Appended as a `key` query param per
+// CARTO's own integration docs, using the Ptah-Realty-scoped key from env.
+const CARTO_MAPS_API_KEY = import.meta.env.VITE_CARTO_MAPS_API_KEY as string | undefined;
+const CARTO_TILE_KEY_PARAM = CARTO_MAPS_API_KEY ? `?key=${CARTO_MAPS_API_KEY}` : '';
+
 // Extract house number from address string (e.g., "5 RICHMOND ROAD" -> "5", "219 MAIN ROAD" -> "219")
 export const extractHouseNumber = (address?: string, fallback = ''): string => {
   if (!address) return fallback;
@@ -327,9 +334,9 @@ export const RealCadastreMap: React.FC<RealCadastreMapProps> = ({
           const sub = ['a', 'b', 'c', 'd'][Math.abs(tx + ty) % 4];
           
           if (activeTileSource === 'carto-dark') {
-            url = `https://${sub}.basemaps.cartocdn.com/rastertiles/dark_all/${zoomInt}/${wrappedX}/${ty}.png`;
+            url = `https://${sub}.basemaps.cartocdn.com/rastertiles/dark_all/${zoomInt}/${wrappedX}/${ty}.png${CARTO_TILE_KEY_PARAM}`;
           } else if (activeTileSource === 'carto-light') {
-            url = `https://${sub}.basemaps.cartocdn.com/rastertiles/light_all/${zoomInt}/${wrappedX}/${ty}.png`;
+            url = `https://${sub}.basemaps.cartocdn.com/rastertiles/light_all/${zoomInt}/${wrappedX}/${ty}.png${CARTO_TILE_KEY_PARAM}`;
           } else if (activeTileSource === 'esri-satellite') {
             url = `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${zoomInt}/${ty}/${wrappedX}`;
           } else {

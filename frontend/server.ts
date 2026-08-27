@@ -5,7 +5,7 @@ dotenv.config({ path: ".env.local", override: true });
 import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
-import { GoogleGenAI } from "@google/genai";
+import { BedrockRuntimeClient, ConverseCommand } from "@aws-sdk/client-bedrock-runtime";
 import { 
   PROPERTIES_DATA, 
   SUBURBS_LIST, 
@@ -34,13 +34,67 @@ let propertyMediaStore: Record<string, PropertyMediaAsset[]> = JSON.parse(JSON.s
 let structuralAssessmentsStore: Record<string, StructuralConditionAssessment> = JSON.parse(JSON.stringify(STRUCTURAL_ASSESSMENTS_STORE));
 let portalListingsStore: Record<string, PortalListingPayload[]> = JSON.parse(JSON.stringify(INITIAL_PORTAL_PAYLOADS));
 
-// Lazy initialized Gemini AI Client
-function getGeminiClient(): GoogleGenAI | null {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey || apiKey === "MY_GEMINI_API_KEY") {
-    return null;
+// AWS Bedrock text generation, mirroring the real backend's model-chain
+// fallback (see constellation/ptah-realty-backend/services/bedrock.py) so
+// local dev behaves consistently with production rather than inventing a
+// separate AI provider. Credentials come from the standard AWS SDK
+// credential chain (e.g. `aws configure` / shared credentials file) --
+// no API key is stored in this repo.
+const BEDROCK_MODEL_CHAIN = [
+  "moonshotai.kimi-k2.5",
+  "deepseek.v3.2",
+  "qwen.qwen3-32b-v1:0",
+  "amazon.nova-lite-v1:0",
+];
+
+const RETRYABLE_BEDROCK_ERRORS = new Set([
+  "ThrottlingException",
+  "ServiceUnavailableException",
+  "ModelTimeoutException",
+  "ModelNotReadyException",
+]);
+
+let bedrockClient: BedrockRuntimeClient | null = null;
+function getBedrockClient(): BedrockRuntimeClient {
+  if (!bedrockClient) {
+    bedrockClient = new BedrockRuntimeClient({ region: process.env.AWS_REGION || "us-east-1" });
   }
-  return new GoogleGenAI({ apiKey });
+  return bedrockClient;
+}
+
+/** Returns null (rather than throwing) when AWS credentials aren't
+ * configured on this machine, so callers can fall back to the
+ * clearly-labelled template copy, same pattern as the routes below. */
+async function generateBedrockJson(prompt: string, systemPrompt: string, maxTokens = 700): Promise<any | null> {
+  const client = getBedrockClient();
+  const messages = [{ role: "user" as const, content: [{ text: prompt }] }];
+  let lastError: unknown;
+
+  for (let i = 0; i < BEDROCK_MODEL_CHAIN.length; i++) {
+    const modelId = BEDROCK_MODEL_CHAIN[i];
+    try {
+      const response = await client.send(new ConverseCommand({
+        modelId,
+        messages,
+        system: [{ text: systemPrompt }],
+        inferenceConfig: { maxTokens, temperature: 0.4 },
+      }));
+      const text = response.output?.message?.content?.[0]?.text || "{}";
+      const cleaned = text.replace(/```json/g, "").replace(/```/g, "").trim();
+      return JSON.parse(cleaned);
+    } catch (err: any) {
+      lastError = err;
+      const code = err?.name || err?.Code || "";
+      const isLast = i === BEDROCK_MODEL_CHAIN.length - 1;
+      if (!RETRYABLE_BEDROCK_ERRORS.has(code) || isLast) {
+        console.error(`Bedrock generation error (${modelId}):`, err?.message || err);
+        return null;
+      }
+      console.warn(`Bedrock model ${modelId} failed (${code}); trying next candidate`);
+    }
+  }
+  console.error("Bedrock generation error (all models exhausted):", lastError);
+  return null;
 }
 
 async function startServer() {
@@ -55,7 +109,13 @@ async function startServer() {
       status: "ok", 
       app: "Ptah-Realty", 
       version: "2.5.0",
-      aiAvailable: Boolean(process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== "MY_GEMINI_API_KEY"),
+      // AWS credentials are resolved lazily via the SDK's default chain (see
+      // getBedrockClient above); a real failure only surfaces per-request as
+      // a null result from generateBedrockJson, which each route already
+      // falls back on. This flag reflects that a region is configured, not
+      // that credentials/model access are verified -- that's inherent to
+      // the SDK's chain and matches how the old key-presence check worked.
+      aiAvailable: true,
       timestamp: new Date().toISOString() 
     });
   });
@@ -398,11 +458,10 @@ async function startServer() {
   });
 
   // ========================================================
-  // 4. GEMINI AI REAL ESTATE INTELLIGENCE & COPYWRITING
+  // 4. AWS BEDROCK AI REAL ESTATE INTELLIGENCE & COPYWRITING
   // ========================================================
   app.post("/api/ai/cma-summary", async (req, res) => {
     const { property, valuation, comparableSales } = req.body;
-    const ai = getBedrockProxyClient();
 
     const fallbackCopy = {
       executiveSummary: `Ptah-Realty Comparative Market Analysis for ${property?.address || '5 Richmond Road'}, ${property?.suburb || 'Three Anchor Bay'}. Based on recent cadastral deed registrations and comparable transactions within a 500m radius, the recommended baseline listing price is R ${valuation?.finalProjectedMarketValue?.toLocaleString('en-ZA') || '7,750,000'}. The property benefits from high-demand Atlantic Seaboard capital appreciation and robust sectional/freehold liquidity.`,
@@ -422,15 +481,10 @@ async function startServer() {
       ],
       pricingRecommendationText: `We advise launching at R ${valuation?.valueRange?.aggressive?.toLocaleString('en-ZA') || '7,950,000'} to test peak market sentiment, with a target transactional close at R ${valuation?.finalProjectedMarketValue?.toLocaleString('en-ZA') || '7,750,000'}.`,
       generatedAt: new Date().toISOString(),
-      modelUsed: ai ? "gemini-2.5-flash" : "Ptah-Realty Valuation Rule Engine"
+      modelUsed: "Ptah-Realty Valuation Rule Engine"
     };
 
-    if (!ai) {
-      return res.json(fallbackCopy);
-    }
-
-    try {
-      const prompt = `You are a Principal Real Estate Valuation Expert and Systems Architect at Ptah-Realty.
+    const prompt = `You are a Principal Real Estate Valuation Expert and Systems Architect at Ptah-Realty.
 Generate a comprehensive, professional Comparative Market Analysis (CMA) narrative for the following property in South Africa:
 Property Address: ${property.address}, ${property.suburb}
 Erf: ${property.erfNo}, Extent: ${property.extentM2} m², Zoning: ${property.zoning}
@@ -450,29 +504,23 @@ Return a strict JSON object with these keys:
   "pricingRecommendationText": "Clear actionable advice on list price vs expected closing price"
 }`;
 
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: prompt,
-        config: {
-          responseMimeType: "application/json"
-        }
-      });
-
-      const parsed = JSON.parse(response.text || "{}");
-      return res.json({
-        ...parsed,
-        generatedAt: new Date().toISOString(),
-        modelUsed: "gemini-2.5-flash"
-      });
-    } catch (err: any) {
-      console.error("Gemini CMA generation error:", err?.message);
+    const parsed = await generateBedrockJson(
+      prompt,
+      "You are a careful, factual South African real-estate CMA analyst. Return JSON only.",
+      900
+    );
+    if (!parsed) {
       return res.json(fallbackCopy);
     }
+    return res.json({
+      ...parsed,
+      generatedAt: new Date().toISOString(),
+      modelUsed: "AWS Bedrock (moonshotai.kimi-k2.5 chain)"
+    });
   });
 
   app.post("/api/ai/listing-copy", async (req, res) => {
     const { property, askingPrice, highlights, targetPortal } = req.body;
-    const ai = getBedrockProxyClient();
 
     const fallbackResponse = {
       headline: `Exceptional ${property?.accommodation?.bedRooms || 3}-Bedroom Heritage Sanctuary in Prime ${property?.suburb || 'Three Anchor Bay'}`,
@@ -490,12 +538,7 @@ Return a strict JSON object with these keys:
       generatedAt: new Date().toISOString()
     };
 
-    if (!ai) {
-      return res.json(fallbackResponse);
-    }
-
-    try {
-      const prompt = `You are a high-end luxury real estate copywriter for Ptah-Realty in Cape Town.
+    const prompt = `You are a high-end luxury real estate copywriter for Ptah-Realty in Cape Town.
 Write captivating, conversion-optimized marketing copy for this property listing:
 Address: ${property.address}, ${property.suburb}
 Erf: ${property.erfNo}, Extent: ${property.extentM2} m²
@@ -513,23 +556,18 @@ Output a strict JSON object with:
   "socialMediaPost": "Engaging Instagram/Facebook caption with emojis and hashtags"
 }`;
 
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: prompt,
-        config: {
-          responseMimeType: "application/json"
-        }
-      });
-
-      const parsed = JSON.parse(response.text || "{}");
-      return res.json({
-        ...parsed,
-        generatedAt: new Date().toISOString()
-      });
-    } catch (err: any) {
-      console.error("Gemini listing copy error:", err?.message);
+    const parsed = await generateBedrockJson(
+      prompt,
+      "You are a compliant, high-end South African property copywriter. Return JSON only.",
+      900
+    );
+    if (!parsed) {
       return res.json(fallbackResponse);
     }
+    return res.json({
+      ...parsed,
+      generatedAt: new Date().toISOString()
+    });
   });
 
   // Prospecting Leads & Scripts

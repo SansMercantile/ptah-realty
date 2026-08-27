@@ -366,7 +366,7 @@ export const ValuationModal: React.FC<ValuationModalProps> = ({
                           {aiValuationData.individualValuation.confidenceScore}% AI Confidence
                         </span>
                         <span className="block text-[10px] text-slate-400 mt-1">
-                          Powered by Gemini 2.5
+                          Powered by AWS Bedrock
                         </span>
                       </div>
                     </div>
