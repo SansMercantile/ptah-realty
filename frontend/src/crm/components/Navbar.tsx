@@ -1,6 +1,5 @@
 import React from 'react';
 import { 
-  Building2, 
   Kanban, 
   CheckSquare, 
   Calendar as CalendarIcon,
@@ -10,8 +9,6 @@ import {
   Radio, 
   Sparkles, 
   Bell, 
-  ExternalLink,
-  ShieldCheck,
   Settings,
   Search,
   Command,
@@ -55,48 +52,25 @@ export const Navbar: React.FC<NavbarProps> = ({
   return (
     <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 sticky top-0 z-30 shadow-xs transition-colors duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Brand Logo & Portal Sync Status */}
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-3 cursor-pointer" onClick={() => setCurrentView('pipeline')}>
-              <div className="w-10 h-10 rounded-xl bg-slate-900 dark:bg-slate-800 flex items-center justify-center shadow-sm ring-1 ring-slate-800 dark:ring-slate-700">
-                <Building2 className="w-5 h-5 text-emerald-400" />
-              </div>
-              <div>
-                <div className="flex items-center space-x-2">
-                  <span className="font-serif font-bold text-lg tracking-wide text-slate-900 dark:text-white">
-                    PTAH REALTY
-                  </span>
-                  <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-                    CRM Suite
-                  </span>
-                </div>
-                <div className="flex items-center space-x-2 text-xs text-slate-500 dark:text-slate-400">
-                  <span className="flex h-2 w-2 relative">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-600 dark:bg-emerald-500"></span>
-                  </span>
-                  <span className="truncate max-w-[180px] sm:max-w-none font-medium">
-                    Property 24 & Syndication Hub
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <a 
-              href="https://ptahrealty.sansmercantile.com/" 
-              target="_blank" 
-              rel="noreferrer"
-              className="hidden lg:flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-slate-50 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white text-xs transition border border-slate-200 dark:border-slate-700"
-              title="Open public website"
-            >
-              <span>ptahrealty.sansmercantile.com</span>
-              <ExternalLink className="w-3 h-3" />
-            </a>
-          </div>
+        {/*
+          Three-column grid, not flex justify-between: the CRM's own brand
+          block (PTAH REALTY logo, "CRM Suite" badge, Property 24 &
+          Syndication Hub subtitle, public-site link) was removed as
+          redundant -- this Navbar only ever renders inside the main Ptah
+          app's CRM tab, which already carries that branding. With a plain
+          flex row, removing that left-hand block just left the nav tabs
+          pinned to the left edge instead of centered (the right-hand
+          action cluster is a different width, so justify-between's
+          "space between two blocks" centering broke). A 3-column grid
+          with equal 1fr flanks keeps the middle nav visually centered on
+          the row regardless of what either side contains; the empty left
+          column is the deliberate mirror of the right column's width.
+        */}
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center h-16 gap-4">
+          <div />
 
           {/* Center Navigation Tabs */}
-          <nav className="hidden md:flex items-center space-x-1 bg-slate-100/80 dark:bg-slate-800/80 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
+          <nav className="hidden md:flex items-center space-x-1 bg-slate-100/80 dark:bg-slate-800/80 p-1 rounded-xl border border-slate-200 dark:border-slate-700 justify-self-center">
             <button
               onClick={() => setCurrentView('pipeline')}
               className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
@@ -164,7 +138,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           </nav>
 
           {/* Right Action Tools */}
-          <div className="flex items-center space-x-2 sm:space-x-2.5">
+          <div className="flex items-center space-x-2 sm:space-x-2.5 justify-self-end">
             {/* Global Command Palette Trigger (Cmd+K) */}
             <button
               onClick={onOpenCommandPalette}
