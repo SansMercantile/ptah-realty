@@ -161,7 +161,17 @@ export function filterPropertiesByStreet(
   return properties.filter((prop) => {
     // 1. Street match
     const street = extractStreetName(prop.address);
-    const matchesStreet = visibleStreets.has(street) || visibleStreets.size === 0;
+    const isKnownDemoStreet = CADASTRAL_STREETS.some((s) => s.name === street);
+    // The Street Filter panel only has toggles for the 8 fixed demo
+    // streets (Three Anchor Bay / Green Point precinct) -- visibleStreets
+    // is seeded from that same fixed list. Real backend properties (e.g.
+    // Property24-ingested or manually created) almost always live on a
+    // different street, which extractStreetName resolves to something
+    // outside that list. Previously that meant "not in visibleStreets" ->
+    // silently and permanently hidden, with no checkbox in the UI to ever
+    // bring it back. A street the filter panel can't even represent
+    // should never be treated as filtered out.
+    const matchesStreet = visibleStreets.has(street) || visibleStreets.size === 0 || !isKnownDemoStreet;
 
     if (!matchesStreet) return false;
 

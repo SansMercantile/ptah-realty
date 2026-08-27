@@ -331,16 +331,22 @@ export const RealCadastreMap: React.FC<RealCadastreMapProps> = ({
         const wrappedX = ((tx % numTiles) + numTiles) % numTiles;
         if (ty >= 0 && ty < numTiles) {
           let url = '';
-          const sub = ['a', 'b', 'c', 'd'][Math.abs(tx + ty) % 4];
+          // Carto's tile CDN supports 4 subdomains (a-d); OpenStreetMap's
+          // only has 3 (a-c) -- sharing one 4-way pick between them sent
+          // every 4th OSM tile to the nonexistent "d.tile.openstreetmap.org"
+          // (ERR_NAME_NOT_RESOLVED). Each provider now gets its own rotation
+          // sized to what it actually serves.
+          const cartoSub = ['a', 'b', 'c', 'd'][Math.abs(tx + ty) % 4];
+          const osmSub = ['a', 'b', 'c'][Math.abs(tx + ty) % 3];
           
           if (activeTileSource === 'carto-dark') {
-            url = `https://${sub}.basemaps.cartocdn.com/rastertiles/dark_all/${zoomInt}/${wrappedX}/${ty}.png${CARTO_TILE_KEY_PARAM}`;
+            url = `https://${cartoSub}.basemaps.cartocdn.com/rastertiles/dark_all/${zoomInt}/${wrappedX}/${ty}.png${CARTO_TILE_KEY_PARAM}`;
           } else if (activeTileSource === 'carto-light') {
-            url = `https://${sub}.basemaps.cartocdn.com/rastertiles/light_all/${zoomInt}/${wrappedX}/${ty}.png${CARTO_TILE_KEY_PARAM}`;
+            url = `https://${cartoSub}.basemaps.cartocdn.com/rastertiles/light_all/${zoomInt}/${wrappedX}/${ty}.png${CARTO_TILE_KEY_PARAM}`;
           } else if (activeTileSource === 'esri-satellite') {
             url = `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${zoomInt}/${ty}/${wrappedX}`;
           } else {
-            url = `https://${sub}.tile.openstreetmap.org/${zoomInt}/${wrappedX}/${ty}.png`;
+            url = `https://${osmSub}.tile.openstreetmap.org/${zoomInt}/${wrappedX}/${ty}.png`;
           }
           
           const screenX = (tx - centerTileX) * tileSize + dimensions.width / 2;
