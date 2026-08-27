@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { apiFetch } from "../../lib/api";
 import { 
   FileText, 
   Printer, 
@@ -16,6 +15,7 @@ import {
   Send
 } from 'lucide-react';
 import { PropertyRecord, ComparativeSaleRecord, CMAValuationCalculation, PropertyMediaAsset, AIGeneratedCMACopy } from '../../types';
+import { runValuation, listMedia } from '../../services/api';
 
 interface PDFReportModalProps {
   isOpen: boolean;
@@ -55,54 +55,33 @@ export const PDFReportModal: React.FC<PDFReportModalProps> = ({
   const loadAllReportData = async () => {
     if (!property) return;
     try {
-      const [valRes, compRes, mediaRes] = await Promise.all([
-        apiFetch('/api/cma/calculate-valuation', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ propertyId: property.id })
-        }),
-        apiFetch(`/api/cma/comparatives/${property.id}`),
-        apiFetch(`/api/media/${property.id}`)
+      const [calc, media] = await Promise.all([
+        runValuation(property, 1000),
+        listMedia(property.id).catch(() => []),
       ]);
 
-      const valJson = await valRes.json();
-      const compJson = await compRes.json();
-      const mediaJson = await mediaRes.json();
+      setValuationData(calc);
+      setComparatives(calc.comparableSales);
+      setMediaList(media);
 
-      setValuationData(valJson);
-      setComparatives(compJson.comparatives || []);
-      setMediaList(mediaJson.media || []);
-
-      // Trigger Amazon Bedrock AI generation for report narrative
-      generateAiMarketCopy('Executive', valJson);
+      // Note: no real backend AI-narrative endpoint exists yet -- aiCopy
+      // stays null and the JSX below already falls back to static
+      // placeholder text (aiCopy?.field || "..."). Not calling a fake
+      // /api/ai/cma-summary route here.
     } catch (err) {
       console.error('Error loading report data:', err);
     }
   };
 
-  const generateAiMarketCopy = async (tone: string, valDataOverride?: any) => {
-    if (!property) return;
-    setIsGeneratingAi(true);
-    try {
-      const currentVal = valDataOverride || valuationData;
-      const res = await apiFetch('/api/ai/cma-summary', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          property,
-          comparatives,
-          valuation: currentVal || { finalProjectedMarketValue: 6450000, averagePricePerM2: 24700 },
-          tone
-        })
-      });
-      const data = await res.json();
-      setAiCopy(data);
-    } catch (err) {
-      console.error('Error generating AI narrative:', err);
-    } finally {
-      setIsGeneratingAi(false);
-    }
+
+  // No real backend AI-narrative endpoint exists yet (server.ts references
+  // an undefined getBedrockProxyClient -- an incomplete integration). The
+  // tone selector stays in the UI for when that lands, but for now it's a
+  // clearly-labelled no-op rather than a fetch to a route that 404s.
+  const generateAiMarketCopy = async (_tone: string, _valDataOverride?: any) => {
+    console.info('AI narrative generation is not wired to a real backend yet.');
   };
+
 
   const handlePrint = () => {
     window.print();
@@ -141,7 +120,7 @@ export const PDFReportModal: React.FC<PDFReportModalProps> = ({
             {/* Tone selector */}
             <div className="hidden sm:flex items-center gap-1.5 bg-slate-950/60 p-0.5 rounded border border-cyan-900/50 text-xs">
               <span className="text-[10px] text-cyan-300 font-bold px-1.5 flex items-center gap-1">
-                <Sparkles className="w-3 h-3" /> Bedrock Tone:
+                <Sparkles className="w-3 h-3" /> AI Tone:
               </span>
               {(['Executive', 'Luxury', 'Investor'] as const).map(t => (
                 <button
@@ -317,7 +296,7 @@ export const PDFReportModal: React.FC<PDFReportModalProps> = ({
               </div>
             )}
 
-            {/* 3. AMAZON BEDROCK MARKET COMMENTARY & STRATEGY */}
+            {/* 3. GEMINI AI MARKET COMMENTARY & STRATEGY */}
             {sections.aiNarrative && (
               <div className="space-y-2 border-t border-slate-200 pt-4">
                 <div className="flex items-center gap-2">
@@ -334,11 +313,11 @@ export const PDFReportModal: React.FC<PDFReportModalProps> = ({
                   <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 border-t border-slate-200">
                     <div>
                       <span className="font-bold text-slate-800 block text-[11px]">Pricing Recommendation:</span>
-                      <p className="text-[11px] text-slate-600">{aiCopy?.pricingRecommendation || "Positioning at R 6 450 000 captures active buyer pools while preserving negotiation leverage."}</p>
+                      <p className="text-[11px] text-slate-600">{aiCopy?.pricingRecommendationText || "Positioning at R 6 450 000 captures active buyer pools while preserving negotiation leverage."}</p>
                     </div>
                     <div>
                       <span className="font-bold text-slate-800 block text-[11px]">Key Value Drivers:</span>
-                      <p className="text-[11px] text-slate-600">{aiCopy?.keyDrivers || "High ceiling volumes, prime cadastral orientation, private secure parking, and immediate proximity to lifestyle amenities."}</p>
+                      <p className="text-[11px] text-slate-600">{aiCopy?.keySellingPoints?.join(', ') || "High ceiling volumes, prime cadastral orientation, private secure parking, and immediate proximity to lifestyle amenities."}</p>
                     </div>
                   </div>
                 </div>
@@ -425,4 +404,3 @@ export const PDFReportModal: React.FC<PDFReportModalProps> = ({
     </div>
   );
 };
-;

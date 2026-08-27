@@ -21,7 +21,6 @@ import {
 } from 'lucide-react';
 import { KYCReportRecord, KYCReportType, KYCPrescribedPurpose } from '../../types';
 import { KYC_INITIAL_HISTORY } from '../../services/mockData';
-import { apiFetch } from '../../lib/api';
 
 interface KYCModalProps {
   isOpen: boolean;
@@ -79,39 +78,23 @@ export const KYCModal: React.FC<KYCModalProps> = ({
     setIsLoading(true);
 
     try {
-      const response = await apiFetch('/api/v1/intelligence/kyc/individual', {
+      const response = await fetch('/api/kyc/run', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          full_name: targetName || 'Subject Applicant',
-          id_number: targetIdOrReg || '7912195023088',
-          run_faceview: activeReportType === 'REAL_TIME_IDV' || activeReportType === 'FACEVIEW' || activeReportType === 'PRE_CHECK',
-          run_credit_check: activeReportType === 'CREDIT_REPORT' || activeReportType === 'PRE_CHECK',
-          run_sanctions: activeReportType === 'SANCTION_SCREENING' || activeReportType === 'PRE_CHECK'
+          reportType: activeReportType,
+          targetName: targetName || 'Subject Applicant',
+          targetIdOrReg: targetIdOrReg || '7912195023088',
+          prescribedPurpose,
+          searchReference,
+          dob
         })
       });
 
       const data = await response.json();
-      if (response.ok && data.id) {
-        // The production API returns a provider-neutral KycCase. Adapt it
-        // to the demo certificate shape so the source-of-truth UI remains
-        // unchanged while using the live authenticated backend contract.
-        const report: KYCReportRecord = {
-          id: data.id,
-          reportType: activeReportType,
-          targetName: data.subject_name,
-          targetIdOrReg: data.id_number || data.registration_number || targetIdOrReg,
-          requestedBy: 'Authenticated user',
-          timestamp: data.created_at,
-          prescribedPurpose,
-          searchReference,
-          costVatExcl: 0,
-          status: data.overall_status === 'passed' ? 'COMPLETED' : 'PENDING',
-          expiresAt: new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString(),
-          data: { checks: data.checks, overallStatus: data.overall_status }
-        };
-        setCurrentResult(report);
-        setHistoryList(prev => [report, ...prev]);
+      if (data.report) {
+        setCurrentResult(data.report);
+        setHistoryList(prev => [data.report, ...prev]);
       }
     } catch (err) {
       console.error(err);

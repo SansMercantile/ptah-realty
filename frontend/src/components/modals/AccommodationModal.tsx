@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { apiFetch } from "../../lib/api";
 import { 
   X, 
   Home, 
@@ -67,7 +66,7 @@ export const AccommodationModal: React.FC<AccommodationModalProps> = ({
 
     try {
       // Call live backend API endpoint
-      await apiFetch(`/api/properties/${property.id}/accommodation`, {
+      await fetch(`/api/properties/${property.id}/accommodation`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)

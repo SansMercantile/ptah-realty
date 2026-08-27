@@ -1,180 +1,283 @@
-/**
- * PTAH Realty -- standalone app shell.
- * Mirrors Ptah's own slate/amber console styling (see the main Ptah repo's
- * ConsolePage.tsx) so this mini-app reads as part of the same product
- * family while living in its own repo.
- *
- * Multi-tenant branding (Phase 1a, 2026-08-19): fetches GET /branding on
- * load, resolved server-side by request domain (see backend tenancy.py).
- * When a tenant has its own logo configured, that logo becomes the
- * primary mark in the header with a small "Powered by Ptah" attribution
- * alongside it; the default Sans Mercantile installation (no logo_url
- * set) keeps today's PTAH Realty branding unchanged. Footer format
- * matches the convention used across other Sans Mercantile applications
- * (see e.g. the main Ptah repo's LandingPage.tsx footer).
- *
- * Auth (Phase 1c, 2026-08-22): every route except /branding now requires
- * a session (see backend auth.py). Gates the main app behind Login until
- * a valid stored session exists -- see lib/api.ts for session storage
- * and the apiFetch() wrapper the rest of the app uses.
- */
+import React, { useState, useEffect } from 'react';
+import { Header, ActiveTab } from './components/Header';
+import { CadastralMap } from './components/CadastralMap';
+import { PropertyPanel } from './components/PropertyPanel';
+import { SuburbAnalyticsModal } from './components/modals/SuburbAnalyticsModal';
+import { PropertySearchModal } from './components/modals/PropertySearchModal';
+import { SalesTransfersModal } from './components/modals/SalesTransfersModal';
+import { ProspectingModal } from './components/modals/ProspectingModal';
+import { KYCModal } from './components/modals/KYCModal';
+import { AccommodationModal } from './components/modals/AccommodationModal';
+import { SectionalTitleModal } from './components/modals/SectionalTitleModal';
+import { ValuationModal } from './components/modals/ValuationModal';
+import { DocumentsModal } from './components/modals/DocumentsModal';
+import { CMAEngineModal } from './components/modals/CMAEngineModal';
+import { MediaManagementModal } from './components/modals/MediaManagementModal';
+import { PDFReportModal } from './components/modals/PDFReportModal';
+import { PortalSyncModal } from './components/modals/PortalSyncModal';
+import { LoginScreen } from './components/LoginScreen';
+import { PROPERTIES_DATA } from './services/mockData';
+import { PropertyRecord, AccommodationDetails } from './types';
+import { getCurrentUser, logout, listProperties, createProperty, type AuthUser } from './services/api';
 
-import React, { useEffect, useState } from "react";
-import { Home, LogOut } from "lucide-react";
-import RealtyValuation from "./components/RealtyValuation";
-import IntelligenceWorkspace from "./IntelligenceWorkspace";
-import Login from "./components/Login";
-import { getStoredAuth, logout, StoredUser } from "./lib/api";
+export function App() {
+  const [user, setUser] = useState<AuthUser | null>(getCurrentUser());
+  const [properties, setProperties] = useState<PropertyRecord[]>(PROPERTIES_DATA);
+  const [selectedProperty, setSelectedProperty] = useState<PropertyRecord | null>(PROPERTIES_DATA[0]); // Default 5 Richmond Road
+  const [isLoadingProperties, setIsLoadingProperties] = useState(false);
+  
+  // Navigation & Modals State
+  const [activeNavTab, setActiveNavTab] = useState<ActiveTab | null>(null);
+  const [isAccommodationModalOpen, setIsAccommodationModalOpen] = useState(false);
+  const [isValuationModalOpen, setIsValuationModalOpen] = useState(false);
+  const [isDocumentsModalOpen, setIsDocumentsModalOpen] = useState(false);
+  const [isSectionalModalOpen, setIsSectionalModalOpen] = useState(false);
+  const [isCMAEngineOpen, setIsCMAEngineOpen] = useState(false);
+  const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
+  const [isPDFReportOpen, setIsPDFReportOpen] = useState(false);
+  const [isPortalSyncOpen, setIsPortalSyncOpen] = useState(false);
+  
+  // KYC quick launch target
+  const [kycTarget, setKycTarget] = useState<{ name: string; id: string }>({ name: '', id: '' });
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
-interface Branding {
-  display_name: string;
-  logo_url: string | null;
-  primary_color: string;
-  accent_color: string;
-  powered_by_ptah: boolean;
-}
-
-const DEFAULT_BRANDING: Branding = {
-  display_name: "Sans Mercantile",
-  logo_url: null,
-  primary_color: "#f59e0b",
-  accent_color: "#f59e0b",
-  powered_by_ptah: true,
-};
-
-export default function App() {
-  const [branding, setBranding] = useState<Branding>(DEFAULT_BRANDING);
-  const [user, setUser] = useState<StoredUser | null>(null);
-  const [authChecked, setAuthChecked] = useState(false);
-  const [workspace, setWorkspace] = useState<"intelligence" | "valuation">("intelligence");
-
+  // Load real properties from the backend once authenticated. If the
+  // tenant has none yet (brand new), seed it with this demo's rich Cape
+  // Town dataset as real records -- so the app has real, valuable data
+  // from day one instead of only-ever-local mock state.
   useEffect(() => {
-    fetch("/api/v1/realty/branding")
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data) setBranding(data);
-      })
-      .catch(() => {
-        // Network hiccup or unregistered domain -- keep the default
-        // branding rather than leaving the header/footer blank.
-      });
+    if (!user) return;
+    setIsLoadingProperties(true);
+    (async () => {
+      try {
+        let real = await listProperties();
+        if (real.length === 0) {
+          for (const p of PROPERTIES_DATA) {
+            await createProperty(p);
+          }
+          real = await listProperties();
+        }
+        if (real.length > 0) {
+          setProperties(real);
+          setSelectedProperty(real[0]);
+        }
+      } catch (err) {
+        console.error('Failed to load real properties, staying on local dataset:', err);
+      } finally {
+        setIsLoadingProperties(false);
+      }
+    })();
+  }, [user]);
 
-    const stored = getStoredAuth();
-    setUser(stored?.user ?? null);
-    setAuthChecked(true);
-  }, []);
+  if (!user) {
+    return <LoginScreen onLogin={setUser} />;
+  }
 
-  const hasTenantLogo = Boolean(branding.logo_url);
+  const handleSelectTab = (tab: ActiveTab) => {
+    if (tab === 'cma') {
+      setIsCMAEngineOpen(true);
+      setActiveNavTab(null);
+    } else if (tab === 'media') {
+      setIsMediaModalOpen(true);
+      setActiveNavTab(null);
+    } else if (tab === 'pdf') {
+      setIsPDFReportOpen(true);
+      setActiveNavTab(null);
+    } else if (tab === 'portals') {
+      setIsPortalSyncOpen(true);
+      setActiveNavTab(null);
+    } else {
+      setActiveNavTab(tab);
+    }
+  };
+
+  const handleCloseNavModal = () => {
+    setActiveNavTab(null);
+  };
+
+  const handleSelectProperty = (prop: PropertyRecord) => {
+    setSelectedProperty(prop);
+    setIsSidebarOpen(true);
+  };
+
+  const handleOpenKYCForOwner = (ownerName: string, ownerId: string) => {
+    setKycTarget({ name: ownerName, id: ownerId });
+    setActiveNavTab('kyc');
+  };
+
+  const handleSaveAccommodation = (updated: AccommodationDetails) => {
+    if (!selectedProperty) return;
+    const updatedProp = {
+      ...selectedProperty,
+      accommodation: updated
+    };
+    setSelectedProperty(updatedProp);
+    setProperties(prev => prev.map(p => p.id === updatedProp.id ? updatedProp : p));
+  };
 
   return (
-    <div
-      className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 font-sans"
-      style={{ "--brand-primary": branding.primary_color, "--brand-accent": branding.accent_color } as React.CSSProperties}
-    >
-      <header className="border-b border-slate-200 dark:border-slate-900 bg-slate-50/80 dark:bg-slate-950/80 backdrop-blur sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center gap-3">
-          {hasTenantLogo ? (
-            <>
-              <div className="w-9 h-9">
-                <img src={branding.logo_url!} alt={branding.display_name} className="w-full h-full object-contain" />
-              </div>
-              <div className="flex-1">
-                <h1 className="font-display font-bold text-lg text-slate-900 dark:text-white leading-tight">
-                  {branding.display_name}
-                </h1>
-                <p className="text-[10px] font-mono text-slate-600 dark:text-slate-500 uppercase tracking-wider">
-                  CMA &middot; Reports &middot; Listing Distribution
-                </p>
-              </div>
-              {branding.powered_by_ptah && (
-                <div className="flex items-center gap-1.5 opacity-70">
-                  <span className="text-[9px] font-mono text-slate-500 dark:text-slate-600 uppercase tracking-wider">
-                    Powered by
-                  </span>
-                  <div className="w-4 h-4">
-                    <img src="/logo.svg" alt="Ptah" className="w-full h-full" />
-                  </div>
-                  <span className="text-[10px] font-display font-semibold text-slate-600 dark:text-slate-500">
-                    Ptah
-                  </span>
-                </div>
-              )}
-            </>
-          ) : (
-            <>
-              <div className="w-9 h-9">
-                <img src="/logo.svg" alt="Ptah" className="w-full h-full" />
-              </div>
-              <div className="flex-1">
-                <h1 className="font-display font-bold text-lg text-slate-900 dark:text-white leading-tight">
-                  PTAH <span style={{ color: "var(--brand-accent)" }}>Realty</span>
-                </h1>
-                <p className="text-[10px] font-mono text-slate-600 dark:text-slate-500 uppercase tracking-wider">
-                  CMA &middot; Reports &middot; Listing Distribution
-                </p>
-              </div>
-            </>
-          )}
-          {user && (
-            <div className="flex items-center gap-3">
-              <span className="text-[11px] font-mono text-slate-600 dark:text-slate-500 hidden sm:block">
-                {user.name}
-              </span>
-              <button
-                onClick={logout}
-                title="Log out"
-                className="flex items-center gap-1.5 text-[11px] font-mono text-slate-600 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-800 rounded px-2 py-1 transition-colors"
-              >
-                <LogOut className="w-3 h-3" /> Log out
-              </button>
-            </div>
-          )}
-        </div>
-      </header>
+    <div className="flex flex-col h-screen w-screen overflow-hidden bg-slate-900 text-slate-100 font-sans">
+      {/* Top Main Navigation */}
+      <Header
+        activeTab={activeNavTab}
+        onSelectTab={handleSelectTab}
+        onOpenAccommodation={() => setIsAccommodationModalOpen(true)}
+        onOpenCMAEngine={() => setIsCMAEngineOpen(true)}
+        onOpenMediaManagement={() => setIsMediaModalOpen(true)}
+        onOpenPDFReport={() => setIsPDFReportOpen(true)}
+        onOpenPortalSync={() => setIsPortalSyncOpen(true)}
+        onOpenDocuments={() => setIsDocumentsModalOpen(true)}
+        selectedPropertyAddress={selectedProperty?.address}
+      />
+      <button
+        onClick={() => { logout(); setUser(null); }}
+        className="fixed top-2 right-2 z-50 text-[10px] px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded"
+        title={user.email}
+      >
+        Sign out
+      </button>
 
-      {!authChecked ? null : user ? (
-        <>
-          <div className="border-b border-slate-200 dark:border-slate-900 bg-slate-50 dark:bg-slate-950 px-6 py-2">
-            <div className="max-w-7xl mx-auto flex items-center justify-end gap-2">
-              <span className="text-[10px] font-mono uppercase tracking-wider text-slate-500">Workspace</span>
-              <button
-                onClick={() => setWorkspace("intelligence")}
-                className={"rounded px-3 py-1 text-[11px] font-mono transition-colors " + (workspace === "intelligence" ? "bg-cyan-700 text-white" : "border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-400")}
-              >
-                Realty Intelligence
-              </button>
-              <button
-                onClick={() => setWorkspace("valuation")}
-                className={"rounded px-3 py-1 text-[11px] font-mono transition-colors " + (workspace === "valuation" ? "bg-amber-500 text-slate-950" : "border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-400")}
-              >
-                Valuation & Publishing
-              </button>
-            </div>
-          </div>
-          {workspace === "intelligence" ? <IntelligenceWorkspace /> : (
-            <main className="max-w-7xl mx-auto px-6 py-8">
-              <RealtyValuation />
-            </main>
-          )}
-        </>
-      ) : (
-        <main className="max-w-7xl mx-auto px-6 py-8">
-          <Login tenantDisplayName={branding.display_name} onLogin={() => setUser(getStoredAuth()?.user ?? null)} />
-        </main>
-      )}
+      {/* Main Workspace Area (Google Maps & Cadastral Vector Canvas + Property Title Panel) */}
+      <main className="flex-1 flex flex-row overflow-hidden relative">
+        {/* Cadastral Map View */}
+        <CadastralMap
+          properties={properties}
+          selectedProperty={selectedProperty}
+          onSelectProperty={handleSelectProperty}
+          isSidebarOpen={isSidebarOpen}
+          onOpenCMAEngine={() => setIsCMAEngineOpen(true)}
+          onOpenPDFReport={() => setIsPDFReportOpen(true)}
+        />
 
-      <footer className="border-t border-slate-200 dark:border-slate-900 mt-12">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex flex-col md:flex-row justify-between items-center text-[10px] font-mono text-slate-500 dark:text-slate-600 gap-2">
-          <span className="flex items-center gap-1.5">
-            <Home className="w-3 h-3" />
-            &copy; {new Date().getFullYear()} {branding.display_name}
-          </span>
-          <div className="flex items-center gap-4 uppercase tracking-wider">
-            {branding.powered_by_ptah && <span>Powered by Ptah</span>}
-            <span className="text-slate-400 dark:text-slate-700">Sans Mercantile Constellation Group</span>
-          </div>
-        </div>
-      </footer>
+        {/* Right Collapsible Property & Title Information Sidebar */}
+        {isSidebarOpen && (
+          <PropertyPanel
+            property={selectedProperty}
+            onClose={() => setIsSidebarOpen(false)}
+            onOpenAccommodation={() => setIsAccommodationModalOpen(true)}
+            onOpenSectionalUnits={(prop) => {
+              setSelectedProperty(prop);
+              setIsSectionalModalOpen(true);
+            }}
+            onOpenKYCForOwner={handleOpenKYCForOwner}
+            onOpenValuation={() => setIsCMAEngineOpen(true)}
+            onOpenCMAEngine={() => setIsCMAEngineOpen(true)}
+            onOpenMediaManagement={() => setIsMediaModalOpen(true)}
+            onOpenPDFReport={() => setIsPDFReportOpen(true)}
+            onOpenPortalSync={() => setIsPortalSyncOpen(true)}
+          />
+        )}
+      </main>
+
+      {/* MODALS */}
+      {/* 1. Suburb & Demographic Analytics Modal */}
+      <SuburbAnalyticsModal
+        isOpen={activeNavTab === 'suburb'}
+        onClose={handleCloseNavModal}
+        onSelectSuburbForMap={(suburb) => {
+          const match = properties.find(p => p.suburb.toLowerCase().includes(suburb.toLowerCase().split(',')[0]));
+          if (match) setSelectedProperty(match);
+        }}
+      />
+
+      {/* 2. Property & Cadastre Search Modal */}
+      <PropertySearchModal
+        isOpen={activeNavTab === 'search'}
+        onClose={handleCloseNavModal}
+        properties={properties}
+        onSelectProperty={handleSelectProperty}
+      />
+
+      {/* 3. Sales & Registered Transfers Modal */}
+      <SalesTransfersModal
+        isOpen={activeNavTab === 'sales'}
+        onClose={handleCloseNavModal}
+        properties={properties}
+        onSelectProperty={handleSelectProperty}
+      />
+
+      {/* 4. Prospecting & Lead Generation Engine Modal */}
+      <ProspectingModal
+        isOpen={activeNavTab === 'prospecting'}
+        onClose={handleCloseNavModal}
+        onSelectPropertyByAddress={(addr) => {
+          const match = properties.find(p => p.address.toLowerCase().includes(addr.toLowerCase()));
+          if (match) setSelectedProperty(match);
+        }}
+      />
+
+      {/* 5. KYC & Deeds Verification Suite Modal */}
+      <KYCModal
+        isOpen={activeNavTab === 'kyc'}
+        onClose={handleCloseNavModal}
+        initialOwnerName={kycTarget.name}
+        initialOwnerId={kycTarget.id}
+      />
+
+      {/* 6. Structural Accommodation Editor Modal */}
+      <AccommodationModal
+        isOpen={isAccommodationModalOpen}
+        onClose={() => setIsAccommodationModalOpen(false)}
+        property={selectedProperty}
+        onSaveAccommodation={handleSaveAccommodation}
+      />
+
+      {/* 7. Sectional Title Scheme Units Modal */}
+      <SectionalTitleModal
+        isOpen={isSectionalModalOpen}
+        onClose={() => setIsSectionalModalOpen(false)}
+        property={selectedProperty}
+        onOpenKYCForOwner={handleOpenKYCForOwner}
+      />
+
+      {/* 8. Comparative Market Analysis (CMA) Engine & Ingestion Pipeline Modal */}
+      <CMAEngineModal
+        isOpen={isCMAEngineOpen}
+        onClose={() => setIsCMAEngineOpen(false)}
+        property={selectedProperty}
+        onOpenPDFReport={() => {
+          setIsCMAEngineOpen(false);
+          setIsPDFReportOpen(true);
+        }}
+        onOpenPortalSync={() => {
+          setIsCMAEngineOpen(false);
+          setIsPortalSyncOpen(true);
+        }}
+      />
+
+      {/* 9. Property Media & Visual Asset Management Modal */}
+      <MediaManagementModal
+        isOpen={isMediaModalOpen}
+        onClose={() => setIsMediaModalOpen(false)}
+        property={selectedProperty}
+        onOpenPDFReport={() => {
+          setIsMediaModalOpen(false);
+          setIsPDFReportOpen(true);
+        }}
+      />
+
+      {/* 10. Client-Facing Automated PDF Report Generator Modal */}
+      <PDFReportModal
+        isOpen={isPDFReportOpen}
+        onClose={() => setIsPDFReportOpen(false)}
+        property={selectedProperty}
+      />
+
+      {/* 11. Multi-Portal Listing Sync & API Distribution Hub Modal */}
+      <PortalSyncModal
+        isOpen={isPortalSyncOpen}
+        onClose={() => setIsPortalSyncOpen(false)}
+        property={selectedProperty}
+      />
+
+      {/* 12. Property Documents & Official Deeds Modal */}
+      <DocumentsModal
+        isOpen={isDocumentsModalOpen}
+        onClose={() => setIsDocumentsModalOpen(false)}
+        property={selectedProperty}
+      />
     </div>
   );
 }
+
+export default App;

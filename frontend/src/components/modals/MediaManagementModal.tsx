@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { apiFetch } from "../../lib/api";
 import { 
   Image as ImageIcon, 
   Upload, 
@@ -68,8 +67,8 @@ export const MediaManagementModal: React.FC<MediaManagementModalProps> = ({
     setIsLoading(true);
     try {
       const [mediaRes, structRes] = await Promise.all([
-        apiFetch(`/api/media/${property.id}`),
-        apiFetch(`/api/structural/${property.id}`)
+        fetch(`/api/media/${property.id}`),
+        fetch(`/api/structural/${property.id}`)
       ]);
       const mediaData = await mediaRes.json();
       const structData = await structRes.json();
@@ -90,7 +89,7 @@ export const MediaManagementModal: React.FC<MediaManagementModalProps> = ({
     if (!property || !uploadUrl) return;
     setIsUploading(true);
     try {
-      const res = await apiFetch(`/api/media/${property.id}`, {
+      const res = await fetch(`/api/media/${property.id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -119,7 +118,7 @@ export const MediaManagementModal: React.FC<MediaManagementModalProps> = ({
   const handleSetHero = async (assetId: string) => {
     if (!property) return;
     try {
-      await apiFetch(`/api/media/${property.id}/${assetId}`, {
+      await fetch(`/api/media/${property.id}/${assetId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ isHero: true })
@@ -136,7 +135,7 @@ export const MediaManagementModal: React.FC<MediaManagementModalProps> = ({
     if (!target) return;
     const updatedVal = !target[field];
     try {
-      await apiFetch(`/api/media/${property.id}/${assetId}`, {
+      await fetch(`/api/media/${property.id}/${assetId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ [field]: updatedVal })
@@ -150,7 +149,7 @@ export const MediaManagementModal: React.FC<MediaManagementModalProps> = ({
   const handleDeleteAsset = async (assetId: string) => {
     if (!property) return;
     try {
-      await apiFetch(`/api/media/${property.id}/${assetId}`, { method: 'DELETE' });
+      await fetch(`/api/media/${property.id}/${assetId}`, { method: 'DELETE' });
       const updated = mediaList.filter(m => m.id !== assetId);
       setMediaList(updated);
       if (selectedAsset?.id === assetId) {
@@ -164,7 +163,7 @@ export const MediaManagementModal: React.FC<MediaManagementModalProps> = ({
   const handleSaveStructural = async () => {
     if (!property || !structuralData) return;
     try {
-      await apiFetch(`/api/structural/${property.id}`, {
+      await fetch(`/api/structural/${property.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(structuralData)

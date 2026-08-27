@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { apiFetch } from "../../lib/api";
 import { 
   X, 
   Calculator, 
@@ -51,7 +50,7 @@ export const ValuationModal: React.FC<ValuationModalProps> = ({
   const fetchCmaValuation = async (propId: string, condition: string) => {
     setIsLoading(true);
     try {
-      const res = await apiFetch('/api/valuations/cma', {
+      const res = await fetch('/api/valuations/cma', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ propertyId: propId, condition })

@@ -64,9 +64,10 @@ export const CadastralMap: React.FC<CadastralMapProps> = ({
   // AWS-first default: vector cadastral mode has no third-party map key.
   // An Amazon Location adapter can be enabled later without changing the
   // property selection and radius interaction contracts.
-  const mapEngine = 'vector' as const;
+  const [mapEngine] = useState<'vector'>('vector');
   const [showRadiusRing, setShowRadiusRing] = useState(true);
   const [radiusMeters, setRadiusMeters] = useState(500);
+  const [showZoningLayer, setShowZoningLayer] = useState(true);
   const [infoWindowProperty, setInfoWindowProperty] = useState<PropertyRecord | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -76,10 +77,12 @@ export const CadastralMap: React.FC<CadastralMapProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [hoveredErf, setHoveredErf] = useState<string | null>(null);
+  const [hoverTooltip, setHoverTooltip] = useState<{ property: PropertyRecord; x: number; y: number } | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
 
-  // Center the vector cadastral canvas on the selected property
+  // Center vector canvas or Google map on selection
   useEffect(() => {
     if (selectedProperty) {
       if (selectedProperty.polygonPoints?.length > 0) {
@@ -128,6 +131,10 @@ export const CadastralMap: React.FC<CadastralMapProps> = ({
     if (!value) return '-';
     return `R ${value.toLocaleString('en-ZA').replace(/,/g, ' ')}`;
   };
+
+  const currentCenter = selectedProperty?.gps 
+    ? { lat: selectedProperty.gps.lat, lng: selectedProperty.gps.lng } 
+    : { lat: -33.90876, lng: 18.401027 };
 
   return (
     <div
@@ -294,8 +301,27 @@ export const CadastralMap: React.FC<CadastralMapProps> = ({
                       e.stopPropagation();
                       onSelectProperty(prop);
                     }}
-                    onMouseEnter={() => setHoveredErf(prop.erfNo)}
-                    onMouseLeave={() => setHoveredErf(null)}
+                    onMouseEnter={(e) => {
+                      setHoveredErf(prop.erfNo);
+                      const rect = containerRef.current?.getBoundingClientRect();
+                      setHoverTooltip({
+                        property: prop,
+                        x: e.clientX - (rect?.left ?? 0),
+                        y: e.clientY - (rect?.top ?? 0),
+                      });
+                    }}
+                    onMouseMove={(e) => {
+                      const rect = containerRef.current?.getBoundingClientRect();
+                      setHoverTooltip({
+                        property: prop,
+                        x: e.clientX - (rect?.left ?? 0),
+                        y: e.clientY - (rect?.top ?? 0),
+                      });
+                    }}
+                    onMouseLeave={() => {
+                      setHoveredErf(null);
+                      setHoverTooltip(null);
+                    }}
                   >
                     <polygon
                       points={pointsString}
@@ -341,6 +367,40 @@ export const CadastralMap: React.FC<CadastralMapProps> = ({
         </div>
       )}
 
+      {/* Hover tooltip: quick property glance (price, extent, last sale
+          date) without needing the full selection panel/modal. Follows
+          the cursor via onMouseMove on the polygon, offset so it doesn't
+          sit directly under the pointer. */}
+      {hoverTooltip && (
+        <div
+          className="absolute z-30 pointer-events-none bg-slate-900/95 backdrop-blur-md border border-cyan-700/60 rounded-lg shadow-2xl px-3 py-2 text-xs space-y-1 min-w-[160px]"
+          style={{ left: hoverTooltip.x + 14, top: hoverTooltip.y + 14 }}
+        >
+          <div className="font-bold text-slate-100 text-[12px] flex items-center gap-1.5">
+            <Building2 className="w-3 h-3 text-cyan-400" />
+            Erf {hoverTooltip.property.erfNo}
+          </div>
+          <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-[11px]">
+            <span className="text-slate-500">Price:</span>
+            <span className="text-emerald-400 font-semibold text-right">
+              {formatZar(hoverTooltip.property.currentSale?.salePrice)}
+            </span>
+            <span className="text-slate-500">Extent:</span>
+            <span className="text-slate-200 font-semibold text-right">
+              {hoverTooltip.property.extentM2} m²
+            </span>
+            <span className="text-slate-500">Last sale:</span>
+            <span className="text-slate-200 font-semibold text-right">
+              {hoverTooltip.property.currentSale?.saleDate
+                ? new Date(hoverTooltip.property.currentSale.saleDate).toLocaleDateString('en-ZA', {
+                    year: 'numeric', month: 'short', day: 'numeric',
+                  })
+                : '-'}
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Bottom Map Toolbar */}
       <div className="absolute bottom-3 left-3 right-3 z-20 flex items-center justify-between pointer-events-none">
         
@@ -375,7 +435,9 @@ export const CadastralMap: React.FC<CadastralMapProps> = ({
             {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
           </button>
         </div>
+
       </div>
+
     </div>
   );
 };

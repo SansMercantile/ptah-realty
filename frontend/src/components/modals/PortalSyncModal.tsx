@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { apiFetch } from "../../lib/api";
 import { 
   Globe, 
   Send, 
@@ -44,7 +43,7 @@ export const PortalSyncModal: React.FC<PortalSyncModalProps> = ({
   const fetchPortals = async () => {
     if (!property) return;
     try {
-      const res = await apiFetch(`/api/portals/${property.id}`);
+      const res = await fetch(`/api/portals/${property.id}`);
       const data = await res.json();
       setPortals(data.portals || []);
       if (data.portals?.length > 0) {
@@ -58,7 +57,7 @@ export const PortalSyncModal: React.FC<PortalSyncModalProps> = ({
   const handleSyncPortal = async (portalId: string) => {
     if (!property) return;
     try {
-      const res = await apiFetch(`/api/portals/${property.id}/sync`, {
+      const res = await fetch(`/api/portals/${property.id}/sync`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ portalId })
@@ -79,7 +78,7 @@ export const PortalSyncModal: React.FC<PortalSyncModalProps> = ({
     if (!property) return;
     setIsSyncingAll(true);
     try {
-      const res = await apiFetch(`/api/portals/${property.id}/sync-all`, { method: 'POST' });
+      const res = await fetch(`/api/portals/${property.id}/sync-all`, { method: 'POST' });
       const data = await res.json();
       setPortals(data.portals || []);
     } catch (err) {
@@ -93,7 +92,7 @@ export const PortalSyncModal: React.FC<PortalSyncModalProps> = ({
     if (!property) return;
     setIsGeneratingAi(true);
     try {
-      const res = await apiFetch('/api/ai/listing-copy', {
+      const res = await fetch('/api/ai/listing-copy', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -202,7 +201,7 @@ export const PortalSyncModal: React.FC<PortalSyncModalProps> = ({
               </div>
             ) : (
               <p className="text-xs text-slate-400">
-                Click above to draft portal copy with Amazon Bedrock, calibrated for Property24 and Private Property workflows.
+                Click above to instantly draft compelling, high-conversion portal copy calibrated for Property24 and Private Property algorithms.
               </p>
             )}
           </div>
