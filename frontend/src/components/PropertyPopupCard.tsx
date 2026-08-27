@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { PropertyRecord } from '../types';
 import { INITIAL_PROPERTY_MEDIA } from '../services/mockData';
+import { listMedia } from '../services/api';
 
 interface PropertyPopupCardProps {
   property: PropertyRecord | null;
@@ -41,10 +42,34 @@ export const PropertyPopupCard: React.FC<PropertyPopupCardProps> = ({
   onOpenPortalSync
 }) => {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [realMediaUrls, setRealMediaUrls] = useState<string[] | null>(null);
 
   // Reset image index when selected property changes
   useEffect(() => {
     setActiveImageIndex(0);
+  }, [property?.id]);
+
+  // Real backend properties (MongoDB ids -- not one of the mock dataset's
+  // fixed 'prop-XXXX' ids) have no photos baked into mockData.ts. This
+  // used to silently fall through to 3 generic stock photos regardless of
+  // address -- misleading, since they look like real photos of that
+  // property. Fetch the actual uploaded media for real properties instead;
+  // mock demo properties are untouched (mediaAssets.length check below
+  // already covers them via INITIAL_PROPERTY_MEDIA).
+  useEffect(() => {
+    if (!property || INITIAL_PROPERTY_MEDIA[property.id]) {
+      setRealMediaUrls(null);
+      return;
+    }
+    let cancelled = false;
+    listMedia(property.id)
+      .then((media) => {
+        if (!cancelled) setRealMediaUrls(media.map((m: any) => m.original_url).filter(Boolean));
+      })
+      .catch(() => {
+        if (!cancelled) setRealMediaUrls([]);
+      });
+    return () => { cancelled = true; };
   }, [property?.id]);
 
   if (!property) return null;
@@ -52,17 +77,25 @@ export const PropertyPopupCard: React.FC<PropertyPopupCardProps> = ({
   // Compile image list: from property.images, propertyMediaStore, or property.imageUrl
   const mediaAssets = INITIAL_PROPERTY_MEDIA[property.id] || [];
   const imageList: string[] = [];
+  const isRealProperty = realMediaUrls !== null;
 
   if (property.images && property.images.length > 0) {
     imageList.push(...property.images);
   } else if (mediaAssets.length > 0) {
     imageList.push(...mediaAssets.map(a => a.url));
+  } else if (isRealProperty && realMediaUrls!.length > 0) {
+    imageList.push(...realMediaUrls!);
   } else if (property.imageUrl) {
     imageList.push(property.imageUrl);
   }
 
-  // Fallback if no images found
-  if (imageList.length === 0) {
+  // Honest empty state for a real property with no uploaded photos yet --
+  // no generic stock-photo fallback here, since that would misrepresent
+  // an address no one has actually photographed.
+  const hasNoRealPhotos = isRealProperty && imageList.length === 0;
+
+  // Demo/mock properties only: fallback if no images found
+  if (!isRealProperty && imageList.length === 0) {
     imageList.push(
       'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80',
       'https://images.unsplash.com/photo-1600566753376-12c8ab7fb75b?auto=format&fit=crop&w=1200&q=80',
@@ -128,11 +161,18 @@ export const PropertyPopupCard: React.FC<PropertyPopupCardProps> = ({
     >
       {/* 1. TOP IMAGE GALLERY CAROUSEL */}
       <div className="relative w-full h-52 bg-slate-950 overflow-hidden group select-none shrink-0">
-        <img
-          src={currentImage}
-          alt={property.address}
-          className="w-full h-full object-cover transition-all duration-300 group-hover:scale-105"
-        />
+        {hasNoRealPhotos ? (
+          <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-slate-500">
+            <Camera className="w-8 h-8" />
+            <span className="text-xs font-semibold">No photos uploaded yet</span>
+          </div>
+        ) : (
+          <img
+            src={currentImage}
+            alt={property.address}
+            className="w-full h-full object-cover transition-all duration-300 group-hover:scale-105"
+          />
+        )}
 
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/20 to-black/50 pointer-events-none" />
 
