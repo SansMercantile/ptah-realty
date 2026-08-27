@@ -8,3 +8,11 @@ __pycache__/
 data/
 *.log
 .vercel/
+
+# This is the ptah-realty *frontend* repo. The FastAPI backend lives in
+# the separate constellation/ptah-realty-backend repo (its own git
+# history, its own AWS ECS deploy pipeline) -- a stray copy or zip of
+# that source occasionally ends up here from local file shuffling and
+# must never be committed to this repo.
+_backend_src/
+_backend_src.zip
