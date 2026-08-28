@@ -157,7 +157,7 @@ export const PropertyPopupCard: React.FC<PropertyPopupCardProps> = ({
   return (
     <div
       id="property-popup-card-modal"
-      className="absolute top-4 left-4 z-40 w-96 max-w-[calc(100vw-32px)] bg-slate-900/95 backdrop-blur-xl border border-cyan-500/50 shadow-2xl rounded-2xl overflow-hidden transition-all duration-200 animate-in fade-in slide-in-from-top-3 flex flex-col max-h-[calc(100vh-140px)]"
+      className="absolute top-28 left-4 z-40 w-96 max-w-[calc(100vw-32px)] bg-slate-900/95 backdrop-blur-xl border border-cyan-500/50 shadow-2xl rounded-2xl overflow-hidden transition-all duration-200 animate-in fade-in slide-in-from-top-3 flex flex-col max-h-[calc(100vh-236px)]"
     >
       {/* 1. TOP IMAGE GALLERY CAROUSEL */}
       <div className="relative w-full h-52 bg-slate-950 overflow-hidden group select-none shrink-0">

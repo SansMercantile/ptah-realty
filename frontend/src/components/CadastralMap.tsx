@@ -2,8 +2,6 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { 
   Maximize2, 
   Minimize2, 
-  Plus, 
-  Minus, 
   Layers, 
   Map as MapIcon, 
   Navigation, 
@@ -354,6 +352,18 @@ export const CadastralMap: React.FC<CadastralMapProps> = ({
         </button>
       </div>
 
+      {/* Top-right: Fullscreen toggle -- moved here from the bottom-right
+          corner per explicit request, mirroring the top-left engine bar. */}
+      <div className="absolute top-3 right-3 z-20 flex items-center gap-1.5 pointer-events-auto">
+        <button
+          onClick={toggleFullscreen}
+          className="p-1.5 bg-slate-900/90 backdrop-blur-md rounded-lg border border-slate-700 shadow-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
+          title="Toggle Fullscreen"
+        >
+          {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+        </button>
+      </div>
+
       {/* Street & Precinct Filter Panel */}
       {showStreetFilters && (
         <div className="absolute top-14 right-3 z-30 pointer-events-auto animate-fade-in">
@@ -591,30 +601,10 @@ export const CadastralMap: React.FC<CadastralMapProps> = ({
           <span className="border-l border-slate-700 pl-2 text-slate-400 hidden sm:inline">SG Cadastre Ref: C0160021</span>
         </div>
 
-        {/* Zoom & Fullscreen Controls */}
-        <div className="flex items-center gap-1.5 bg-slate-900/90 backdrop-blur-md p-1 rounded-lg border border-slate-700 shadow-lg pointer-events-auto">
-          <button
-            onClick={() => setZoom(prev => Math.min(prev * 1.2, 3.5))}
-            className="p-1.5 hover:bg-slate-800 rounded text-slate-300 hover:text-white transition-colors"
-            title="Zoom In"
-          >
-            <Plus className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => setZoom(prev => Math.max(prev * 0.8, 0.5))}
-            className="p-1.5 hover:bg-slate-800 rounded text-slate-300 hover:text-white transition-colors"
-            title="Zoom Out"
-          >
-            <Minus className="w-4 h-4" />
-          </button>
-          <button
-            onClick={toggleFullscreen}
-            className="p-1.5 hover:bg-slate-800 rounded text-slate-300 hover:text-white transition-colors"
-            title="Toggle Fullscreen"
-          >
-            {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-          </button>
-        </div>
+        {/* Fullscreen toggle moved to the top-right cluster (mirroring the
+            top-left Engine Switcher) per explicit request -- was down here
+            stacked with the (now-removed) redundant zoom buttons, out of
+            the way of the map's other bottom-right controls. */}
 
       </div>
 
