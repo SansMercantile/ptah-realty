@@ -4,7 +4,6 @@ import {
   MapPin, 
   Layers, 
   Maximize2, 
-  Compass, 
   Sparkles, 
   ShieldCheck, 
   FileText, 
@@ -16,10 +15,25 @@ import {
   CheckCircle2,
   ZoomIn,
   ZoomOut,
-  RotateCcw
+  RotateCcw,
+  Box
 } from 'lucide-react';
 import { PropertyRecord } from '../types';
 import { extractStreetName } from '../utils/cadastralFilters';
+import { ARCHITECTURAL_BUILDINGS_DATABASE, getArchitecturalBuilding, ArchitecturalBuildingBox } from '../utils/buildingGeometry';
+
+// CARTO's basemaps.cartocdn.com raster tiles now require a dedicated,
+// free "Basemaps API key" (request one at https://carto.com/basemaps/apikey)
+// appended as a `key` query param, or tiles render with a repeated
+// "API key required" watermark. NOTE: this is a different credential from
+// VITE_CARTO_MAPS_API_KEY in .env -- that one is a CARTO Cloud Native v3
+// API Access Token (JWT, scoped to a specific connection/dataset for the
+// Maps/SQL/Tilesets APIs at gcp-us-east1.api.carto.com) and is NOT valid
+// against the basemaps.cartocdn.com raster endpoint, so it won't clear the
+// watermark on the Cadastral Dark / Deeds Plan Light basemaps below.
+// Street GIS (OpenStreetMap) needs no key at all and is the default.
+const CARTO_MAPS_API_KEY = import.meta.env.VITE_CARTO_BASEMAPS_API_KEY as string | undefined;
+const CARTO_TILE_KEY_PARAM = CARTO_MAPS_API_KEY ? `?key=${CARTO_MAPS_API_KEY}` : '';
 
 interface RealCadastreMapProps {
   properties: PropertyRecord[];
@@ -35,22 +49,18 @@ interface RealCadastreMapProps {
   visibleStreets?: Set<string>;
   showSurroundingParcels?: boolean;
   showHouseNumbers?: boolean;
+  heading?: number;
+  onHeadingChange?: (heading: number) => void;
+  tilt?: number;
+  onTiltChange?: (tilt: number) => void;
+  buildingRenderMode?: 'building_boxes' | 'cadastre_lots' | 'hybrid';
+  onBuildingRenderModeChange?: (mode: 'building_boxes' | 'cadastre_lots' | 'hybrid') => void;
+  show3DExtrusions?: boolean;
+  onToggle3DExtrusions?: (show: boolean) => void;
+  onCursorCoordsChange?: (coords: { lat: number; lng: number } | null) => void;
 }
 
-// CARTO's basemaps.cartocdn.com raster tiles now require a dedicated,
-// free "Basemaps API key" (request one at https://carto.com/basemaps/apikey)
-// appended as a `key` query param, or tiles render with a repeated
-// "API key required" watermark. NOTE: this is a different credential from
-// VITE_CARTO_MAPS_API_KEY in .env -- that one is a CARTO Cloud Native v3
-// API Access Token (JWT, scoped to a specific connection/dataset for the
-// Maps/SQL/Tilesets APIs at gcp-us-east1.api.carto.com) and is NOT valid
-// against the basemaps.cartocdn.com raster endpoint, so it won't clear the
-// watermark on the Cadastral Dark / Deeds Plan Light basemaps below.
-// Street GIS (OpenStreetMap) needs no key at all and is the default.
-const CARTO_MAPS_API_KEY = import.meta.env.VITE_CARTO_BASEMAPS_API_KEY as string | undefined;
-const CARTO_TILE_KEY_PARAM = CARTO_MAPS_API_KEY ? `?key=${CARTO_MAPS_API_KEY}` : '';
-
-// Extract house number from address string (e.g., "5 RICHMOND ROAD" -> "5", "219 MAIN ROAD" -> "219")
+// Extract house number from address string
 export const extractHouseNumber = (address?: string, fallback = ''): string => {
   if (!address) return fallback;
   const trimmed = address.trim();
@@ -73,6 +83,7 @@ const SURROUNDING_GEO_PARCELS: Array<{
   extentM2: number;
   center: [number, number]; // [lng, lat]
   coords: Array<[number, number]>; // [[lng, lat], ...]
+  buildingCoords?: Array<[number, number]>;
 }> = [
   {
     erf: '1680',
@@ -85,6 +96,12 @@ const SURROUNDING_GEO_PARCELS: Array<{
       [18.40088, -33.90878],
       [18.40086, -33.90892],
       [18.40066, -33.90894]
+    ],
+    buildingCoords: [
+      [18.40070, -33.90882],
+      [18.40085, -33.90880],
+      [18.40084, -33.90890],
+      [18.40069, -33.90891]
     ]
   },
   {
@@ -98,6 +115,12 @@ const SURROUNDING_GEO_PARCELS: Array<{
       [18.40134, -33.90864],
       [18.40132, -33.90878],
       [18.40112, -33.90880]
+    ],
+    buildingCoords: [
+      [18.40116, -33.90868],
+      [18.40131, -33.90866],
+      [18.40129, -33.90876],
+      [18.40115, -33.90877]
     ]
   },
   {
@@ -111,6 +134,12 @@ const SURROUNDING_GEO_PARCELS: Array<{
       [18.40156, -33.90860],
       [18.40154, -33.90874],
       [18.40134, -33.90876]
+    ],
+    buildingCoords: [
+      [18.40138, -33.90864],
+      [18.40153, -33.90862],
+      [18.40151, -33.90872],
+      [18.40137, -33.90873]
     ]
   },
   {
@@ -124,6 +153,12 @@ const SURROUNDING_GEO_PARCELS: Array<{
       [18.40108, -33.90844],
       [18.40106, -33.90858],
       [18.40086, -33.90860]
+    ],
+    buildingCoords: [
+      [18.40090, -33.90848],
+      [18.40105, -33.90846],
+      [18.40104, -33.90856],
+      [18.40089, -33.90857]
     ]
   },
   {
@@ -137,6 +172,12 @@ const SURROUNDING_GEO_PARCELS: Array<{
       [18.40130, -33.90840],
       [18.40128, -33.90854],
       [18.40108, -33.90856]
+    ],
+    buildingCoords: [
+      [18.40112, -33.90844],
+      [18.40127, -33.90842],
+      [18.40125, -33.90852],
+      [18.40111, -33.90853]
     ]
   },
   {
@@ -150,6 +191,12 @@ const SURROUNDING_GEO_PARCELS: Array<{
       [18.39940, -33.90830],
       [18.39938, -33.90855],
       [18.39898, -33.90860]
+    ],
+    buildingCoords: [
+      [18.39904, -33.90838],
+      [18.39936, -33.90833],
+      [18.39934, -33.90852],
+      [18.39902, -33.90856]
     ]
   },
   {
@@ -163,6 +210,12 @@ const SURROUNDING_GEO_PARCELS: Array<{
       [18.40015, -33.90815],
       [18.40013, -33.90840],
       [18.39973, -33.90845]
+    ],
+    buildingCoords: [
+      [18.39980, -33.90823],
+      [18.40010, -33.90818],
+      [18.40008, -33.90837],
+      [18.39978, -33.90841]
     ]
   },
   {
@@ -176,6 +229,12 @@ const SURROUNDING_GEO_PARCELS: Array<{
       [18.39980, -33.90926],
       [18.39978, -33.90950],
       [18.39948, -33.90954]
+    ],
+    buildingCoords: [
+      [18.39954, -33.90933],
+      [18.39976, -33.90930],
+      [18.39974, -33.90947],
+      [18.39952, -33.90950]
     ]
   },
   {
@@ -189,6 +248,12 @@ const SURROUNDING_GEO_PARCELS: Array<{
       [18.40055, -33.90908],
       [18.40053, -33.90930],
       [18.40023, -33.90932]
+    ],
+    buildingCoords: [
+      [18.40028, -33.90913],
+      [18.40051, -33.90911],
+      [18.40050, -33.90927],
+      [18.40026, -33.90928]
     ]
   },
   {
@@ -202,6 +267,12 @@ const SURROUNDING_GEO_PARCELS: Array<{
       [18.40105, -33.90920],
       [18.40100, -33.90945],
       [18.40060, -33.90950]
+    ],
+    buildingCoords: [
+      [18.40070, -33.90928],
+      [18.40098, -33.90924],
+      [18.40095, -33.90942],
+      [18.40066, -33.90945]
     ]
   }
 ];
@@ -228,7 +299,16 @@ export const RealCadastreMap: React.FC<RealCadastreMapProps> = ({
   containerBounds,
   visibleStreets,
   showSurroundingParcels = true,
-  showHouseNumbers = true
+  showHouseNumbers = true,
+  heading = 0,
+  onHeadingChange,
+  tilt = 0,
+  onTiltChange,
+  buildingRenderMode = 'building_boxes',
+  onBuildingRenderModeChange,
+  show3DExtrusions = true,
+  onToggle3DExtrusions,
+  onCursorCoordsChange
 }) => {
   const canvasRef = useRef<HTMLDivElement>(null);
 
@@ -248,7 +328,7 @@ export const RealCadastreMap: React.FC<RealCadastreMapProps> = ({
     selectedProperty?.gps ? { lat: selectedProperty.gps.lat, lng: selectedProperty.gps.lng } : defaultCenter
   );
   
-  // Real GIS zoom level (15 = neighborhood, 17 = parcel detail, 18 = rooftop/deeds)
+  // Real GIS zoom level (15 = neighborhood, 17.4 = parcel detail, 18.5 = rooftop/deeds)
   const [zoomLevel, setZoomLevel] = useState<number>(17.4);
   const [dimensions, setDimensions] = useState<{ width: number; height: number }>({ width: 800, height: 600 });
   const [isDragging, setIsDragging] = useState(false);
@@ -259,8 +339,6 @@ export const RealCadastreMap: React.FC<RealCadastreMapProps> = ({
   // key/token state. The Carto raster basemaps (Cadastral Dark, Deeds Plan
   // Light) remain available as an explicit switch.
   const [activeTileSource, setActiveTileSource] = useState<'carto-dark' | 'esri-satellite' | 'osm-standard' | 'carto-light'>('osm-standard');
-  const [showSurveyGrid, setShowSurveyGrid] = useState(true);
-  const [showLotDimensions, setShowLotDimensions] = useState(true);
   const [hoveredErfNo, setHoveredErfNo] = useState<string | null>(null);
 
   // Resize observer for responsive canvas
@@ -276,32 +354,125 @@ export const RealCadastreMap: React.FC<RealCadastreMapProps> = ({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // When selected property changes, smoothly animate center
+  // When selected property changes, smoothly center map
   useEffect(() => {
     if (selectedProperty?.gps) {
       setCenter({ lat: selectedProperty.gps.lat, lng: selectedProperty.gps.lng });
     }
   }, [selectedProperty]);
 
-  // Convert real geographic GPS to screen pixel space relative to current center and zoom
-  const projectGeoToScreen = (lat: number, lng: number): { x: number; y: number } => {
+  // Convert real geographic GPS to screen pixel space relative to center, heading, tilt, and height
+  const projectGeoToScreen = (lat: number, lng: number, heightMeters = 0): { x: number; y: number } => {
     const scale = Math.pow(2, zoomLevel);
     const centerWorld = latLngToWorld(center.lat, center.lng);
     const pointWorld = latLngToWorld(lat, lng);
     
-    const pixelX = (pointWorld.x - centerWorld.x) * scale + dimensions.width / 2;
-    const pixelY = (pointWorld.y - centerWorld.y) * scale + dimensions.height / 2;
+    let dx = (pointWorld.x - centerWorld.x) * scale;
+    let dy = (pointWorld.y - centerWorld.y) * scale;
+    
+    // Apply heading rotation if heading !== 0
+    if (heading !== 0) {
+      const rad = (-heading * Math.PI) / 180;
+      const cos = Math.cos(rad);
+      const sin = Math.sin(rad);
+      const rotX = dx * cos - dy * sin;
+      const rotY = dx * sin + dy * cos;
+      dx = rotX;
+      dy = rotY;
+    }
+    
+    let pixelX = dx + dimensions.width / 2;
+    let pixelY = dy + dimensions.height / 2;
+
+    // Apply 3D Tilt & Elevation
+    if (tilt > 0) {
+      const tiltRad = (tilt * Math.PI) / 180;
+      const cosTilt = Math.cos(tiltRad);
+      const sinTilt = Math.sin(tiltRad);
+
+      const relY = pixelY - dimensions.height / 2;
+      pixelY = dimensions.height / 2 + relY * cosTilt;
+
+      if (heightMeters > 0 && show3DExtrusions) {
+        const metersToPixels = (scale * 256) / (40075016.686 * Math.cos((center.lat * Math.PI) / 180));
+        const elevationPixels = heightMeters * metersToPixels * sinTilt * 2.2;
+        pixelY -= elevationPixels;
+      }
+    } else if (heightMeters > 0 && show3DExtrusions) {
+      // Isometric 2.5D elevation in 2D mode
+      const metersToPixels = (scale * 256) / (40075016.686 * Math.cos((center.lat * Math.PI) / 180));
+      const elevationPixels = heightMeters * metersToPixels * 0.9;
+      pixelY -= elevationPixels;
+      pixelX -= elevationPixels * 0.45;
+    }
     
     return { x: pixelX, y: pixelY };
   };
 
-  // Convert screen pixels back to lat/lng for dragging
-  const projectScreenToGeo = (screenX: number, screenY: number, baseCenter: { lat: number; lng: number }, baseZoom: number): { lat: number; lng: number } => {
+  // Convert screen pixels back to lat/lng for smooth natural dragging under rotation & tilt
+  const projectScreenToGeo = (
+    screenDx: number, 
+    screenDy: number, 
+    baseCenter: { lat: number; lng: number }, 
+    baseZoom: number
+  ): { lat: number; lng: number } => {
+    let unrotDx = screenDx;
+    let unrotDy = screenDy;
+
+    if (tilt > 0) {
+      const tiltRad = (tilt * Math.PI) / 180;
+      unrotDy = unrotDy / Math.cos(tiltRad);
+    }
+
+    if (heading !== 0) {
+      const rad = (heading * Math.PI) / 180;
+      const cos = Math.cos(rad);
+      const sin = Math.sin(rad);
+      const rx = unrotDx * cos - unrotDy * sin;
+      const ry = unrotDx * sin + unrotDy * cos;
+      unrotDx = rx;
+      unrotDy = ry;
+    }
+
     const scale = Math.pow(2, baseZoom);
     const centerWorld = latLngToWorld(baseCenter.lat, baseCenter.lng);
     
-    const worldX = centerWorld.x + (screenX - dimensions.width / 2) / scale;
-    const worldY = centerWorld.y + (screenY - dimensions.height / 2) / scale;
+    const worldX = centerWorld.x - unrotDx / scale;
+    const worldY = centerWorld.y - unrotDy / scale;
+    
+    const lng = (worldX / 256 - 0.5) * 360;
+    const n = Math.PI - (2 * Math.PI * worldY) / 256;
+    const lat = (180 / Math.PI) * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n)));
+    
+    return { lat, lng };
+  };
+
+  // Convert screen coordinates (relative to canvas container) to geographic lat/lng
+  const projectScreenPixelToGeo = (screenX: number, screenY: number): { lat: number; lng: number } => {
+    let unrotDx = screenX - dimensions.width / 2;
+    let unrotDy = screenY - dimensions.height / 2;
+
+    if (tilt > 0) {
+      const tiltRad = (tilt * Math.PI) / 180;
+      unrotDy = unrotDy / Math.cos(tiltRad);
+    }
+
+    if (heading !== 0) {
+      const rad = (-heading * Math.PI) / 180;
+      const cos = Math.cos(rad);
+      const sin = Math.sin(rad);
+      // Inverse rotation of (rotX = dx*cos - dy*sin, rotY = dx*sin + dy*cos)
+      const rx = unrotDx * cos + unrotDy * sin;
+      const ry = -unrotDx * sin + unrotDy * cos;
+      unrotDx = rx;
+      unrotDy = ry;
+    }
+
+    const scale = Math.pow(2, zoomLevel);
+    const centerWorld = latLngToWorld(center.lat, center.lng);
+    
+    const worldX = centerWorld.x + unrotDx / scale;
+    const worldY = centerWorld.y + unrotDy / scale;
     
     const lng = (worldX / 256 - 0.5) * 360;
     const n = Math.PI - (2 * Math.PI * worldY) / 256;
@@ -312,20 +483,21 @@ export const RealCadastreMap: React.FC<RealCadastreMapProps> = ({
 
   // Tile calculation for real OpenStreetMap / CartoDB / Esri satellite raster tiles
   const visibleTiles = useMemo(() => {
-    const scale = Math.pow(2, zoomLevel);
     const centerWorld = latLngToWorld(center.lat, center.lng);
     const zoomInt = Math.floor(zoomLevel);
     const tileZoomScale = Math.pow(2, zoomLevel - zoomInt);
     const tileSize = 256 * tileZoomScale;
     
     const numTiles = Math.pow(2, zoomInt);
-    const centerTileX = centerWorld.x * Math.pow(2, zoomInt) / 256;
-    const centerTileY = centerWorld.y * Math.pow(2, zoomInt) / 256;
+    const centerTileX = (centerWorld.x * Math.pow(2, zoomInt)) / 256;
+    const centerTileY = (centerWorld.y * Math.pow(2, zoomInt)) / 256;
     
-    const minTileX = Math.floor(centerTileX - (dimensions.width / (2 * tileSize)));
-    const maxTileX = Math.floor(centerTileX + (dimensions.width / (2 * tileSize))) + 1;
-    const minTileY = Math.floor(centerTileY - (dimensions.height / (2 * tileSize)));
-    const maxTileY = Math.floor(centerTileY + (dimensions.height / (2 * tileSize))) + 1;
+    // Expand bounds when rotated or tilted to prevent missing tile corners
+    const diagonal = Math.sqrt(dimensions.width * dimensions.width + dimensions.height * dimensions.height);
+    const minTileX = Math.floor(centerTileX - (diagonal / (2 * tileSize))) - 1;
+    const maxTileX = Math.floor(centerTileX + (diagonal / (2 * tileSize))) + 2;
+    const minTileY = Math.floor(centerTileY - (diagonal / (2 * tileSize))) - 1;
+    const maxTileY = Math.floor(centerTileY + (diagonal / (2 * tileSize))) + 2;
     
     const tiles: Array<{
       key: string;
@@ -341,14 +513,13 @@ export const RealCadastreMap: React.FC<RealCadastreMapProps> = ({
         const wrappedX = ((tx % numTiles) + numTiles) % numTiles;
         if (ty >= 0 && ty < numTiles) {
           let url = '';
-          // Carto's tile CDN supports 4 subdomains (a-d); OpenStreetMap's
-          // only has 3 (a-c) -- sharing one 4-way pick between them sent
-          // every 4th OSM tile to the nonexistent "d.tile.openstreetmap.org"
-          // (ERR_NAME_NOT_RESOLVED). Each provider now gets its own rotation
-          // sized to what it actually serves.
+          // OSM's tile CDN only rotates across 3 subdomains (a/b/c) --
+          // using the same 4-way 'd' subdomain as Carto here would send a
+          // quarter of Street GIS tile requests to a host that doesn't
+          // resolve for OSM, leaving visible gaps on the default basemap.
           const cartoSub = ['a', 'b', 'c', 'd'][Math.abs(tx + ty) % 4];
           const osmSub = ['a', 'b', 'c'][Math.abs(tx + ty) % 3];
-          
+
           if (activeTileSource === 'carto-dark') {
             url = `https://${cartoSub}.basemaps.cartocdn.com/rastertiles/dark_all/${zoomInt}/${wrappedX}/${ty}.png${CARTO_TILE_KEY_PARAM}`;
           } else if (activeTileSource === 'carto-light') {
@@ -391,82 +562,70 @@ export const RealCadastreMap: React.FC<RealCadastreMapProps> = ({
       const dy = e.clientY - dragStart.y;
       
       const newGeo = projectScreenToGeo(
-        dimensions.width / 2 - dx,
-        dimensions.height / 2 - dy,
+        dx,
+        dy,
         dragCenterStart,
         zoomLevel
       );
       setCenter(newGeo);
     }
+
+    if (canvasRef.current && onCursorCoordsChange) {
+      const rect = canvasRef.current.getBoundingClientRect();
+      const screenX = e.clientX - rect.left;
+      const screenY = e.clientY - rect.top;
+      const geo = projectScreenPixelToGeo(screenX, screenY);
+      onCursorCoordsChange(geo);
+    }
   };
 
   const handleMouseUp = () => setIsDragging(false);
 
-  // Handle Zoom Wheel
-  //
-  // React attaches its synthetic wheel listener as passive (for scroll
-  // perf), so an onWheel={...} JSX prop calling e.preventDefault() throws
-  // "Unable to preventDefault inside passive event listener invocation"
-  // on every scroll tick -- and doesn't actually stop the page from also
-  // scrolling behind the map while the user scroll-zooms. A native
-  // { passive: false } listener attached directly to the canvas element
-  // is the only way to make preventDefault() take effect here; see the
-  // useEffect below. Functional setZoomLevel update so this listener
-  // (attached once) never reads a stale zoomLevel from closure.
+  const handleMouseLeave = () => {
+    setIsDragging(false);
+    onCursorCoordsChange?.(null);
+  };
+
+  // Handle Zoom Wheel. Deliberately NOT a JSX onWheel prop: React attaches
+  // its wheel listener as passive by default, so calling preventDefault()
+  // there throws a console warning and doesn't reliably stop the page
+  // from scrolling behind the map. A native, explicitly non-passive
+  // listener (attached below in a useEffect) is what actually works.
+  const handleWheel = (e: WheelEvent) => {
+    e.preventDefault();
+    const zoomDelta = e.deltaY < 0 ? 0.25 : -0.25;
+    setZoomLevel((z) => Math.min(Math.max(z + zoomDelta, 14.5), 19.5));
+  };
+
   useEffect(() => {
     const node = canvasRef.current;
     if (!node) return;
-    const onWheel = (e: WheelEvent) => {
-      e.preventDefault();
-      const zoomDelta = e.deltaY < 0 ? 0.25 : -0.25;
-      setZoomLevel((z) => Math.min(Math.max(z + zoomDelta, 14.5), 19.5));
-    };
-    node.addEventListener('wheel', onWheel, { passive: false });
-    return () => node.removeEventListener('wheel', onWheel);
+    node.addEventListener('wheel', handleWheel, { passive: false });
+    return () => node.removeEventListener('wheel', handleWheel);
   }, []);
 
-  // Convert property record into geo polygon points
-  const getPropertyGeoPolygon = (prop: PropertyRecord): Array<[number, number]> => {
-    if (!prop.gps) return [];
-    const { lat, lng } = prop.gps;
-
-    if (prop.polygonPoints && prop.polygonPoints.length > 0) {
-      const avgX = prop.polygonPoints.reduce((acc, p) => acc + p[0], 0) / prop.polygonPoints.length;
-      const avgY = prop.polygonPoints.reduce((acc, p) => acc + p[1], 0) / prop.polygonPoints.length;
-      
-      const latScale = 0.0000038;
-      const lngScale = 0.0000046;
-
-      return prop.polygonPoints.map(([x, y]) => [
-        lng + (x - avgX) * lngScale,
-        lat - (y - avgY) * latScale
-      ]);
-    }
-
-    // Default lot footprint
-    const side = Math.sqrt(prop.extentM2 || 200) * 0.000008;
-    return [
-      [lng - side * 0.5, lat + side * 0.5],
-      [lng + side * 0.5, lat + side * 0.5],
-      [lng + side * 0.5, lat - side * 0.5],
-      [lng - side * 0.5, lat - side * 0.5]
-    ];
+  // Convert array of [lng, lat] points to SVG points string with optional elevation height
+  const formatPointsString = (coords: Array<[number, number]>, heightMeters = 0): string => {
+    return coords
+      .map(([lng, lat]) => {
+        const pt = projectGeoToScreen(lat, lng, heightMeters);
+        return `${pt.x},${pt.y}`;
+      })
+      .join(' ');
   };
 
-  // Format ZAR currency
-  const formatZar = (val?: number) => {
-    if (!val) return 'N/A';
-    return `R ${val.toLocaleString('en-ZA').replace(/,/g, ' ')}`;
+  // Compute centroid of polygon points
+  const getCentroid = (coords: Array<[number, number]>, heightMeters = 0): { x: number; y: number } => {
+    if (!coords.length) return { x: dimensions.width / 2, y: dimensions.height / 2 };
+    let sumX = 0;
+    let sumY = 0;
+    coords.forEach(([lng, lat]) => {
+      const pt = projectGeoToScreen(lat, lng, heightMeters);
+      sumX += pt.x;
+      sumY += pt.y;
+    });
+    return { x: sumX / coords.length, y: sumY / coords.length };
   };
-
-  // Compute radius in screen pixels
-  const radiusPixel = useMemo(() => {
-    if (!selectedProperty?.gps) return 0;
-    const p1 = projectGeoToScreen(selectedProperty.gps.lat, selectedProperty.gps.lng);
-    // 1 meter in degrees lat ~ 1 / 111139
-    const p2 = projectGeoToScreen(selectedProperty.gps.lat + radiusMeters / 111139, selectedProperty.gps.lng);
-    return Math.abs(p2.y - p1.y);
-  }, [selectedProperty, radiusMeters, zoomLevel, center, dimensions]);
 
   return (
     <div
@@ -476,10 +635,17 @@ export const RealCadastreMap: React.FC<RealCadastreMapProps> = ({
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
+      onMouseLeave={handleMouseLeave}
     >
       {/* 1. RASTER TILE LAYER (OpenStreetMap / CartoDB Dark / Esri High-Res Satellite) */}
-      <div className="absolute inset-0 pointer-events-none">
+      <div 
+        className="absolute inset-0 pointer-events-none origin-center transition-transform duration-200"
+        style={{
+          transform: heading !== 0 || tilt > 0 
+            ? `perspective(1200px) rotateX(${tilt}deg) rotate(${-heading}deg)` 
+            : undefined
+        }}
+      >
         {visibleTiles.map((tile) => (
           <img
             key={tile.key}
@@ -493,171 +659,341 @@ export const RealCadastreMap: React.FC<RealCadastreMapProps> = ({
               top: `${tile.y}px`,
               width: `${tile.width}px`,
               height: `${tile.height}px`,
-              opacity: activeTileSource === 'esri-satellite' ? 0.85 : 0.95
+              opacity: activeTileSource === 'esri-satellite' ? 0.88 : 0.95
             }}
           />
         ))}
       </div>
 
-      {/* 2. CADASTRAL SURVEYOR-GENERAL OVERLAY (SVG GEOGRAPHIC VECTOR LAYER) */}
+      {/* 2. CADASTRAL SURVEYOR-GENERAL & 3D ARCHITECTURAL BUILDING BOX OVERLAY */}
       <svg className="absolute inset-0 w-full h-full pointer-events-none">
         <defs>
-          {/* Neon Cadastral Glow Filter */}
+          {/* Subtle Cadastral Pulse Animation and Glow Filters */}
+          <style>{`
+            @keyframes cadastrePulseLoop {
+              0%, 100% {
+                fill-opacity: 0.50;
+                stroke-opacity: 0.90;
+                stroke-width: 3.2px;
+              }
+              50% {
+                fill-opacity: 0.72;
+                stroke-opacity: 1;
+                stroke-width: 4.8px;
+              }
+            }
+            @keyframes pulseHaloExpand {
+              0%, 100% {
+                stroke-width: 3px;
+                stroke-opacity: 0.8;
+                fill-opacity: 0.15;
+              }
+              50% {
+                stroke-width: 8px;
+                stroke-opacity: 0.35;
+                fill-opacity: 0.32;
+              }
+            }
+            .cadastre-selected-pulse {
+              animation: cadastrePulseLoop 2.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+            }
+            .cadastre-halo-pulse {
+              animation: pulseHaloExpand 2.4s ease-in-out infinite;
+            }
+          `}</style>
+          
           <filter id="cadastreGlow" x="-20%" y="-20%" width="140%" height="140%">
             <feGaussianBlur stdDeviation="3" result="blur" />
             <feComposite in="SourceGraphic" in2="blur" operator="over" />
           </filter>
+
+          <filter id="buildingBoxShadow" x="-20%" y="-20%" width="140%" height="140%">
+            <feDropShadow dx="2" dy="4" stdDeviation="3" floodColor="#000000" floodOpacity="0.65" />
+          </filter>
+
           <pattern id="surveyHatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-            <line x1="0" y1="0" x2="0" y2="8" stroke="#00bcd4" strokeWidth="1" strokeOpacity="0.25" />
+            <line x1="0" y1="0" x2="0" y2="8" stroke="#00acc1" strokeWidth="1" strokeOpacity="0.25" />
           </pattern>
         </defs>
 
-        {/* Real Cadastral Distance Radius Ring from Selected Erf Centroid */}
+        {/* 2A. CMA PROXIMITY RADIUS RING */}
         {showRadiusRing && selectedProperty?.gps && (
-          <g>
-            <circle
-              cx={projectGeoToScreen(selectedProperty.gps.lat, selectedProperty.gps.lng).x}
-              cy={projectGeoToScreen(selectedProperty.gps.lat, selectedProperty.gps.lng).y}
-              r={radiusPixel}
-              fill="none"
-              stroke="#00bcd4"
-              strokeWidth="1.8"
-              strokeDasharray="6 4"
-              className="animate-pulse opacity-80"
-            />
-            {/* Radius Badge */}
-            <text
-              x={projectGeoToScreen(selectedProperty.gps.lat, selectedProperty.gps.lng).x}
-              y={projectGeoToScreen(selectedProperty.gps.lat, selectedProperty.gps.lng).y - radiusPixel - 8}
-              fill="#38bdf8"
-              fontSize="11"
-              fontWeight="bold"
-              textAnchor="middle"
-              className="font-mono bg-slate-900"
-            >
-              {radiusMeters}m CMA Cadastral Radius
-            </text>
-          </g>
+          (() => {
+            const pCenter = projectGeoToScreen(selectedProperty.gps.lat, selectedProperty.gps.lng);
+            const pRadiusEdge = projectGeoToScreen(selectedProperty.gps.lat + radiusMeters / 111139, selectedProperty.gps.lng);
+            const rPx = Math.abs(pRadiusEdge.y - pCenter.y) || 120;
+            return (
+              <g>
+                <circle
+                  cx={pCenter.x}
+                  cy={pCenter.y}
+                  r={rPx}
+                  fill="rgba(0, 188, 212, 0.06)"
+                  stroke="#00e5ff"
+                  strokeWidth="1.8"
+                  strokeDasharray="6 4"
+                  className="animate-pulse"
+                />
+                <text
+                  x={pCenter.x + rPx * 0.707}
+                  y={pCenter.y - rPx * 0.707}
+                  fill="#00e5ff"
+                  fontSize="11"
+                  fontWeight="bold"
+                  className="font-mono select-none"
+                >
+                  {radiusMeters >= 1000 ? `${(radiusMeters / 1000).toFixed(1)} km` : `${radiusMeters}m`} CMA Radius
+                </text>
+              </g>
+            );
+          })()
         )}
 
-        {/* Surrounding Cadastral Lots (Neighbouring Registered Erven) */}
+        {/* 2B. SURROUNDING REGISTERED CADASTRAL ERVEN (UNREGISTERED MLS PARCELS) */}
         {filteredSurroundingGeoParcels.map((parcel) => {
-          const screenPoints = parcel.coords.map(([lng, lat]) => {
-            const pt = projectGeoToScreen(lat, lng);
-            return `${pt.x},${pt.y}`;
-          }).join(' ');
-
-          const centerPt = projectGeoToScreen(parcel.center[1], parcel.center[0]);
           const isHovered = hoveredErfNo === parcel.erf;
+          const lotPoints = formatPointsString(parcel.coords);
+          const centerPt = getCentroid(parcel.coords);
 
           return (
             <g
-              key={parcel.erf}
-              className="pointer-events-auto cursor-pointer transition-all duration-150"
+              key={`surrounding-${parcel.erf}`}
+              className="cursor-pointer pointer-events-auto transition-opacity"
               onMouseEnter={(e) => {
                 setHoveredErfNo(parcel.erf);
-                onHoverProperty(null, { x: e.clientX, y: e.clientY });
-              }}
-              onMouseMove={(e) => {
-                onHoverProperty(null, { x: e.clientX, y: e.clientY });
+                const rect = canvasRef.current?.getBoundingClientRect();
+                onHoverProperty(null, {
+                  x: e.clientX - (rect?.left || 0),
+                  y: e.clientY - (rect?.top || 0)
+                });
               }}
               onMouseLeave={() => {
                 setHoveredErfNo(null);
                 onHoverProperty(null, null);
               }}
             >
-              <polygon
-                points={screenPoints}
-                fill={isHovered ? 'rgba(56, 189, 248, 0.25)' : 'rgba(15, 23, 42, 0.55)'}
-                stroke={isHovered ? '#38bdf8' : '#475569'}
-                strokeWidth={isHovered ? 2 : 1.2}
-                strokeDasharray={isHovered ? 'none' : '3 2'}
-              />
-              
-              {/* House Number on Map (Clean Cadastre identifier) */}
-              {showHouseNumbers && zoomLevel >= 16.5 && (
-                <g transform={`translate(${centerPt.x}, ${centerPt.y})`}>
-                  <circle
-                    cx="0"
-                    cy="0"
-                    r={isHovered ? 10.5 : 8.5}
-                    fill={isHovered ? 'rgba(2, 132, 199, 0.9)' : 'rgba(15, 23, 42, 0.8)'}
-                    stroke={isHovered ? '#38bdf8' : '#475569'}
-                    strokeWidth="0.9"
-                  />
-                  <text
-                    x="0"
-                    y="3"
-                    fill={isHovered ? '#ffffff' : '#cbd5e1'}
-                    fontSize={zoomLevel >= 18 ? "10" : "8.5"}
-                    fontWeight="bold"
-                    textAnchor="middle"
-                    className="font-sans select-none"
-                  >
-                    {extractHouseNumber(parcel.street, parcel.erf)}
-                  </text>
-                </g>
+              {/* Cadastral Lot Boundary */}
+              {(buildingRenderMode === 'cadastre_lots' || buildingRenderMode === 'hybrid') && (
+                <polygon
+                  points={lotPoints}
+                  fill={isHovered ? 'rgba(56, 189, 248, 0.18)' : 'rgba(30, 41, 59, 0.28)'}
+                  stroke={isHovered ? '#38bdf8' : '#475569'}
+                  strokeWidth={isHovered ? 1.8 : 1.2}
+                  strokeDasharray="3 3"
+                />
+              )}
+
+              {/* Building Footprint Box for surrounding parcels */}
+              {(buildingRenderMode === 'building_boxes' || buildingRenderMode === 'hybrid') && parcel.buildingCoords && (
+                <polygon
+                  points={formatPointsString(parcel.buildingCoords, 4)}
+                  fill={isHovered ? 'rgba(56, 189, 248, 0.45)' : 'rgba(71, 85, 105, 0.35)'}
+                  stroke={isHovered ? '#7dd3fc' : '#64748b'}
+                  strokeWidth={1.4}
+                  filter="url(#buildingBoxShadow)"
+                />
+              )}
+
+              {/* Surrounding Erf Badge */}
+              {showHouseNumbers && (
+                <text
+                  x={centerPt.x}
+                  y={centerPt.y + 3}
+                  fill={isHovered ? '#38bdf8' : '#94a3b8'}
+                  fontSize="9"
+                  fontWeight="600"
+                  textAnchor="middle"
+                  className="font-mono select-none"
+                >
+                  Erf {parcel.erf}
+                </text>
               )}
             </g>
           );
         })}
 
-        {/* Primary Interactive Valuated Properties */}
+        {/* 2C. REGISTERED VALUATION & LISTING PROPERTIES (FULL ARCHITECTURAL BUILDING BOXES & CADASTRE) */}
         {properties.map((prop) => {
           const isSelected = selectedProperty?.id === prop.id;
           const isHovered = hoveredProperty?.id === prop.id || hoveredErfNo === prop.erfNo;
-          const geoPolygon = getPropertyGeoPolygon(prop);
-          
-          if (geoPolygon.length === 0 || !prop.gps) return null;
-
-          const screenPoints = geoPolygon.map(([lng, lat]) => {
-            const pt = projectGeoToScreen(lat, lng);
-            return `${pt.x},${pt.y}`;
-          }).join(' ');
-
-          const centerPt = projectGeoToScreen(prop.gps.lat, prop.gps.lng);
           const houseNum = extractHouseNumber(prop.address, prop.erfNo);
+          
+          const building = getArchitecturalBuilding(prop);
+          const lotPoints = formatPointsString(building.cadastralLotGeo);
+          const centerPt = getCentroid(building.cadastralLotGeo);
+
+          // 3D Building extrusion geometry points
+          const groundBldgPoints = formatPointsString(building.mainBuildingGeo, 0);
+          const roofBldgPoints = formatPointsString(building.mainBuildingGeo, building.heightMeters);
+          const bldgCenterPt = getCentroid(building.mainBuildingGeo, building.heightMeters);
 
           return (
             <g
-              key={prop.id}
-              id={`cadastral-lot-${prop.erfNo}`}
-              className="pointer-events-auto cursor-pointer"
-              onClick={(e) => {
-                e.stopPropagation();
-                onSelectProperty(prop);
-              }}
+              key={`prop-${prop.id}`}
+              className="cursor-pointer pointer-events-auto"
+              onClick={() => onSelectProperty(prop)}
               onMouseEnter={(e) => {
                 setHoveredErfNo(prop.erfNo);
-                onHoverProperty(prop, { x: e.clientX, y: e.clientY });
+                const rect = canvasRef.current?.getBoundingClientRect();
+                onHoverProperty(prop, {
+                  x: e.clientX - (rect?.left || 0),
+                  y: e.clientY - (rect?.top || 0)
+                });
               }}
               onMouseMove={(e) => {
-                onHoverProperty(prop, { x: e.clientX, y: e.clientY });
+                const rect = canvasRef.current?.getBoundingClientRect();
+                onHoverProperty(prop, {
+                  x: e.clientX - (rect?.left || 0),
+                  y: e.clientY - (rect?.top || 0)
+                });
               }}
               onMouseLeave={() => {
                 setHoveredErfNo(null);
                 onHoverProperty(null, null);
               }}
             >
-              {/* Main Cadastral Polygon */}
-              <polygon
-                points={screenPoints}
-                fill={
-                  isSelected 
-                    ? 'rgba(0, 188, 212, 0.45)' 
-                    : isHovered 
-                    ? 'rgba(56, 189, 248, 0.35)' 
-                    : 'rgba(0, 105, 128, 0.28)'
-                }
-                stroke={isSelected ? '#00bcd4' : isHovered ? '#38bdf8' : '#00acc1'}
-                strokeWidth={isSelected ? 3.2 : isHovered ? 2.6 : 1.8}
-                filter={isSelected ? 'url(#cadastreGlow)' : undefined}
-                className="transition-all duration-150"
-              />
+              {/* Subtle outer pulse halo for selected cadastral parcel */}
+              {isSelected && (
+                <polygon
+                  points={lotPoints}
+                  fill="rgba(0, 229, 255, 0.22)"
+                  stroke="#00e5ff"
+                  strokeWidth="6"
+                  filter="url(#cadastreGlow)"
+                  className="cadastre-halo-pulse"
+                />
+              )}
+
+              {/* LAYER 1: CADASTRAL ERF LOT BOUNDARY (SURVEYOR-GENERAL PEGS) */}
+              {(buildingRenderMode === 'cadastre_lots' || buildingRenderMode === 'hybrid') && (
+                <g>
+                  <polygon
+                    points={lotPoints}
+                    fill={
+                      isSelected 
+                        ? 'rgba(0, 188, 212, 0.28)' 
+                        : isHovered 
+                        ? 'rgba(56, 189, 248, 0.22)' 
+                        : 'rgba(0, 105, 128, 0.16)'
+                    }
+                    stroke={isSelected ? '#00e5ff' : isHovered ? '#38bdf8' : '#00acc1'}
+                    strokeWidth={isSelected ? 3.0 : isHovered ? 2.2 : 1.6}
+                    strokeDasharray={buildingRenderMode === 'hybrid' ? '4 3' : undefined}
+                    filter={isSelected ? 'url(#cadastreGlow)' : undefined}
+                    className={isSelected ? 'cadastre-selected-pulse transition-all duration-300' : 'transition-all duration-150'}
+                  />
+                  
+                  {/* Lot Hatch in Cadastre-Only Mode */}
+                  {buildingRenderMode === 'cadastre_lots' && (
+                    <polygon
+                      points={lotPoints}
+                      fill="url(#surveyHatch)"
+                      stroke="none"
+                    />
+                  )}
+                </g>
+              )}
+
+              {/* LAYER 2: REAL ARCHITECTURAL BUILDING BOX & FOOTPRINT */}
+              {(buildingRenderMode === 'building_boxes' || buildingRenderMode === 'hybrid') && (
+                <g filter="url(#buildingBoxShadow)">
+                  
+                  {/* 2.1 Porch / Veranda Structure */}
+                  {building.porchGeo && (
+                    <polygon
+                      points={formatPointsString(building.porchGeo, Math.min(building.heightMeters * 0.4, 2.5))}
+                      fill={isSelected ? 'rgba(56, 189, 248, 0.70)' : 'rgba(148, 163, 184, 0.60)'}
+                      stroke={isSelected ? '#00e5ff' : '#cbd5e1'}
+                      strokeWidth={1.2}
+                    />
+                  )}
+
+                  {/* 2.2 Garage / Outbuilding Structure */}
+                  {building.garageGeo && (
+                    <polygon
+                      points={formatPointsString(building.garageGeo, Math.min(building.heightMeters * 0.5, 3.2))}
+                      fill={isSelected ? 'rgba(14, 116, 144, 0.85)' : 'rgba(51, 65, 85, 0.80)'}
+                      stroke={isSelected ? '#38bdf8' : '#94a3b8'}
+                      strokeWidth={1.4}
+                    />
+                  )}
+
+                  {/* 2.3 Pool / Courtyard Feature */}
+                  {building.poolGeo && (
+                    <polygon
+                      points={formatPointsString(building.poolGeo, 0)}
+                      fill="#0284c7"
+                      stroke="#38bdf8"
+                      strokeWidth={1.5}
+                    />
+                  )}
+
+                  {/* 2.4 3D Extruded Building Walls (Depth Faces) */}
+                  {(tilt > 0 || show3DExtrusions) && (
+                    <g>
+                      {building.mainBuildingGeo.map(([lng1, lat1], idx) => {
+                        const nextIdx = (idx + 1) % building.mainBuildingGeo.length;
+                        const [lng2, lat2] = building.mainBuildingGeo[nextIdx];
+                        
+                        const gPt1 = projectGeoToScreen(lat1, lng1, 0);
+                        const gPt2 = projectGeoToScreen(lat2, lng2, 0);
+                        const rPt1 = projectGeoToScreen(lat1, lng1, building.heightMeters);
+                        const rPt2 = projectGeoToScreen(lat2, lng2, building.heightMeters);
+                        
+                        const wallFace = `${gPt1.x},${gPt1.y} ${gPt2.x},${gPt2.y} ${rPt2.x},${rPt2.y} ${rPt1.x},${rPt1.y}`;
+                        const faceShade = (idx % 2 === 0) ? 0.85 : 0.65;
+
+                        return (
+                          <polygon
+                            key={`wall-${idx}`}
+                            points={wallFace}
+                            fill={isSelected ? `rgba(0, 188, 212, ${faceShade})` : `rgba(30, 41, 59, ${faceShade})`}
+                            stroke={isSelected ? '#00e5ff' : '#475569'}
+                            strokeWidth={1.0}
+                          />
+                        );
+                      })}
+                    </g>
+                  )}
+
+                  {/* 2.5 Main Elevated Roof Box / Footprint */}
+                  <polygon
+                    points={roofBldgPoints}
+                    fill={
+                      isSelected
+                        ? '#00bcd4'
+                        : isHovered
+                        ? '#0284c7'
+                        : building.roofColor || '#334155'
+                    }
+                    stroke={isSelected ? '#00e5ff' : isHovered ? '#38bdf8' : '#64748b'}
+                    strokeWidth={isSelected ? 3.0 : isHovered ? 2.2 : 1.6}
+                    className={isSelected ? 'cadastre-selected-pulse transition-all duration-300' : 'transition-all duration-150'}
+                  />
+
+                  {/* 2.6 Roof Ridge Line & Pitch Facets */}
+                  {building.roofRidge?.map(([p1, p2], idx) => {
+                    const r1 = projectGeoToScreen(p1[1], p1[0], building.heightMeters * 1.15);
+                    const r2 = projectGeoToScreen(p2[1], p2[0], building.heightMeters * 1.15);
+                    return (
+                      <line
+                        key={`ridge-${idx}`}
+                        x1={r1.x}
+                        y1={r1.y}
+                        x2={r2.x}
+                        y2={r2.y}
+                        stroke={isSelected ? '#ffffff' : '#94a3b8'}
+                        strokeWidth={2.0}
+                      />
+                    );
+                  })}
+
+                </g>
+              )}
 
               {/* House Number Badge */}
               {showHouseNumbers && (
-                <g transform={`translate(${centerPt.x}, ${centerPt.y})`}>
+                <g transform={`translate(${bldgCenterPt.x}, ${bldgCenterPt.y})`}>
                   <circle
                     cx="0"
                     cy="0"
@@ -671,7 +1007,7 @@ export const RealCadastreMap: React.FC<RealCadastreMapProps> = ({
                   <text
                     x="0"
                     y="3.5"
-                    fill={isSelected ? '#ffffff' : isHovered ? '#ffffff' : '#f1f5f9'}
+                    fill="#ffffff"
                     fontSize={isSelected ? "11" : isHovered ? "11" : "10"}
                     fontWeight="800"
                     textAnchor="middle"
@@ -683,11 +1019,11 @@ export const RealCadastreMap: React.FC<RealCadastreMapProps> = ({
               )}
 
               {/* Boundary vertex markers for Deeds Office precision */}
-              {isSelected && geoPolygon.map(([lng, lat], idx) => {
-                const cornerPt = projectGeoToScreen(lat, lng);
+              {isSelected && building.cadastralLotGeo.map(([lng, lat], idx) => {
+                const cornerPt = projectGeoToScreen(lat, lng, 0);
                 const pegLetters = ['A', 'B', 'C', 'D', 'E', 'F'];
                 return (
-                  <g key={idx}>
+                  <g key={`peg-${idx}`}>
                     <circle
                       cx={cornerPt.x}
                       cy={cornerPt.y}
@@ -709,6 +1045,7 @@ export const RealCadastreMap: React.FC<RealCadastreMapProps> = ({
                   </g>
                 );
               })}
+
             </g>
           );
         })}
@@ -757,25 +1094,7 @@ export const RealCadastreMap: React.FC<RealCadastreMapProps> = ({
         </button>
       </div>
 
-      {/* 4. ON-CANVAS COMPASS & METRIC SCALE BAR */}
-      <div className="absolute top-14 right-3 z-20 flex flex-col items-end gap-2 pointer-events-none">
-        {/* Real Compass */}
-        <div className="bg-slate-900/90 backdrop-blur-md p-2 rounded-xl border border-slate-700 shadow-xl flex items-center justify-center pointer-events-auto">
-          <div className="relative w-8 h-8 flex items-center justify-center">
-            <Compass className="w-8 h-8 text-cyan-400 animate-spin-slow" />
-            <span className="absolute text-[8px] font-extrabold text-cyan-300 font-mono -top-1">N</span>
-          </div>
-        </div>
-
-        {/* Surveyor-General Precision Scale */}
-        <div className="bg-slate-900/90 backdrop-blur-md px-2.5 py-1 rounded-lg border border-slate-700 shadow-lg text-[10px] font-mono text-slate-300 pointer-events-auto flex items-center gap-2">
-          <Ruler className="w-3 h-3 text-cyan-400" />
-          <span>Zoom: {zoomLevel.toFixed(1)}x</span>
-          <span className="border-l border-slate-700 pl-2 text-cyan-300">SG 1:1,250</span>
-        </div>
-      </div>
-
-      {/* 5. QUICK NAVIGATION PRESETS */}
+      {/* 4. QUICK NAVIGATION & RECENTER PRESETS */}
       <div className="absolute bottom-14 right-3 z-20 flex items-center gap-1 bg-slate-900/90 backdrop-blur-md p-1 rounded-lg border border-slate-700 shadow-xl pointer-events-auto">
         <button
           id="btn-recenter-selection"

@@ -16,7 +16,8 @@ import { GoogleMapPolygons } from './GoogleMapPolygons';
 import { RealCadastreMap, extractHouseNumber } from './RealCadastreMap';
 import { PropertyPopupCard } from './PropertyPopupCard';
 import { StreetFilterControls } from './StreetFilterControls';
-import { CADASTRAL_STREETS, filterPropertiesByStreet } from '../utils/cadastralFilters';
+import { CompassTool } from './CompassTool';
+import { CADASTRAL_STREETS, filterPropertiesByStreet, formatWGS84 } from '../utils/cadastralFilters';
 import { pullProperty24RadiusListings, radiusListingToPropertyRecord, createPropertyFromRadiusListing, Property24RadiusResponse } from '../services/api';
 
 interface CadastralMapProps {
@@ -65,6 +66,19 @@ export const CadastralMap: React.FC<CadastralMapProps> = ({
   const [showPopupCard, setShowPopupCard] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showStreetFilters, setShowStreetFilters] = useState(false);
+
+  // Compass / Orientation Tool: bearing, tilt (2D plan vs 3D oblique),
+  // and building footprint render mode -- all driven into RealCadastreMap
+  // as controlled props so the SVG canvas actually rotates/tilts/extrudes.
+  const [mapHeading, setMapHeading] = useState(0);
+  const [mapTilt, setMapTilt] = useState(0);
+  const [buildingRenderMode, setBuildingRenderMode] = useState<'building_boxes' | 'cadastre_lots' | 'hybrid'>('hybrid');
+  const [show3DExtrusions, setShow3DExtrusions] = useState(true);
+
+  // Dynamic WGS84 cursor tracking -- updated by RealCadastreMap's mouse
+  // move handler via inverse Web Mercator projection; falls back to the
+  // selected property's coordinates when the cursor isn't over the map.
+  const [cursorCoords, setCursorCoords] = useState<{ lat: number; lng: number } | null>(null);
 
   // Live Property24 radius pull (Apify, includeFullDetails -- real
   // prices, descriptions and every listing photo within the current CMA
@@ -352,9 +366,23 @@ export const CadastralMap: React.FC<CadastralMapProps> = ({
         </button>
       </div>
 
-      {/* Top-right: Fullscreen toggle -- moved here from the bottom-right
-          corner per explicit request, mirroring the top-left engine bar. */}
-      <div className="absolute top-3 right-3 z-20 flex items-center gap-1.5 pointer-events-auto">
+      {/* Top-right: Compass/Orientation Tool (vector engine only -- it
+          drives RealCadastreMap's heading/tilt/building-render-mode
+          props, which the Google Maps engine has no equivalent for) and
+          Fullscreen toggle, mirroring the top-left engine bar. */}
+      <div className="absolute top-3 right-3 z-20 flex items-start gap-1.5 pointer-events-auto">
+        {mapEngine === 'vector' && (
+          <CompassTool
+            heading={mapHeading}
+            onHeadingChange={setMapHeading}
+            tilt={mapTilt}
+            onTiltChange={setMapTilt}
+            buildingRenderMode={buildingRenderMode}
+            onBuildingRenderModeChange={setBuildingRenderMode}
+            show3DExtrusions={show3DExtrusions}
+            onToggle3DExtrusions={setShow3DExtrusions}
+          />
+        )}
         <button
           onClick={toggleFullscreen}
           className="p-1.5 bg-slate-900/90 backdrop-blur-md rounded-lg border border-slate-700 shadow-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
@@ -588,17 +616,34 @@ export const CadastralMap: React.FC<CadastralMapProps> = ({
           containerBounds={containerBounds}
           showSurroundingParcels={showSurroundingParcels}
           showHouseNumbers={showHouseNumbers}
+          heading={mapHeading}
+          onHeadingChange={setMapHeading}
+          tilt={mapTilt}
+          onTiltChange={setMapTilt}
+          buildingRenderMode={buildingRenderMode}
+          onBuildingRenderModeChange={setBuildingRenderMode}
+          show3DExtrusions={show3DExtrusions}
+          onToggle3DExtrusions={setShow3DExtrusions}
+          onCursorCoordsChange={setCursorCoords}
         />
       )}
 
       {/* Bottom Map Toolbar */}
       <div className="absolute bottom-3 left-3 right-3 z-20 flex items-center justify-between pointer-events-none">
 
-        {/* Cadastral Coordinates Badge */}
+        {/* Cadastral Coordinates Badge -- dynamic WGS84 cursor tracking
+            while hovering the vector cadastre canvas, falling back to the
+            selected property's coordinates when idle or on Google Maps. */}
         <div className="bg-slate-900/90 backdrop-blur-md px-3 py-1.5 rounded-lg border border-slate-700 text-[11px] text-slate-300 font-mono shadow-lg flex items-center gap-2 pointer-events-auto">
           <Navigation className="w-3.5 h-3.5 text-cyan-400" />
-          <span>WGS84: {selectedProperty?.gps.formatted || "18.401027°E 33.90876°S"}</span>
-          <span className="border-l border-slate-700 pl-2 text-slate-400 hidden sm:inline">SG Cadastre Ref: C0160021</span>
+          <span>
+            WGS84: {cursorCoords
+              ? formatWGS84(cursorCoords.lat, cursorCoords.lng)
+              : (selectedProperty?.gps.formatted || '18.401027°E 33.908760°S')}
+          </span>
+          <span className="border-l border-slate-700 pl-2 text-slate-400 hidden sm:inline">
+            SG Cadastre Ref: {hoveredErf ? `C0160021-${hoveredErf}` : 'C0160021'}
+          </span>
         </div>
 
         {/* Fullscreen toggle moved to the top-right cluster (mirroring the

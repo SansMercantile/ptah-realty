@@ -98,6 +98,28 @@ async function authJson<T>(path: string, options: RequestInit = {}): Promise<T> 
   return res.json();
 }
 
+// Same auth-header/401 handling as authFetch/authJson above, but for
+// backend routers mounted outside the /api/v1/realty prefix (e.g.
+// /api/v1/intelligence's KYC/deeds endpoints) -- takes the full path.
+async function authJsonAbs<T>(fullPath: string, options: RequestInit = {}): Promise<T> {
+  const token = getToken();
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(options.headers as Record<string, string> | undefined),
+  };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  const res = await fetch(fullPath, { ...options, headers });
+  if (res.status === 401) {
+    logout();
+    window.location.reload();
+  }
+  if (!res.ok) {
+    const detail = await res.json().catch(() => ({}));
+    throw new Error(detail.detail || `Request failed: ${res.status}`);
+  }
+  return res.json();
+}
+
 // ---------------------------------------------------------------------
 // Backend <-> frontend Property adapter
 // ---------------------------------------------------------------------
@@ -695,5 +717,82 @@ export async function saveCrmState(state: {
   return authJson<{ saved: boolean }>('/crm/state', {
     method: 'PUT',
     body: JSON.stringify(state),
+  });
+}
+
+// ---------------------------------------------------------------------
+// KYC / FICA verification (real backend round trip, provider-neutral
+// mock findings behind it -- see services/kyc.py's own docstring. Mounted
+// under /api/v1/intelligence, not /api/v1/realty, hence authJsonAbs.)
+// ---------------------------------------------------------------------
+
+export interface KycCheckResult {
+  check_id: string;
+  subject_id: string;
+  check_type: string;
+  status: string;
+  provider: string;
+  checked_at: string;
+  findings: string[];
+}
+
+export interface KycCaseResult {
+  id: string;
+  subject_type: 'individual' | 'corporate';
+  subject_name: string;
+  id_number?: string;
+  registration_number?: string;
+  checks: KycCheckResult[];
+  overall_status: string;
+  created_at: string;
+}
+
+export async function verifyIndividualKyc(
+  fullName: string,
+  idNumber: string,
+  options: { runFaceview?: boolean; runCreditCheck?: boolean; runSanctions?: boolean } = {}
+): Promise<KycCaseResult> {
+  return authJsonAbs<KycCaseResult>('/api/v1/intelligence/kyc/individual', {
+    method: 'POST',
+    body: JSON.stringify({
+      full_name: fullName,
+      id_number: idNumber,
+      run_faceview: options.runFaceview ?? true,
+      run_credit_check: options.runCreditCheck ?? true,
+      run_sanctions: options.runSanctions ?? true,
+    }),
+  });
+}
+
+export async function verifyCorporateKyc(
+  legalName: string,
+  registrationNumber: string,
+  options: { runDirectorLookup?: boolean; runSanctions?: boolean } = {}
+): Promise<KycCaseResult> {
+  return authJsonAbs<KycCaseResult>('/api/v1/intelligence/kyc/corporate', {
+    method: 'POST',
+    body: JSON.stringify({
+      legal_name: legalName,
+      registration_number: registrationNumber,
+      run_director_lookup: options.runDirectorLookup ?? true,
+      run_sanctions: options.runSanctions ?? true,
+    }),
+  });
+}
+
+export interface DeedsQueryResult {
+  query_type: string;
+  query_value: string;
+  matches: any[];
+  generated_at: string;
+}
+
+export async function queryDeeds(
+  queryType: 'title_deed' | 'owner' | 'erf' | 'eua' | 'national',
+  queryValue: string
+): Promise<DeedsQueryResult> {
+  return authJsonAbs<DeedsQueryResult>('/api/v1/intelligence/deeds/query', {
+    method: 'POST',
+    body: JSON.stringify({ query_type: queryType, query_value: queryValue }),
   });
 }

@@ -282,6 +282,7 @@ export function App() {
           <PropertyPanel
             property={selectedProperty}
             onClose={() => setIsSidebarOpen(false)}
+            onOpenQuickListing={() => setIsMyListingsOpen(true)}
             onOpenAccommodation={() => setIsAccommodationModalOpen(true)}
             onOpenSectionalUnits={(prop) => {
               setSelectedProperty(prop);
@@ -343,6 +344,7 @@ export function App() {
         onClose={handleCloseNavModal}
         initialOwnerName={kycTarget.name}
         initialOwnerId={kycTarget.id}
+        onOpenCreditsModal={() => setIsCreditsTopUpOpen(true)}
       />
 
       {/* 6. Structural Accommodation Editor Modal */}

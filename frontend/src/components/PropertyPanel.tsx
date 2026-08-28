@@ -21,7 +21,8 @@ import {
   MapPin,
   ShieldCheck,
   Building2,
-  DollarSign
+  DollarSign,
+  Zap
 } from 'lucide-react';
 import { PropertyRecord, AIPropertyValuationResponse, OwnerContactDetails } from '../types';
 import { getIndividualValuation } from '../services/api';
@@ -29,6 +30,7 @@ import { getIndividualValuation } from '../services/api';
 interface PropertyPanelProps {
   property: PropertyRecord | null;
   onClose?: () => void;
+  onOpenQuickListing?: () => void;
   onOpenAccommodation: () => void;
   onOpenSectionalUnits?: (property: PropertyRecord) => void;
   onOpenKYCForOwner: (ownerName: string, ownerId: string) => void;
@@ -43,6 +45,7 @@ interface PropertyPanelProps {
 export const PropertyPanel: React.FC<PropertyPanelProps> = ({
   property,
   onClose,
+  onOpenQuickListing,
   onOpenAccommodation,
   onOpenSectionalUnits,
   onOpenKYCForOwner,
@@ -228,6 +231,24 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
           </span>
           <span className="text-slate-400 font-mono">MLS Ready</span>
         </div>
+
+        {/* Quick Listing Creator Direct Action Banner */}
+        {onOpenQuickListing && (
+          <button
+            id="btn-panel-quick-listing"
+            onClick={onOpenQuickListing}
+            className="w-full py-1.5 px-3 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-500 hover:to-teal-600 text-white font-bold rounded-lg text-xs flex items-center justify-between transition-all shadow-xs ring-1 ring-emerald-400/40 group"
+            title="Quick Listing Creator: Streamlines mandate creation with auto-filled property details, asking price, commission rate, and 1-click syndication"
+          >
+            <span className="flex items-center gap-1.5">
+              <Zap className="w-3.5 h-3.5 text-amber-300 fill-amber-300 group-hover:scale-110 transition-transform" />
+              <span>Quick Listing Creator</span>
+            </span>
+            <span className="text-[10px] bg-black/25 px-1.5 py-0.5 rounded text-emerald-200 font-mono">
+              1-Click Syndicate
+            </span>
+          </button>
+        )}
 
         <div className="grid grid-cols-2 gap-1.5">
           {onOpenCMAEngine && (
