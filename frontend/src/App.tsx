@@ -163,6 +163,18 @@ export function App() {
     setIsSidebarOpen(true);
   };
 
+  // Bubbled up from CadastralMap's "Pull Live Property24 Data" button --
+  // merges newly-pulled listings into the visible property set (already
+  // persisted to the backend by the caller, so this is just what's shown
+  // in this session immediately without waiting for a refetch).
+  const handleLivePropertiesAdded = (newProps: PropertyRecord[]) => {
+    setProperties(prev => {
+      const known = new Set(prev.map(p => `${p.address}|${p.suburb}`.toLowerCase()));
+      const toAdd = newProps.filter(p => !known.has(`${p.address}|${p.suburb}`.toLowerCase()));
+      return toAdd.length > 0 ? [...prev, ...toAdd] : prev;
+    });
+  };
+
   const handleOpenKYCForOwner = (ownerName: string, ownerId: string) => {
     setKycTarget({ name: ownerName, id: ownerId });
     setActiveNavTab('kyc');
@@ -229,6 +241,7 @@ export function App() {
           onOpenContactOwner={handleOpenContactOwner}
           onOpenPortalSync={() => setIsPortalSyncOpen(true)}
           onOpenQuickListing={() => setIsMyListingsOpen(true)}
+          onLivePropertiesAdded={handleLivePropertiesAdded}
         />
 
         {/* Right Collapsible Property & Title Information Sidebar */}

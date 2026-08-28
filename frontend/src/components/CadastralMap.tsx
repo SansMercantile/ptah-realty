@@ -19,7 +19,7 @@ import { RealCadastreMap, extractHouseNumber } from './RealCadastreMap';
 import { PropertyPopupCard } from './PropertyPopupCard';
 import { StreetFilterControls } from './StreetFilterControls';
 import { CADASTRAL_STREETS, filterPropertiesByStreet } from '../utils/cadastralFilters';
-import { pullProperty24RadiusListings, Property24RadiusResponse } from '../services/api';
+import { pullProperty24RadiusListings, radiusListingToPropertyRecord, createPropertyFromRadiusListing, Property24RadiusResponse } from '../services/api';
 
 interface CadastralMapProps {
   properties: PropertyRecord[];
@@ -31,6 +31,11 @@ interface CadastralMapProps {
   onOpenContactOwner?: (property: PropertyRecord) => void;
   onOpenPortalSync?: () => void;
   onOpenQuickListing?: () => void;
+  // Bubbles newly-pulled live Property24 listings up to App.tsx so they
+  // actually render as pins/polygons on the map -- previously
+  // handlePullRadiusListings only showed a "Pulled N listings" toast and
+  // discarded the results, so the button did nothing visible beyond that.
+  onLivePropertiesAdded?: (properties: PropertyRecord[]) => void;
 }
 
 export const CadastralMap: React.FC<CadastralMapProps> = ({
@@ -42,7 +47,8 @@ export const CadastralMap: React.FC<CadastralMapProps> = ({
   onOpenPDFReport,
   onOpenContactOwner,
   onOpenPortalSync,
-  onOpenQuickListing
+  onOpenQuickListing,
+  onLivePropertiesAdded
 }) => {
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
   // Only pass a mapId to the Google Map when one is explicitly configured --
@@ -177,6 +183,8 @@ export const CadastralMap: React.FC<CadastralMapProps> = ({
     setIsPullingListings(true);
     setRadiusPullError(null);
     try {
+      const fallbackSuburb = selectedProperty?.suburb || 'Camps Bay';
+      const fallbackCity = selectedProperty?.municipality || 'Cape Town';
       const searchLocation = selectedProperty
         ? `${selectedProperty.suburb}, ${selectedProperty.province || 'Western Cape'}`
         : 'Camps Bay, Cape Town';
@@ -193,6 +201,29 @@ export const CadastralMap: React.FC<CadastralMapProps> = ({
         40
       );
       setRadiusPullResult(result);
+
+      // Convert every pulled listing to a real PropertyRecord and render
+      // it on the map immediately -- previously this data was fetched
+      // and then discarded, so the button did nothing beyond a toast.
+      const known = new Set(properties.map(p => `${p.address}|${p.suburb}`.toLowerCase()));
+      const newRecords = result.listings
+        .filter(l => l.latitude && l.longitude)
+        .map(l => radiusListingToPropertyRecord(l, fallbackSuburb, fallbackCity))
+        .filter(r => !known.has(`${r.address}|${r.suburb}`.toLowerCase()));
+
+      if (newRecords.length > 0) {
+        onLivePropertiesAdded?.(newRecords);
+        // Persist in the background so these survive a refresh -- errors
+        // here don't affect what's already showing on the map, since the
+        // records above are already in local state regardless.
+        result.listings
+          .filter(l => l.latitude && l.longitude)
+          .forEach(l => {
+            createPropertyFromRadiusListing(l, fallbackSuburb, fallbackCity).catch(err =>
+              console.error('Failed to persist pulled Property24 listing:', err)
+            );
+          });
+      }
     } catch (err: any) {
       setRadiusPullError(err?.message || 'Property24 radius pull failed.');
     } finally {

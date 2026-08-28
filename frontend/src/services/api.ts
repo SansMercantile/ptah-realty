@@ -118,6 +118,20 @@ export interface BackendProperty {
   condition_rating?: number | null;
   status: string;
   created_at: string;
+  // Live-source listing content (Property24/Apify full-detail pulls).
+  // Absent on manually quick-added properties.
+  images?: string[] | null;
+  property24_listing?: {
+    listingId?: string;
+    listingUrl?: string;
+    headline?: string;
+    description?: string;
+    keyFeatures?: string[];
+    agentName?: string;
+    agentAgency?: string;
+    agentPhone?: string;
+  } | null;
+  source?: string | null;
 }
 
 const CONDITION_BY_RATING: AccommodationDetails['condition'][] = ['POOR', 'FAIR', 'GOOD', 'GOOD', 'EXCELLENT'];
@@ -149,20 +163,42 @@ function propertyTypeFor(accommType: string): string {
 export function toPropertyRecord(p: BackendProperty): PropertyRecord {
   const [lng, lat] = p.location.coordinates;
   const isSectional = p.tenure_type === 'sectional_title';
+  const isLivePull = p.source === 'property24_live_pull';
 
-  const currentSale: SaleRecord = {
-    owner: p.registered_owner || 'UNKNOWN OWNER',
-    ownersId: '', // owner ID numbers live in the KYC module, not on Property -- never duplicated here unverified
-    salePrice: p.asking_price ?? 0,
-    saleDate: p.created_at?.slice(0, 10) || '',
-    registeredDate: p.created_at?.slice(0, 10) || '',
-    titleDeed: p.title_deed_number || '',
-    bondHolder: p.bond_holder || undefined,
-    bondAmount: 0, // not tracked on the backend yet
-    saleType: 'PRIVATE TREATY',
-  };
+  // A live Property24 pull has an asking price, not a registered sale --
+  // asserting one here (even using the asking price as a stand-in) would
+  // misrepresent an ask as a completed, deeds-verified transaction. This
+  // stays honestly empty until a real transfer record exists for the
+  // property (see /properties/{id}/transfers).
+  const currentSale: SaleRecord = isLivePull
+    ? {
+        owner: 'PENDING DEEDS SEARCH',
+        ownersId: '',
+        salePrice: 0,
+        saleDate: '',
+        registeredDate: '',
+        titleDeed: '',
+        bondAmount: 0,
+        saleType: 'PRIVATE TREATY',
+      }
+    : {
+        owner: p.registered_owner || 'UNKNOWN OWNER',
+        ownersId: '', // owner ID numbers live in the KYC module, not on Property -- never duplicated here unverified
+        salePrice: p.asking_price ?? 0,
+        saleDate: p.created_at?.slice(0, 10) || '',
+        registeredDate: p.created_at?.slice(0, 10) || '',
+        titleDeed: p.title_deed_number || '',
+        bondHolder: p.bond_holder || undefined,
+        bondAmount: 0, // not tracked on the backend yet
+        saleType: 'PRIVATE TREATY',
+      };
 
   const municipalValuation: MunicipalValuation = {
+    // No fabricated municipal roll for live pulls -- Property24 doesn't
+    // carry municipal valuation data, only a real City of Cape Town
+    // e-Services lookup would. 0 here means "not yet available", and
+    // the AI valuation engine already treats a falsy value as "skip this
+    // signal" rather than as a real R0 valuation (see api/ai.py).
     totalValue: p.municipal_valuation ?? 0,
     valuationYear: new Date().getFullYear(),
     ratesEstimateMonthly: p.municipal_valuation ? Math.round(p.municipal_valuation * 0.00054 * 100) / 100 : 0,
@@ -178,6 +214,8 @@ export function toPropertyRecord(p: BackendProperty): PropertyRecord {
     garages: p.garage_count ?? undefined,
     pool: p.has_pool ?? undefined,
   };
+
+  const p24 = p.property24_listing;
 
   return {
     id: p.id,
@@ -202,6 +240,22 @@ export function toPropertyRecord(p: BackendProperty): PropertyRecord {
     currentSale,
     municipalValuation,
     accommodation,
+    imageUrl: p.images?.[0] || undefined,
+    images: p.images ?? undefined,
+    property24Listing: p24
+      ? {
+          listingId: p24.listingId,
+          title: p24.headline || '',
+          askingPrice: p.asking_price ?? 0,
+          url: p24.listingUrl || '',
+          headline: p24.headline,
+          description: p24.description,
+          keyFeatures: p24.keyFeatures,
+          agentName: p24.agentName,
+          agentAgency: p24.agentAgency,
+          agentPhone: p24.agentPhone,
+        }
+      : undefined,
     polygonPoints: [], // no cadastral geometry on the backend yet -- CadastralMap won't draw a shape for real properties until this exists
   };
 }
@@ -496,6 +550,104 @@ export async function pullProperty24RadiusListings(
       maxItems,
     }),
   });
+}
+
+/** Maps one raw Apify/Property24 radius-pull result straight to this
+ * app's PropertyRecord shape for immediate map display -- no backend
+ * round-trip needed for this (see createPropertyFromRadiusListing below
+ * for actually persisting it). Every field left blank here (currentSale,
+ * municipalValuation, erfNo, zoning, deeds/title info) is something
+ * Property24 genuinely doesn't carry -- a live listing pull is not a
+ * deeds-office or municipal-valuation record, so those stay honestly
+ * empty/zero rather than invented, exactly like toPropertyRecord()'s
+ * live-pull branch above. */
+export function radiusListingToPropertyRecord(listing: Property24RadiusListing, fallbackSuburb: string, fallbackCity: string): PropertyRecord {
+  const lat = listing.latitude ?? 0;
+  const lng = listing.longitude ?? 0;
+  return {
+    id: `p24-${listing.listingId}`,
+    erfNo: '',
+    lpiCode: '',
+    deedsOffice: '',
+    township: listing.suburb || fallbackSuburb,
+    address: listing.address || listing.headline || 'Address on Property24 listing',
+    suburb: listing.suburb || fallbackSuburb,
+    municipality: listing.city || fallbackCity,
+    province: '',
+    gps: { lat, lng, formatted: `${lng.toFixed(6)}°E ${Math.abs(lat).toFixed(6)}°S` },
+    extentM2: listing.floorSizeSqm ?? listing.erfSizeSqm ?? 0,
+    cadastralExtentM2: listing.erfSizeSqm ?? listing.floorSizeSqm ?? 0,
+    category: 'Freehold',
+    usage: 'Residential',
+    zoning: 'GR4',
+    zoningDescription: '',
+    servitudes: false,
+    currentSale: {
+      owner: 'PENDING DEEDS SEARCH',
+      ownersId: '',
+      salePrice: 0,
+      saleDate: '',
+      registeredDate: '',
+      titleDeed: '',
+      bondAmount: 0,
+      saleType: 'PRIVATE TREATY',
+    },
+    municipalValuation: { totalValue: 0, valuationYear: new Date().getFullYear(), ratesEstimateMonthly: 0 },
+    accommodation: {
+      type: listing.propertyType?.toLowerCase().includes('apartment') ? 'Sectional title scheme' : 'House',
+      usage: 'Residential',
+      condition: 'GOOD',
+      buildingM2: listing.floorSizeSqm ?? undefined,
+      bedRooms: listing.bedrooms ?? undefined,
+      bathRooms: listing.bathrooms ?? undefined,
+    },
+    imageUrl: listing.images?.[0],
+    images: listing.images,
+    property24Listing: {
+      listingId: listing.listingId,
+      title: listing.headline || '',
+      askingPrice: listing.price ?? 0,
+      url: listing.listingUrl || '',
+      headline: listing.headline,
+      description: listing.description,
+      keyFeatures: listing.features,
+    },
+    polygonPoints: [],
+  };
+}
+
+/** Persists a live radius-pull listing as a real backend Property (source:
+ * "property24_live_pull") so it survives a refresh instead of only living
+ * in this session's React state. Uses the listing's own real lat/lng
+ * directly (see create_property's source-aware branch) rather than
+ * re-geocoding text that's already known-accurate. */
+export async function createPropertyFromRadiusListing(listing: Property24RadiusListing, fallbackSuburb: string, fallbackCity: string): Promise<string> {
+  const data = await authJson<{ id: string }>('/properties', {
+    method: 'POST',
+    body: JSON.stringify({
+      address_line: listing.address || listing.headline || 'Address on Property24 listing',
+      suburb: listing.suburb || fallbackSuburb,
+      city: listing.city || fallbackCity,
+      property_type: listing.propertyType?.toLowerCase().includes('apartment') ? 'apartment' : 'house',
+      bedrooms: listing.bedrooms ?? null,
+      bathrooms: listing.bathrooms ?? null,
+      erf_size_sqm: listing.erfSizeSqm ?? null,
+      floor_size_sqm: listing.floorSizeSqm ?? null,
+      lat: listing.latitude ?? null,
+      lng: listing.longitude ?? null,
+      asking_price: listing.price ?? null,
+      images: listing.images ?? null,
+      property24_listing: {
+        listingId: listing.listingId,
+        listingUrl: listing.listingUrl,
+        headline: listing.headline,
+        description: listing.description,
+        keyFeatures: listing.features,
+      },
+      source: 'property24_live_pull',
+    }),
+  });
+  return data.id;
 }
 
 // ---------------------------------------------------------------------
