@@ -29,7 +29,14 @@ import {
   Server,
   Bell,
   Cpu,
-  Sparkles
+  Sparkles,
+  Video,
+  Layers,
+  FileSpreadsheet,
+  Palette,
+  Send,
+  Megaphone,
+  Share2
 } from 'lucide-react';
 import {
   ConnectorItem,
@@ -48,6 +55,7 @@ interface SettingsConnectorsModalProps {
   syncEvents: ConnectorSyncEvent[];
   onAddSyncEvent: (event: ConnectorSyncEvent) => void;
   onClearSyncEvents: () => void;
+  initialTab?: ConnectorCategory | 'all' | 'events' | 'agency';
 }
 
 export const SettingsConnectorsModal: React.FC<SettingsConnectorsModalProps> = ({
@@ -59,8 +67,16 @@ export const SettingsConnectorsModal: React.FC<SettingsConnectorsModalProps> = (
   syncEvents,
   onAddSyncEvent,
   onClearSyncEvents,
+  initialTab = 'all',
 }) => {
-  const [activeTab, setActiveTab] = useState<ConnectorCategory | 'all' | 'events' | 'agency'>('all');
+  const [activeTab, setActiveTab] = useState<ConnectorCategory | 'all' | 'events' | 'agency'>(initialTab);
+
+  // Sync activeTab if initialTab changes
+  React.useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab, isOpen]);
   const [selectedConnector, setSelectedConnector] = useState<ConnectorItem | null>(null);
   const [editingConfig, setEditingConfig] = useState<Record<string, any>>({});
   const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});
@@ -96,8 +112,22 @@ export const SettingsConnectorsModal: React.FC<SettingsConnectorsModalProps> = (
         return <FileCheck className={className} />;
       case 'ShieldCheck':
         return <ShieldCheck className={className} />;
+      case 'Video':
+        return <Video className={className} />;
+      case 'Layers':
+        return <Layers className={className} />;
+      case 'FileSpreadsheet':
+        return <FileSpreadsheet className={className} />;
       case 'Zap':
         return <Zap className={className} />;
+      case 'Palette':
+        return <Palette className={className} />;
+      case 'Send':
+        return <Send className={className} />;
+      case 'Megaphone':
+        return <Megaphone className={className} />;
+      case 'Share2':
+        return <Share2 className={className} />;
       default:
         return <Globe className={className} />;
     }
@@ -477,7 +507,43 @@ export const SettingsConnectorsModal: React.FC<SettingsConnectorsModalProps> = (
               }`}
             >
               <Mail className="w-3.5 h-3.5 text-blue-600" />
-              <span>Gmail / SMTP & WhatsApp</span>
+              <span>Gmail & WhatsApp</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('marketing_campaigns')}
+              className={`py-3.5 flex items-center space-x-1.5 border-b-2 transition ${
+                activeTab === 'marketing_campaigns'
+                  ? 'border-emerald-600 text-emerald-900 font-bold'
+                  : 'border-transparent hover:text-slate-800'
+              }`}
+            >
+              <Megaphone className="w-3.5 h-3.5 text-amber-500" />
+              <span>Marketing & Campaigns ({connectors.filter(c => c.category === 'marketing_campaigns').length})</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('video_walkthroughs')}
+              className={`py-3.5 flex items-center space-x-1.5 border-b-2 transition ${
+                activeTab === 'video_walkthroughs'
+                  ? 'border-emerald-600 text-emerald-900 font-bold'
+                  : 'border-transparent hover:text-slate-800'
+              }`}
+            >
+              <Video className="w-3.5 h-3.5 text-cyan-600" />
+              <span>Zoom & Meet ({connectors.filter(c => c.category === 'video_walkthroughs').length})</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('virtual_tours')}
+              className={`py-3.5 flex items-center space-x-1.5 border-b-2 transition ${
+                activeTab === 'virtual_tours'
+                  ? 'border-emerald-600 text-emerald-900 font-bold'
+                  : 'border-transparent hover:text-slate-800'
+              }`}
+            >
+              <Layers className="w-3.5 h-3.5 text-indigo-600" />
+              <span>Matterport 3D ({connectors.filter(c => c.category === 'virtual_tours').length})</span>
             </button>
 
             <button
@@ -489,7 +555,19 @@ export const SettingsConnectorsModal: React.FC<SettingsConnectorsModalProps> = (
               }`}
             >
               <Calendar className="w-3.5 h-3.5 text-purple-600" />
-              <span>Cal ID & Viewings Sync</span>
+              <span>Cal ID & Viewings</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('accounting_commission')}
+              className={`py-3.5 flex items-center space-x-1.5 border-b-2 transition ${
+                activeTab === 'accounting_commission'
+                  ? 'border-emerald-600 text-emerald-900 font-bold'
+                  : 'border-transparent hover:text-slate-800'
+              }`}
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Xero & Commission ({connectors.filter(c => c.category === 'accounting_commission').length})</span>
             </button>
 
             <button
@@ -501,7 +579,7 @@ export const SettingsConnectorsModal: React.FC<SettingsConnectorsModalProps> = (
               }`}
             >
               <FileCheck className="w-3.5 h-3.5 text-amber-600" />
-              <span>Valuation & Deeds Office</span>
+              <span>TPN Credit & Deeds</span>
             </button>
 
             <button
@@ -731,6 +809,61 @@ export const SettingsConnectorsModal: React.FC<SettingsConnectorsModalProps> = (
                         <span className="px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 font-semibold">
                           REST Event Bus: Inbound/Outbound
                         </span>
+                      )}
+
+                      {conn.slug === 'zoom-real-estate' && (
+                        <>
+                          <span className="px-2 py-0.5 rounded-md bg-cyan-50 text-cyan-700 font-semibold">
+                            Cloud 4K Recording: Active
+                          </span>
+                          <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700">
+                            Waiting Room: Enabled
+                          </span>
+                        </>
+                      )}
+
+                      {conn.slug === 'google-meet' && (
+                        <>
+                          <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 font-semibold">
+                            Google Workspace: Linked
+                          </span>
+                          <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700">
+                            Auto-Attach to Calendar
+                          </span>
+                        </>
+                      )}
+
+                      {conn.slug === 'matterport-3d' && (
+                        <>
+                          <span className="px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 font-semibold">
+                            Dollhouse 3D API: Active
+                          </span>
+                          <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700">
+                            Spatial VR: Supported
+                          </span>
+                        </>
+                      )}
+
+                      {conn.slug === 'xero-accounting' && (
+                        <>
+                          <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 font-semibold">
+                            Commission Split: 60/40
+                          </span>
+                          <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700">
+                            Sec 54(1) Trust Ledger: Reconciled
+                          </span>
+                        </>
+                      )}
+
+                      {conn.slug === 'tpn-credit-bureau' && (
+                        <>
+                          <span className="px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 font-semibold">
+                            TPN Bureau: Verified
+                          </span>
+                          <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700">
+                            Min Score: 650
+                          </span>
+                        </>
                       )}
                     </div>
                   </div>
@@ -1056,6 +1189,7 @@ export const SettingsConnectorsModal: React.FC<SettingsConnectorsModalProps> = (
                 >
                   <option value="portals">Portals & Property Syndication</option>
                   <option value="communications">Communications & Email / Chat</option>
+                  <option value="marketing_campaigns">Marketing & Campaigns (Canva, Mailchimp, Zapier)</option>
                   <option value="calendars">Calendars & Viewing Schedules</option>
                   <option value="legal_valuations">Valuations & Deeds Registry</option>
                   <option value="webhooks">Custom Webhook & Event Bus</option>

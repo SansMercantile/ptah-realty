@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { authHeaders } from '../../services/api';
 import { 
   Sparkles, 
   RefreshCw, 
@@ -52,7 +53,7 @@ export const LeadQualityScoreView: React.FC<LeadQualityScoreViewProps> = ({
     try {
       const response = await fetch('/api/gemini/lead-quality-score', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify({
           lead,
           allLeadsCount: allLeads.length || 24,

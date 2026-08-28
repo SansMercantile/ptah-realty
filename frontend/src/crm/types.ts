@@ -23,6 +23,7 @@ export type CommunicationType = 'whatsapp' | 'email' | 'call' | 'sms' | 'meeting
 export type ConnectorCategory =
   | 'portals'
   | 'communications'
+  | 'marketing_campaigns'
   | 'video_walkthroughs'
   | 'virtual_tours'
   | 'calendars'
@@ -288,3 +289,84 @@ export interface AnalyticsSummary {
   stageBreakdown: { stage: LeadStatus; label: string; count: number; value: number }[];
   monthlyTrends: { month: string; leads: number; won: number; conversionRate: number }[];
 }
+
+export interface PropertyListing {
+  id: string;
+  referenceNumber: string;
+  title: string;
+  price: number;
+  location: string;
+  suburb: string;
+  propertyType: 'House' | 'Penthouse' | 'Apartment' | 'Villa' | 'Commercial' | 'Plot / Land';
+  status: 'active' | 'show_house' | 'under_offer' | 'sold';
+  mandateType: 'Sole Mandate' | 'Dual Mandate' | 'Open Mandate';
+  bedrooms: number;
+  bathrooms: number;
+  garages?: number;
+  erfSizeM2?: number;
+  ownerName?: string;
+  ownerPhone?: string;
+  ownerEmail?: string;
+  assignedAgentName?: string;
+  isSyndicatedP24: boolean;
+  isSyndicatedPrivateProperty: boolean;
+  isSyndicatedPtahWebsite: boolean;
+  featuredImage: string;
+  description?: string;
+  showHouseDates?: string;
+  createdDate: string;
+}
+
+export interface ShowHouseRecord {
+  id: string;
+  propertyId: string;
+  propertyName: string;
+  propertyLocation: string;
+  ownerName: string;
+  clientName?: string;
+  startDate: string;
+  endDate: string;
+  status: 'opened' | 'closed';
+  agentInCharge: string;
+  attendeeCount?: number;
+  notes?: string;
+}
+
+export type CampaignConnectedApp = 'canva' | 'mailchimp' | 'zapier' | 'meta_ads';
+
+export interface MarketingCampaign {
+  id: string;
+  title: string;
+  objective: 'show_house' | 'just_listed' | 'vip_buyer_blast' | 'price_reduction' | 'market_report' | 'custom';
+  status: 'draft' | 'scheduled' | 'sent' | 'syncing';
+  propertyId?: string;
+  propertyTitle?: string;
+  propertyPrice?: number;
+  propertyLocation?: string;
+  propertyImage?: string;
+  targetAudience: string;
+  connectedApps: CampaignConnectedApp[];
+  subjectLine?: string;
+  previewText?: string;
+  emailBody?: string;
+  socialCaption?: string;
+  canvaTemplateUrl?: string;
+  canvaDesignName?: string;
+  mailchimpCampaignId?: string;
+  zapierWebhookTriggered?: boolean;
+  sentAt?: string;
+  scheduledFor?: string;
+  metrics?: {
+    recipientsCount: number;
+    openRate: number; // e.g. 52.4
+    clickRate: number; // e.g. 21.8
+    leadsGenerated: number;
+  };
+  aiGenerated: boolean;
+  aiSuggestedSubjectLines?: { subject: string; predictedOpenRate: number }[];
+  aiCanvaPalette?: { name: string; hex: string }[];
+  aiZapierWorkflow?: string[];
+  createdAt: string;
+}
+
+

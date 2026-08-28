@@ -1,26 +1,26 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Search, 
+  Filter, 
   Phone, 
   MessageSquare, 
+  Mail, 
   Clock, 
   Building, 
   Flame, 
-  ChevronRight, 
-  ChevronLeft, 
-  DollarSign, 
-  Move, 
-  ArrowDown, 
-  TrendingUp, 
-  Award, 
-  Users, 
-  X, 
-  Check,
-  Zap,
-  Target
+  CheckCircle2, 
+  Calendar, 
+  ArrowRight, 
+  ExternalLink,
+  ChevronRight,
+  Sparkles,
+  SlidersHorizontal,
+  DollarSign,
+  UserCheck,
+  ChevronLeft
 } from 'lucide-react';
-import { Lead, LeadSource, LeadStatus } from '../types';
+import { Lead, LeadSource, LeadStatus, UrgencyLevel } from '../types';
 import { formatCurrency, formatShortCurrency, formatRelativeTime } from '../utils/formatters';
 
 interface PipelineBoardProps {
@@ -30,7 +30,7 @@ interface PipelineBoardProps {
   onOpenQuickWhatsApp: (lead: Lead) => void;
 }
 
-export const PIPELINE_COLUMNS: { id: LeadStatus; label: string; color: string; badgeBg: string }[] = [
+const PIPELINE_COLUMNS: { id: LeadStatus; label: string; color: string; badgeBg: string }[] = [
   { id: 'new', label: 'New / Inbound', color: 'border-blue-500 text-blue-700 dark:text-blue-400', badgeBg: 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800' },
   { id: 'contacted', label: 'Attempted / Contacted', color: 'border-purple-500 text-purple-700 dark:text-purple-400', badgeBg: 'bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800' },
   { id: 'qualified', label: 'Qualified / Needs Set', color: 'border-amber-500 text-amber-700 dark:text-amber-400', badgeBg: 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800' },
@@ -51,32 +51,6 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
   const [selectedUrgency, setSelectedUrgency] = useState<string>('all');
   const [selectedAgent, setSelectedAgent] = useState<string>('all');
 
-  // Click and Drop state
-  const [pickedUpLead, setPickedUpLead] = useState<Lead | null>(null);
-  const [draggedLeadId, setDraggedLeadId] = useState<string | null>(null);
-  const [dragOverColumnId, setDragOverColumnId] = useState<LeadStatus | null>(null);
-  const [quickMoveLeadId, setQuickMoveLeadId] = useState<string | null>(null);
-
-  // Clear pickedUpLead on Escape key
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setPickedUpLead(null);
-        setQuickMoveLeadId(null);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
-
-  const handleDropLead = (leadId: string, targetStatus: LeadStatus) => {
-    onUpdateLeadStatus(leadId, targetStatus);
-    setPickedUpLead(null);
-    setQuickMoveLeadId(null);
-    setDraggedLeadId(null);
-    setDragOverColumnId(null);
-  };
-
   // Filtered leads
   const filteredLeads = useMemo(() => {
     return leads.filter((lead) => {
@@ -95,28 +69,6 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
       return matchesSearch && matchesSource && matchesUrgency && matchesAgent;
     });
   }, [leads, searchQuery, selectedSource, selectedUrgency, selectedAgent]);
-
-  // High-level pipeline stats
-  const totalPipelineValue = useMemo(() => {
-    return leads.reduce((acc, lead) => acc + (lead.dealValue || lead.propertyPrice || 0), 0);
-  }, [leads]);
-
-  const urgentLeadsCount = useMemo(() => {
-    return leads.filter((l) => l.urgency === 'urgent' && (l.status === 'new' || l.status === 'contacted')).length;
-  }, [leads]);
-
-  const wonLeads = useMemo(() => {
-    return leads.filter((l) => l.status === 'deal_won');
-  }, [leads]);
-
-  const wonValue = useMemo(() => {
-    return wonLeads.reduce((acc, l) => acc + (l.dealValue || l.propertyPrice || 0), 0);
-  }, [wonLeads]);
-
-  const conversionRate = useMemo(() => {
-    if (leads.length === 0) return 0;
-    return Math.round((wonLeads.length / leads.length) * 100);
-  }, [leads.length, wonLeads.length]);
 
   // Source badges styling helper
   const getSourceBadge = (source: LeadSource) => {
@@ -154,138 +106,68 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
     }
   };
 
+  // High-level pipeline stats
+  const totalPipelineValue = useMemo(() => {
+    return filteredLeads.reduce((acc, lead) => acc + (lead.dealValue || lead.propertyPrice || 0), 0);
+  }, [filteredLeads]);
+
+  const urgentLeadsCount = useMemo(() => {
+    return filteredLeads.filter((l) => l.urgency === 'urgent' && l.status === 'new').length;
+  }, [filteredLeads]);
+
   return (
     <div className="space-y-4">
-      {/* 1. ELEVATED LEAD METRICS STRIP */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-        {/* Metric 1: Total Pipeline Value */}
-        <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-xs relative overflow-hidden transition hover:shadow-md">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Active Pipeline Value</span>
-            <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400">
-              <TrendingUp className="w-4 h-4" />
+      {/* Top Controls & Metrics Strip */}
+      <div className="bg-white/60 dark:bg-slate-900/50 backdrop-blur-xl rounded-2xl p-4 border border-white/50 dark:border-slate-700/40 shadow-lg transition-colors">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          {/* Quick Metrics */}
+          <div className="flex flex-wrap items-center gap-3 sm:gap-6 text-xs text-slate-700 dark:text-slate-300">
+            <div className="flex items-center space-x-2 bg-slate-50 dark:bg-slate-800/80 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700">
+              <span className="text-slate-500 dark:text-slate-400 font-medium">Total Leads:</span>
+              <span className="font-bold text-slate-900 dark:text-white text-sm">{filteredLeads.length}</span>
             </div>
-          </div>
-          <div className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-            {formatShortCurrency(totalPipelineValue)}
-          </div>
-          <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 dark:border-slate-800/80 text-[11px]">
-            <span className="text-slate-500 dark:text-slate-400">Est. Commission (5%):</span>
-            <span className="font-bold text-emerald-700 dark:text-emerald-400">{formatShortCurrency(totalPipelineValue * 0.05)}</span>
-          </div>
-        </div>
-
-        {/* Metric 2: HOT / High-Intent Leads Card (HOT TAG AT TOP RIGHT CORNER) */}
-        <div 
-          onClick={() => setSelectedUrgency(selectedUrgency === 'urgent' ? 'all' : 'urgent')}
-          className={`bg-white dark:bg-slate-900 rounded-2xl p-4 border shadow-xs relative overflow-hidden transition cursor-pointer hover:shadow-md ${
-            selectedUrgency === 'urgent' 
-              ? 'border-red-500 dark:border-red-500 ring-2 ring-red-500/20 bg-red-50/20 dark:bg-red-950/20' 
-              : 'border-slate-200 dark:border-slate-800 hover:border-red-300 dark:hover:border-red-800'
-          }`}
-        >
-          {/* THE HOT TAG PLACED AT THE TOP RIGHT CORNER OF THE METRIC CARD */}
-          <div className="absolute top-2.5 right-2.5 z-10">
-            <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full bg-red-600 dark:bg-red-500 text-white font-bold text-[10px] shadow-xs tracking-wider animate-pulse">
-              <Flame className="w-3 h-3 fill-current" />
-              <span>HOT</span>
-            </span>
-          </div>
-
-          <div className="flex items-center space-x-1.5 mb-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
-            <span>High-Intent Inquiries</span>
-          </div>
-          <div className="text-2xl font-black text-red-600 dark:text-red-400 tracking-tight">
-            {urgentLeadsCount} Leads
-          </div>
-          <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 dark:border-slate-800/80 text-[11px]">
-            <span className="text-slate-500 dark:text-slate-400">SLA Requirement:</span>
-            <span className="font-semibold text-red-700 dark:text-red-300">Under 15m callback</span>
-          </div>
-        </div>
-
-        {/* Metric 3: Active Agency Leads & Inflow */}
-        <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-xs relative overflow-hidden transition hover:shadow-md">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Active Agency Leads</span>
-            <div className="p-2 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400">
-              <Users className="w-4 h-4" />
+            <div className="flex items-center space-x-2 bg-slate-50 dark:bg-slate-800/80 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700">
+              <span className="text-slate-500 dark:text-slate-400 font-medium">Pipeline Value:</span>
+              <span className="font-bold text-emerald-700 dark:text-emerald-400 text-sm">{formatShortCurrency(totalPipelineValue)}</span>
             </div>
-          </div>
-          <div className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-            {filteredLeads.length} <span className="text-sm font-normal text-slate-400">/ {leads.length}</span>
-          </div>
-          <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 dark:border-slate-800/80 text-[11px]">
-            <span className="text-slate-500 dark:text-slate-400">New Inbound Today:</span>
-            <span className="font-bold text-blue-700 dark:text-blue-400">{leads.filter(l => l.status === 'new').length} Inquiries</span>
-          </div>
-        </div>
-
-        {/* Metric 4: Closed Deals & Conversion */}
-        <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-xs relative overflow-hidden transition hover:shadow-md">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Closed & Won Deals</span>
-            <div className="p-2 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400">
-              <Award className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-            {wonLeads.length} <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">({conversionRate}%)</span>
-          </div>
-          <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 dark:border-slate-800/80 text-[11px]">
-            <span className="text-slate-500 dark:text-slate-400">Deeds Registered:</span>
-            <span className="font-bold text-amber-700 dark:text-amber-400">{formatShortCurrency(wonValue)}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* 2. CLICK-AND-DROP ACTIVE BANNER */}
-      {pickedUpLead && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
-          className="bg-emerald-900 text-white p-3.5 rounded-2xl shadow-xl border border-emerald-500/50 flex flex-wrap items-center justify-between gap-3"
-        >
-          <div className="flex items-center space-x-3 text-xs">
-            <span className="w-3 h-3 rounded-full bg-emerald-400 animate-ping shrink-0" />
-            <div>
-              <span className="font-bold text-emerald-300">Click-and-Drop Active:</span>{' '}
-              <span>Moving <strong>{pickedUpLead.name}</strong> ({pickedUpLead.propertyTitle})</span>
-              <span className="text-emerald-300/80 ml-2 hidden sm:inline">
-                Current: <em>{PIPELINE_COLUMNS.find(c => c.id === pickedUpLead.status)?.label}</em>
-              </span>
-            </div>
+            {urgentLeadsCount > 0 && (
+              <div className="flex items-center space-x-2 bg-red-50 dark:bg-red-950/60 px-3 py-1.5 rounded-xl border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 font-medium">
+                <Flame className="w-3.5 h-3.5 text-red-600 dark:text-red-400 animate-pulse" />
+                <span className="font-bold">{urgentLeadsCount} Urgent Uncontacted Leads!</span>
+              </div>
+            )}
           </div>
 
+          {/* View Toggle */}
           <div className="flex items-center space-x-2">
-            <span className="text-[11px] text-emerald-200 hidden md:inline">Click any column below to drop, or jump:</span>
-            <select
-              value={pickedUpLead.status}
-              onChange={(e) => handleDropLead(pickedUpLead.id, e.target.value as LeadStatus)}
-              className="bg-emerald-950 text-white text-xs px-3 py-1.5 rounded-xl border border-emerald-700 font-semibold cursor-pointer focus:outline-none"
-            >
-              {PIPELINE_COLUMNS.map((c) => (
-                <option key={c.id} value={c.id}>
-                  Drop into: {c.label}
-                </option>
-              ))}
-            </select>
-            <button
-              onClick={() => setPickedUpLead(null)}
-              className="px-3 py-1.5 rounded-xl bg-emerald-800 hover:bg-emerald-700 text-xs font-semibold text-white transition cursor-pointer flex items-center space-x-1"
-            >
-              <X className="w-3.5 h-3.5" />
-              <span>Cancel</span>
-            </button>
+            <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
+              <button
+                onClick={() => setViewMode('kanban')}
+                className={`px-3 py-1 text-xs font-semibold rounded-lg transition ${
+                  viewMode === 'kanban' 
+                    ? 'bg-slate-900 dark:bg-emerald-600 text-white shadow-xs' 
+                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                Kanban Stages
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                className={`px-3 py-1 text-xs font-semibold rounded-lg transition ${
+                  viewMode === 'list' 
+                    ? 'bg-slate-900 dark:bg-emerald-600 text-white shadow-xs' 
+                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                Table List View
+              </button>
+            </div>
           </div>
-        </motion.div>
-      )}
+        </div>
 
-      {/* 3. CONTROLS & FILTER STRIP */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-xs transition-colors">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
-          {/* Search bar */}
+        {/* Filter bar */}
+        <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800 flex flex-col md:flex-row gap-3">
+          {/* Search */}
           <div className="relative flex-1">
             <Search className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
@@ -305,8 +187,8 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
             )}
           </div>
 
-          {/* Filters */}
-          <div className="flex flex-wrap items-center gap-2">
+          {/* Source Filter */}
+          <div className="flex items-center space-x-2">
             <select
               value={selectedSource}
               onChange={(e) => setSelectedSource(e.target.value)}
@@ -321,83 +203,50 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
               <option value="Direct Call / Walk-in">Direct Call / Walk-in</option>
             </select>
 
+            {/* Urgency Filter */}
             <select
               value={selectedUrgency}
               onChange={(e) => setSelectedUrgency(e.target.value)}
               className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-200 focus:bg-white dark:focus:bg-slate-700 focus:outline-none focus:border-emerald-600 cursor-pointer font-medium"
             >
-              <option value="all">All Urgencies</option>
+              <option value="all">All Urgency</option>
               <option value="urgent">🔥 Urgent Priority</option>
               <option value="high">High Priority</option>
               <option value="medium">Medium Priority</option>
               <option value="low">Low Priority</option>
             </select>
-
-            {/* View Mode Toggle */}
-            <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
-              <button
-                onClick={() => setViewMode('kanban')}
-                className={`px-3 py-1 text-xs font-semibold rounded-lg transition ${
-                  viewMode === 'kanban' 
-                    ? 'bg-slate-900 dark:bg-emerald-600 text-white shadow-xs' 
-                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
-                }`}
-              >
-                Kanban
-              </button>
-              <button
-                onClick={() => setViewMode('list')}
-                className={`px-3 py-1 text-xs font-semibold rounded-lg transition ${
-                  viewMode === 'list' 
-                    ? 'bg-slate-900 dark:bg-emerald-600 text-white shadow-xs' 
-                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
-                }`}
-              >
-                Table List
-              </button>
-            </div>
           </div>
         </div>
       </div>
 
-      {/* 4. PIPELINE VIEW (KANBAN OR TABLE) */}
+      {/* Kanban Board View */}
       {viewMode === 'kanban' ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 overflow-x-auto pb-4">
+        // Fixed breakpoint column counts (md:2, lg:3, xl:6) left each
+        // column at whatever 1/N share of the container that produced --
+        // with `main` capped at max-w-7xl (1280px) and 6 columns at
+        // xl:min-w-0 (min-width explicitly zeroed right at the
+        // breakpoint that turns ON 6 columns), that share crushed down
+        // to ~195px regardless of actual screen width. There are always
+        // exactly 6 pipeline stages, so this stays a fixed 6-column
+        // template (not auto-fit, which would wrap onto multiple rows
+        // on medium-width screens instead of the intended single
+        // horizontally-scrollable row) -- minmax(260px, 1fr) gives every
+        // column a real floor and lets them share whatever room `main`
+        // actually has (now max-w-[1920px], see CRMApp.tsx) instead of
+        // a fixed count fighting a fixed cap. overflow-x-auto on the
+        // container is the fallback below that floor.
+        <div
+          className="grid gap-4 overflow-x-auto pb-4"
+          style={{ gridTemplateColumns: 'repeat(6, minmax(260px, 1fr))' }}
+        >
           {PIPELINE_COLUMNS.map((col) => {
             const columnLeads = filteredLeads.filter((l) => l.status === col.id);
             const columnValue = columnLeads.reduce((acc, l) => acc + (l.dealValue || l.propertyPrice || 0), 0);
-            const isDropTargetActive = pickedUpLead !== null;
-            const isDragOver = dragOverColumnId === col.id;
 
             return (
               <div
                 key={col.id}
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  setDragOverColumnId(col.id);
-                }}
-                onDragLeave={() => {
-                  setDragOverColumnId(null);
-                }}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  const leadId = e.dataTransfer.getData('text/plain');
-                  if (leadId) {
-                    handleDropLead(leadId, col.id);
-                  }
-                }}
-                onClick={() => {
-                  if (pickedUpLead && pickedUpLead.status !== col.id) {
-                    handleDropLead(pickedUpLead.id, col.id);
-                  }
-                }}
-                className={`rounded-2xl border p-3 flex flex-col min-w-[280px] xl:min-w-0 transition-all ${
-                  isDragOver
-                    ? 'bg-emerald-50/70 dark:bg-emerald-950/50 border-emerald-500 ring-2 ring-emerald-400'
-                    : isDropTargetActive && pickedUpLead?.status !== col.id
-                    ? 'bg-emerald-50/30 dark:bg-emerald-950/20 border-emerald-400 dark:border-emerald-700/60'
-                    : 'bg-slate-100/80 dark:bg-slate-900/90 border-slate-200 dark:border-slate-800'
-                }`}
+                className="bg-white/40 dark:bg-slate-900/40 backdrop-blur-lg rounded-2xl border border-white/50 dark:border-slate-700/30 p-3 flex flex-col min-w-[260px] transition-colors"
               >
                 {/* Column Header */}
                 <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-200 dark:border-slate-800">
@@ -411,29 +260,10 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
                 </div>
 
                 {/* Sub-value total */}
-                <div className="text-[11px] text-slate-500 dark:text-slate-400 mb-2 px-1 flex justify-between items-center">
+                <div className="text-[11px] text-slate-500 dark:text-slate-400 mb-3 px-1 flex justify-between items-center">
                   <span>Value:</span>
                   <span className="font-semibold text-slate-800 dark:text-slate-200">{formatShortCurrency(columnValue)}</span>
                 </div>
-
-                {/* CLICK-AND-DROP TARGET BUTTON */}
-                {pickedUpLead && (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDropLead(pickedUpLead.id, col.id);
-                    }}
-                    className={`w-full py-2 px-2.5 rounded-xl border-2 border-dashed font-bold text-xs flex items-center justify-center space-x-1.5 transition cursor-pointer mb-2.5 shadow-xs ${
-                      pickedUpLead.status === col.id
-                        ? 'border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-default'
-                        : 'border-emerald-500 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/80 dark:hover:bg-emerald-900 text-emerald-900 dark:text-emerald-200 animate-pulse scale-[1.01]'
-                    }`}
-                  >
-                    <ArrowDown className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>{pickedUpLead.status === col.id ? 'Current Stage' : `Drop ${pickedUpLead.name.split(' ')[0]} Here`}</span>
-                  </button>
-                )}
 
                 {/* Column Cards */}
                 <div className="space-y-3 flex-1 overflow-y-auto max-h-[70vh] pr-1 scrollbar-thin">
@@ -447,14 +277,12 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
                         transition={{ duration: 0.2 }}
                         className="h-28 border border-dashed border-slate-300 dark:border-slate-700 rounded-xl flex items-center justify-center text-slate-400 dark:text-slate-500 text-xs italic bg-white/50 dark:bg-slate-800/30"
                       >
-                        {pickedUpLead ? 'Click to drop here' : 'No leads in stage'}
+                        No leads in stage
                       </motion.div>
                     ) : (
                       columnLeads.map((lead) => {
                         const nextStage = PIPELINE_COLUMNS[PIPELINE_COLUMNS.findIndex((c) => c.id === lead.status) + 1]?.id;
                         const prevStage = PIPELINE_COLUMNS[PIPELINE_COLUMNS.findIndex((c) => c.id === lead.status) - 1]?.id;
-                        const isPickedUp = pickedUpLead?.id === lead.id;
-                        const isDragging = draggedLeadId === lead.id;
 
                         return (
                           <motion.div
@@ -469,52 +297,35 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
                               ease: [0.16, 1, 0.3, 1],
                               layout: { duration: 0.28, ease: 'easeOut' }
                             }}
-                            draggable={true}
-                            onDragStart={(e) => {
-                              e.dataTransfer.setData('text/plain', lead.id);
-                              setDraggedLeadId(lead.id);
-                            }}
-                            onDragEnd={() => {
-                              setDraggedLeadId(null);
-                            }}
                             onClick={() => onSelectLead(lead)}
-                            className={`group bg-white dark:bg-slate-800 hover:bg-white dark:hover:bg-slate-800/90 border rounded-xl p-3.5 shadow-xs hover:shadow-md transition-all cursor-pointer relative ${
-                              isPickedUp
-                                ? 'border-emerald-500 ring-2 ring-emerald-400 bg-emerald-50/20 dark:bg-emerald-950/20'
-                                : isDragging
-                                ? 'opacity-40 border-dashed border-emerald-500'
-                                : 'border-slate-200 dark:border-slate-700/80 hover:border-emerald-500 dark:hover:border-emerald-500'
-                            }`}
+                            className="group bg-white/70 dark:bg-slate-800/60 backdrop-blur-md hover:bg-white/90 dark:hover:bg-slate-800/80 border border-white/60 dark:border-slate-700/50 hover:border-emerald-500 dark:hover:border-emerald-500 rounded-xl p-3.5 shadow-xs hover:shadow-md transition-all cursor-pointer relative"
                           >
-                            {/* THE HOT TAG MOVED TO TOP RIGHT CORNER OF THE CARD */}
-                            {lead.urgency === 'urgent' && (
-                              <div className="absolute top-2.5 right-2.5 z-10 pointer-events-none">
-                                <span className="inline-flex items-center space-x-0.5 text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-600 dark:bg-red-500 text-white shadow-xs animate-pulse">
-                                  <Flame className="w-2.5 h-2.5 fill-current" />
-                                  <span>HOT</span>
-                                </span>
-                              </div>
-                            )}
-
-                            {/* Top row: Source badge & Score */}
-                            <div className="flex items-center justify-between mb-2 pr-12">
+                            {/* Lead Score & Urgency indicator */}
+                            <div className="flex items-center justify-between mb-2">
                               {getSourceBadge(lead.source)}
 
-                              <span
-                                className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${
-                                  lead.leadScore >= 90
-                                    ? 'bg-emerald-50 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
-                                    : lead.leadScore >= 75
-                                    ? 'bg-amber-50 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800'
-                                    : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-600'
-                                }`}
-                                title={`Lead Quality Score: ${lead.leadScore}/100`}
-                              >
-                                {lead.leadScore} pts
-                              </span>
+                              <div className="flex items-center space-x-1.5">
+                                {lead.urgency === 'urgent' && (
+                                  <span className="flex items-center text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-50 dark:bg-red-950/70 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800 animate-pulse">
+                                    <Flame className="w-2.5 h-2.5 mr-0.5" /> HOT
+                                  </span>
+                                )}
+                                <span
+                                  className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${
+                                    lead.leadScore >= 90
+                                      ? 'bg-emerald-50 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
+                                      : lead.leadScore >= 75
+                                      ? 'bg-amber-50 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800'
+                                      : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-600'
+                                  }`}
+                                  title={`Lead Score: ${lead.leadScore}/100`}
+                                >
+                                  Score: {lead.leadScore}
+                                </span>
+                              </div>
                             </div>
 
-                            {/* Client Name & Property Title */}
+                            {/* Client Name & Reference */}
                             <div className="mb-1.5">
                               <div className="flex items-center justify-between">
                                 <h4 className="font-semibold text-xs text-slate-900 dark:text-slate-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition line-clamp-1">
@@ -544,31 +355,16 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
                               </div>
                             )}
 
-                            {/* Action Strip: Click-and-Drop Button & Quick Moves */}
+                            {/* Quick Stage Stepper & Actions */}
                             <div className="flex items-center justify-between pt-1 text-slate-500 dark:text-slate-400 text-[11px]">
-                              {/* Left: Click-and-Drop Grab button */}
                               <div className="flex items-center space-x-1" onClick={(e) => e.stopPropagation()}>
-                                <button
-                                  type="button"
-                                  onClick={() => setPickedUpLead(isPickedUp ? null : lead)}
-                                  className={`px-2 py-0.5 rounded-lg text-[10px] font-bold flex items-center space-x-1 transition cursor-pointer ${
-                                    isPickedUp
-                                      ? 'bg-emerald-600 text-white shadow-xs'
-                                      : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200'
-                                  }`}
-                                  title="Click to Pick Up and Drop into any Stage"
-                                >
-                                  <Move className="w-2.5 h-2.5" />
-                                  <span>{isPickedUp ? 'Selected' : 'Move'}</span>
-                                </button>
-
                                 {prevStage && (
                                   <button
                                     onClick={() => onUpdateLeadStatus(lead.id, prevStage)}
                                     className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition"
                                     title="Move to Previous Stage"
                                   >
-                                    <ChevronLeft className="w-3 h-3" />
+                                    <ChevronLeft className="w-3.5 h-3.5" />
                                   </button>
                                 )}
                                 {nextStage && (
@@ -583,7 +379,6 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
                                 )}
                               </div>
 
-                              {/* Right: Quick actions */}
                               <div className="flex items-center space-x-1" onClick={(e) => e.stopPropagation()}>
                                 <button
                                   onClick={() => onOpenQuickWhatsApp(lead)}
@@ -599,6 +394,13 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
                                 >
                                   <Phone className="w-3.5 h-3.5" />
                                 </a>
+                                <button
+                                  onClick={() => onSelectLead(lead)}
+                                  className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition"
+                                  title="Open Full Details"
+                                >
+                                  <ChevronRight className="w-3.5 h-3.5" />
+                                </button>
                               </div>
                             </div>
                           </motion.div>
@@ -622,7 +424,7 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
                   <th className="p-3.5">Portal Source</th>
                   <th className="p-3.5">Property of Interest</th>
                   <th className="p-3.5">Budget / Value</th>
-                  <th className="p-3.5">Pipeline Stage (Click to Move)</th>
+                  <th className="p-3.5">Pipeline Stage</th>
                   <th className="p-3.5">Score</th>
                   <th className="p-3.5">Assigned Agent</th>
                   <th className="p-3.5">Received</th>
@@ -645,16 +447,8 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
                     >
                       {/* Name & Contact */}
                       <td className="p-3.5">
-                        <div className="flex items-center space-x-2">
-                          <span className="font-semibold text-slate-900 dark:text-slate-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition">
-                            {lead.name}
-                          </span>
-                          {lead.urgency === 'urgent' && (
-                            <span className="inline-flex items-center space-x-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-red-600 text-white animate-pulse">
-                              <Flame className="w-2.5 h-2.5 fill-current" />
-                              <span>HOT</span>
-                            </span>
-                          )}
+                        <div className="font-semibold text-slate-900 dark:text-slate-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition">
+                          {lead.name}
                         </div>
                         <div className="text-[11px] text-slate-500 dark:text-slate-400 font-mono mt-0.5">
                           {lead.phone} • {lead.email}
@@ -680,7 +474,7 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
                         <select
                           value={lead.status}
                           onChange={(e) => onUpdateLeadStatus(lead.id, e.target.value as LeadStatus)}
-                          className="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-emerald-600 font-medium cursor-pointer"
+                          className="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-emerald-600 font-medium"
                         >
                           {PIPELINE_COLUMNS.map((c) => (
                             <option key={c.id} value={c.id}>

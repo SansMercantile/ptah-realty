@@ -258,7 +258,7 @@ export const EmailAutomationsView: React.FC<EmailAutomationsViewProps> = ({
                 <div className="bg-white p-4 rounded-xl border border-emerald-200 text-xs shadow-xs">
                   <div className="flex justify-between text-slate-500 mb-1">
                     <span><strong>To:</strong> [Client Email]</span>
-                    <span><strong>From:</strong> concierge@ptahrealty.sansmercantile.com</span>
+                    <span><strong>From:</strong> concierge@ptahrealty.com</span>
                   </div>
                   <div className="text-slate-900 font-bold">
                     <strong>Subject:</strong> Thank you for your inquiry on [Property Title] - Ptah Realty Luxury Portfolio
@@ -271,7 +271,7 @@ export const EmailAutomationsView: React.FC<EmailAutomationsViewProps> = ({
                       <h3 className="font-serif font-bold text-base text-slate-900">PTAH REALTY</h3>
                       <span className="text-[10px] text-slate-500 uppercase tracking-widest">Exclusive Real Estate Advisory</span>
                     </div>
-                    <span className="text-emerald-700 font-bold text-xs">ptahrealty.sansmercantile.com</span>
+                    <span className="text-emerald-700 font-bold text-xs">ptahrealty.com</span>
                   </div>
 
                   <p className="text-slate-800">
@@ -295,7 +295,7 @@ export const EmailAutomationsView: React.FC<EmailAutomationsViewProps> = ({
                   <div className="pt-3 border-t border-slate-100 text-slate-600 text-[11px]">
                     Warm regards,<br />
                     <strong>Ptah Realty Senior Brokerage Team</strong><br />
-                    <a href="https://ptahrealty.sansmercantile.com/" className="text-emerald-700 font-semibold">https://ptahrealty.sansmercantile.com/</a>
+                    <a href="https://ptahrealty.com/" className="text-emerald-700 font-semibold">https://ptahrealty.com/</a>
                   </div>
                 </div>
               </div>

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { authHeaders } from '../../services/api';
 import { 
   X, 
   MessageSquare, 
@@ -27,7 +28,9 @@ import {
   Target,
   TrendingUp,
   BarChart2,
-  Activity
+  Activity,
+  Video,
+  Layers
 } from 'lucide-react';
 import { Lead, LeadStatus, CommunicationItem, TaskItem, UrgencyLevel, CommunicationType, ActivityLogItem } from '../types';
 import { formatCurrency, formatDate, formatRelativeTime, triggerDealWonConfetti } from '../utils/formatters';
@@ -243,13 +246,95 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
     });
   };
 
+  // Launch Zoom 4K Virtual Walkthrough
+  const handleLaunchZoom = () => {
+    const zoomUrl = `https://zoom.us/start/videomeeting`;
+    window.open(zoomUrl, '_blank');
+
+    const now = new Date().toISOString();
+    const commActivity: ActivityLogItem = {
+      id: `act-zoom-${Date.now()}`,
+      type: 'communication',
+      title: `Zoom 4K Walkthrough Session Initiated`,
+      description: `Launched private 4K video walkthrough with ${lead.name} for ${lead.propertyTitle}. HD cloud recording and presentation specs loaded.`,
+      timestamp: now,
+      author: lead.assignedAgent.name || 'Ptah Realty Broker',
+      metadata: {
+        commType: 'meeting',
+        tag: 'Zoom Virtual Walkthrough'
+      }
+    };
+
+    onUpdateLead({
+      ...lead,
+      activityLogs: [commActivity, ...(lead.activityLogs || [])],
+      lastContactedAt: now,
+      status: lead.status === 'new' ? 'contacted' : lead.status
+    });
+  };
+
+  // Launch Google Meet Video Bridge
+  const handleLaunchMeet = () => {
+    const meetUrl = `https://meet.google.com/new`;
+    window.open(meetUrl, '_blank');
+
+    const now = new Date().toISOString();
+    const commActivity: ActivityLogItem = {
+      id: `act-meet-${Date.now()}`,
+      type: 'communication',
+      title: `Google Meet Video Bridge Connected`,
+      description: `Started Google Workspace video meeting with ${lead.name}. Interactive floor plan review & brochure screen share active.`,
+      timestamp: now,
+      author: lead.assignedAgent.name || 'Ptah Realty Broker',
+      metadata: {
+        commType: 'meeting',
+        tag: 'Google Meet Bridge'
+      }
+    };
+
+    onUpdateLead({
+      ...lead,
+      activityLogs: [commActivity, ...(lead.activityLogs || [])],
+      lastContactedAt: now,
+      status: lead.status === 'new' ? 'contacted' : lead.status
+    });
+  };
+
+  // Launch Matterport 3D Digital Twin Tour
+  const handleLaunchMatterport = () => {
+    // Standard Matterport Showcase interactive tour 3D viewer
+    const matterportUrl = `https://my.matterport.com/show/?m=sB28fLpM891&play=1&qs=1&brand=0`;
+    window.open(matterportUrl, '_blank');
+
+    const now = new Date().toISOString();
+    const commActivity: ActivityLogItem = {
+      id: `act-mp-${Date.now()}`,
+      type: 'communication',
+      title: `Matterport 3D Dollhouse Tour Launched`,
+      description: `Opened immersive 3D spatial walkthrough for ${lead.propertyTitle} with ${lead.name}. Interactive floorplan and measurement dollhouse active.`,
+      timestamp: now,
+      author: lead.assignedAgent.name || 'Ptah Realty Broker',
+      metadata: {
+        commType: 'meeting',
+        tag: 'Matterport 3D Tour'
+      }
+    };
+
+    onUpdateLead({
+      ...lead,
+      activityLogs: [commActivity, ...(lead.activityLogs || [])],
+      lastContactedAt: now,
+      status: lead.status === 'new' ? 'contacted' : lead.status
+    });
+  };
+
   // Generate AI Email
   const handleGenerateAiEmail = async () => {
     setAiGenerating(true);
     try {
       const response = await fetch('/api/gemini/generate-email', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify({
           leadName: lead.name,
           propertyTitle: lead.propertyTitle,
@@ -277,7 +362,7 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
     try {
       const response = await fetch('/api/gemini/analyze-lead', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify({ lead }),
       });
       const data = await response.json();
@@ -411,7 +496,8 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
               )}`}
               target="_blank"
               rel="noreferrer"
-              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-semibold transition"
+              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-semibold transition cursor-pointer"
+              title="1-Click WhatsApp Concierge"
             >
               <MessageSquare className="w-3.5 h-3.5 text-emerald-600" />
               <span>WhatsApp</span>
@@ -420,11 +506,45 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
             {/* Direct Call */}
             <a
               href={`tel:${lead.phone}`}
-              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200 text-xs font-semibold transition"
+              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200 text-xs font-semibold transition cursor-pointer"
+              title="Phone Call"
             >
               <Phone className="w-3.5 h-3.5 text-blue-600" />
               <span>Call</span>
             </a>
+
+            {/* Zoom 4K Virtual Walkthrough */}
+            <button
+              type="button"
+              onClick={handleLaunchZoom}
+              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-cyan-50 hover:bg-cyan-100 text-cyan-800 border border-cyan-200 text-xs font-semibold transition cursor-pointer"
+              title="Launch HD 4K Zoom Virtual Walkthrough"
+            >
+              <Video className="w-3.5 h-3.5 text-cyan-600" />
+              <span>Zoom Tour</span>
+            </button>
+
+            {/* Google Meet Video Bridge */}
+            <button
+              type="button"
+              onClick={handleLaunchMeet}
+              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-800 border border-purple-200 text-xs font-semibold transition cursor-pointer"
+              title="Launch Google Meet Video Meeting"
+            >
+              <Video className="w-3.5 h-3.5 text-purple-600" />
+              <span>Google Meet</span>
+            </button>
+
+            {/* Matterport 3D Tour */}
+            <button
+              type="button"
+              onClick={handleLaunchMatterport}
+              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-800 border border-indigo-200 text-xs font-semibold transition cursor-pointer"
+              title="Explore 3D Matterport Dollhouse & Virtual Walkthrough"
+            >
+              <Layers className="w-3.5 h-3.5 text-indigo-600" />
+              <span>Matterport 3D</span>
+            </button>
 
             {/* Close */}
             <button

@@ -255,16 +255,6 @@ interface PropertyHub {
   keywords: string[];
 }
 
-interface PropertyHubStats extends PropertyHub {
-  leads: Lead[];
-  count: number;
-  totalValue: number;
-  dealsWon: number;
-  avgScore: number;
-  topSource: string;
-  conversionRate: string;
-}
-
 const PROPERTY_HUBS: PropertyHub[] = [
   {
     id: 'hub-clifton',
@@ -353,7 +343,7 @@ export const LeadGeoHeatmap: React.FC<LeadGeoHeatmapProps> = ({ leads, onSelectL
   const [selectedMetric, setSelectedMetric] = useState<'volume' | 'value' | 'conversion' | 'urgent'>('value');
   const [selectedPortal, setSelectedPortal] = useState<string>('all');
   const [selectedProvince, setSelectedProvince] = useState<string>('all');
-  const [activeHub, setActiveHub] = useState<PropertyHubStats | null>(null);
+  const [activeHub, setActiveHub] = useState<PropertyHub | null>(null);
   const [mapPosition, setMapPosition] = useState<{ coordinates: [number, number]; zoom: number }>({
     coordinates: [24.8, -29.2],
     zoom: 1

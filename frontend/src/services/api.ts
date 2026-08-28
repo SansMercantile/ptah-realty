@@ -35,6 +35,16 @@ export function getToken(): string | null {
   return localStorage.getItem(TOKEN_KEY);
 }
 
+// For the small number of CRM fetch() calls that hit backend paths
+// outside this file's /api/v1/realty/* convention (the CRM's AI
+// endpoints at /api/gemini/* and /api/campaigns/dispatch -- see
+// api/crm_ai.py) and so can't use authFetch/authJson below, which
+// prepend that prefix. Spread this into a fetch() call's headers.
+export function authHeaders(): Record<string, string> {
+  const token = getToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 export function getCurrentUser(): AuthUser | null {
   const raw = localStorage.getItem(USER_KEY);
   return raw ? JSON.parse(raw) : null;
@@ -662,6 +672,10 @@ export interface CrmState {
   automationRules: any[];
   connectors: any[];
   connectorSyncEvents: any[];
+  sprint: any;
+  listings: any[];
+  showHouses: any[];
+  campaigns: any[];
 }
 
 export async function getCrmState(): Promise<CrmState> {
@@ -673,6 +687,10 @@ export async function saveCrmState(state: {
   automationRules: any[];
   connectors: any[];
   connectorSyncEvents: any[];
+  sprint?: any;
+  listings?: any[];
+  showHouses?: any[];
+  campaigns?: any[];
 }): Promise<{ saved: boolean }> {
   return authJson<{ saved: boolean }>('/crm/state', {
     method: 'PUT',

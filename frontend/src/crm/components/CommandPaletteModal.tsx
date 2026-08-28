@@ -24,7 +24,12 @@ import {
   ShieldCheck,
   Flame,
   CornerDownLeft,
-  X
+  X,
+  Target,
+  Bell,
+  LayoutDashboard,
+  Home,
+  Megaphone
 } from 'lucide-react';
 import { Lead, ConnectorSyncEvent, TaskItem } from '../types';
 import { formatCurrency, formatRelativeTime } from '../utils/formatters';
@@ -42,7 +47,10 @@ interface CommandPaletteModalProps {
   onToggleAiAdvisor: () => void;
   onToggleDarkMode: () => void;
   darkMode: boolean;
-  onNavigateView: (view: 'pipeline' | 'tasks' | 'calendar' | 'automations' | 'reporting') => void;
+  onNavigateView: (view: 'dashboard' | 'pipeline' | 'tasks' | 'calendar' | 'automations' | 'reporting' | 'scrum') => void;
+  onOpenQuickListings?: () => void;
+  onOpenNotifications?: () => void;
+  onOpenCampaigns?: () => void;
 }
 
 type PaletteCategory = 'all' | 'leads' | 'tasks' | 'sync' | 'actions';
@@ -70,10 +78,13 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
   onOpenSettings,
   onOpenSimulator,
   onOpenNewLead,
+  onOpenQuickListings,
   onToggleAiAdvisor,
   onToggleDarkMode,
   darkMode,
   onNavigateView,
+  onOpenNotifications,
+  onOpenCampaigns,
 }) => {
   const [query, setQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<PaletteCategory>('all');
@@ -112,6 +123,52 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
     // 1. Navigation & System Actions
     const actionItems: PaletteItem[] = [
       {
+        id: 'action-dashboard',
+        category: 'actions',
+        title: 'Go to CRM Command Dashboard',
+        subtitle: 'Client intelligence, Demographics, LSM scores, Show Houses & Calendar',
+        tag: 'Navigation',
+        badge: 'View',
+        badgeColor: 'bg-rose-50 dark:bg-rose-950/70 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800',
+        icon: <LayoutDashboard className="w-4 h-4 text-rose-500" />,
+        action: () => {
+          onNavigateView('dashboard');
+          onClose();
+        },
+      },
+      {
+        id: 'action-quick-listings',
+        category: 'actions',
+        title: 'Open Quick Listings & Portal Syndication Hub',
+        subtitle: 'Instant publishing to Property24, Private Property & Ptah Web, Show Houses',
+        tag: 'Listings',
+        badge: 'Hub',
+        badgeColor: 'bg-cyan-50 dark:bg-cyan-950/70 text-cyan-700 dark:text-cyan-300 border-cyan-200 dark:border-cyan-800',
+        icon: <Home className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />,
+        action: () => {
+          onClose();
+          if (onOpenQuickListings) {
+            onOpenQuickListings();
+          }
+        },
+      },
+      {
+        id: 'action-campaigns-hub',
+        category: 'actions',
+        title: 'Open Marketing & AI Campaigns Hub',
+        subtitle: 'Canva, Mailchimp, Zapier & Meta Ads connectors with Gemini AI studio',
+        tag: 'Marketing',
+        badge: 'AI Hub',
+        badgeColor: 'bg-indigo-50 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800',
+        icon: <Megaphone className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />,
+        action: () => {
+          onClose();
+          if (onOpenCampaigns) {
+            onOpenCampaigns();
+          }
+        },
+      },
+      {
         id: 'action-pipeline',
         category: 'actions',
         title: 'Go to Pipeline Kanban Board',
@@ -123,6 +180,22 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
         action: () => {
           onNavigateView('pipeline');
           onClose();
+        },
+      },
+      {
+        id: 'action-notifications',
+        category: 'actions',
+        title: 'Open Notifications & Task Reminders Center',
+        subtitle: 'Review pending task reminders, 15-minute SLA alerts, and portal auto-responders',
+        tag: 'Notifications',
+        badge: 'Reminders',
+        badgeColor: 'bg-amber-50 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800',
+        icon: <Bell className="w-4 h-4 text-amber-600 dark:text-amber-400" />,
+        action: () => {
+          onClose();
+          if (onOpenNotifications) {
+            onOpenNotifications();
+          }
         },
       },
       {
@@ -178,6 +251,20 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
         icon: <BarChart3 className="w-4 h-4 text-purple-600 dark:text-purple-400" />,
         action: () => {
           onNavigateView('reporting');
+          onClose();
+        },
+      },
+      {
+        id: 'action-scrum',
+        category: 'actions',
+        title: 'Go to Agile Real Estate Scrum & Sprints Hub',
+        subtitle: 'Manage active sprint velocity, story points, conveyancing blockers & VIP viewings',
+        tag: 'Navigation',
+        badge: 'View',
+        badgeColor: 'bg-purple-50 dark:bg-purple-950/70 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800',
+        icon: <Target className="w-4 h-4 text-purple-600 dark:text-purple-400" />,
+        action: () => {
+          onNavigateView('scrum');
           onClose();
         },
       },

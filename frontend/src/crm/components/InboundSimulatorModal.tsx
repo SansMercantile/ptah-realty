@@ -66,7 +66,7 @@ const PRESET_SIMULATIONS = [
     type: 'House' as const,
     urgency: 'urgent' as const,
     score: 93,
-    message: 'Direct submission from ptahrealty.sansmercantile.com: We are looking for an agricultural lifestyle estate in Franschhoek or Stellenbosch with water rights. Please send confidential specs pack.',
+    message: 'Direct submission from ptahrealty.com: We are looking for an agricultural lifestyle estate in Franschhoek or Stellenbosch with water rights. Please send confidential specs pack.',
   },
   {
     name: 'Competitor Network Syndication Lead',

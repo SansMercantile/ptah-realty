@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { authHeaders } from '../../services/api';
 import { 
   X, 
   Sparkles, 
@@ -55,7 +56,7 @@ export const AiAdvisorDrawer: React.FC<AiAdvisorDrawerProps> = ({
 
       const response = await fetch('/api/gemini/chat-assistant', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify({
           message: textToSend,
           crmSummary,
