@@ -34,10 +34,12 @@ import { Bell, CheckCircle2, Flame, Radio, X, Calendar as CalendarIcon, Sliders 
 export default function App({
   openConnectorsSignal,
   openCommandPaletteSignal,
+  openNotificationsSignal,
   onOpenQuickListing,
 }: {
   openConnectorsSignal?: number;
   openCommandPaletteSignal?: number;
+  openNotificationsSignal?: number;
   onOpenQuickListing?: () => void;
 }) {
   // Load from local storage or mock data
@@ -223,6 +225,20 @@ export default function App({
     }
     if (openCommandPaletteSignal) setIsCommandPaletteOpen(true);
   }, [openCommandPaletteSignal]);
+
+  // Same signal pattern, for the main app header's notification bell.
+  // Navbar's own "Alerts" bell (Task Reminders + email notifications
+  // combined) has been removed as redundant now that the main header's
+  // bell reaches this same drawer -- see App.tsx's
+  // handleOpenCRMNotifications / crmOpenNotificationsSignal.
+  const isInitialNotificationsSignalRef = useRef(true);
+  useEffect(() => {
+    if (isInitialNotificationsSignalRef.current) {
+      isInitialNotificationsSignalRef.current = false;
+      return;
+    }
+    if (openNotificationsSignal) setIsNotificationsOpen(true);
+  }, [openNotificationsSignal]);
 
   // Global Cmd+K / Ctrl+K keyboard shortcut listener
   useEffect(() => {
@@ -503,10 +519,6 @@ export default function App({
         onOpenQuickListing={onOpenQuickListing}
         onOpenSimulator={() => setIsSimulatorOpen(true)}
         onToggleAiAdvisor={() => setIsAiAdvisorOpen(!isAiAdvisorOpen)}
-        pendingTasksCount={pendingTasksCount}
-        recentNotifications={allNotifications}
-        onOpenNotifications={() => setIsNotificationsOpen(true)}
-        unreadNotificationsCount={allNotifications.length}
         darkMode={isDarkMode}
         onToggleDarkMode={() => setIsDarkMode((prev) => !prev)}
         onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}

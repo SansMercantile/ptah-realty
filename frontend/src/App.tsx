@@ -81,6 +81,16 @@ export function App() {
     setCrmOpenConnectorsSignal((n) => n + 1);
   };
 
+  // Same signal pattern, for the main header's notification bell -- the
+  // CRM's own Task Reminders + Notifications bell (Navbar's "Alerts"
+  // button) is now redundant with this one and has been removed there
+  // (see Navbar.tsx); clicking the main header's bell while on the CRM
+  // tab opens CRM's own NotificationDrawer via this bridge instead.
+  const [crmOpenNotificationsSignal, setCrmOpenNotificationsSignal] = useState(0);
+  const handleOpenCRMNotifications = () => {
+    setCrmOpenNotificationsSignal((n) => n + 1);
+  };
+
   // Consolidated Quick Search: the main header's Quick Search button used
   // to always switch to the cadastre 'search' tab. The CRM had its own
   // separate command palette (leads/tasks/sync/actions) behind its own
@@ -250,6 +260,7 @@ export function App() {
         userEmail={user.email}
         onLogout={() => { logout(); setUser(null); }}
         selectedPropertyAddress={selectedProperty?.address}
+        onOpenCRMNotifications={handleOpenCRMNotifications}
       />
       {/* Main Workspace Area (Google Maps & Cadastral Vector Canvas + Property Title Panel) */}
       <main className={`flex-1 overflow-hidden relative ${activeNavTab === 'crm' ? 'overflow-y-auto' : 'flex flex-row'}`}>
@@ -257,6 +268,7 @@ export function App() {
           <CRMApp
             openConnectorsSignal={crmOpenConnectorsSignal}
             openCommandPaletteSignal={crmOpenCommandPaletteSignal}
+            openNotificationsSignal={crmOpenNotificationsSignal}
             onOpenQuickListing={() => setIsQuickListingOpen(true)}
           />
         ) : (

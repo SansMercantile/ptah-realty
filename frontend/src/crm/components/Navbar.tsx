@@ -8,7 +8,6 @@ import {
   Plus, 
   Radio, 
   Sparkles, 
-  Bell, 
   ShieldCheck,
   Settings,
   Search,
@@ -29,10 +28,6 @@ interface NavbarProps {
   quickListingsCount?: number;
   onOpenSimulator: () => void;
   onToggleAiAdvisor: () => void;
-  pendingTasksCount: number;
-  recentNotifications: EmailNotificationLog[];
-  onOpenNotifications: () => void;
-  unreadNotificationsCount: number;
   onOpenSettings: () => void;
   activeConnectorsCount?: number;
   darkMode: boolean;
@@ -48,17 +43,12 @@ export const Navbar: React.FC<NavbarProps> = ({
   quickListingsCount = 0,
   onOpenSimulator,
   onToggleAiAdvisor,
-  pendingTasksCount,
-  unreadNotificationsCount,
-  onOpenNotifications,
   onOpenSettings,
   activeConnectorsCount = 8,
   darkMode,
   onToggleDarkMode,
   onOpenCommandPalette,
 }) => {
-  const totalAlertsCount = pendingTasksCount + unreadNotificationsCount;
-
   return (
     <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 sticky top-0 z-30 shadow-xs transition-colors duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -201,27 +191,6 @@ export const Navbar: React.FC<NavbarProps> = ({
               <span className="hidden sm:inline">AI Copilot</span>
             </button>
 
-            {/* Notification & Task Reminders Bell */}
-            <button
-              onClick={onOpenNotifications}
-              className="flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white relative transition cursor-pointer border border-slate-200 dark:border-slate-700 text-xs font-semibold group"
-              title={`Notifications & Task Reminders (${pendingTasksCount} tasks due, ${unreadNotificationsCount} email alerts)`}
-              aria-label="Open Notifications & Task Reminders"
-            >
-              <div className="relative">
-                <Bell className="w-4 h-4 text-slate-600 dark:text-slate-300 group-hover:text-amber-500 transition" />
-                {pendingTasksCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-amber-500 animate-ping" />
-                )}
-              </div>
-              <span className="hidden xl:inline text-xs font-medium">Alerts</span>
-              {totalAlertsCount > 0 && (
-                <span className="px-1.5 py-0.2 text-[10px] font-bold rounded-full bg-amber-500 text-slate-950 shadow-2xs">
-                  {totalAlertsCount}
-                </span>
-              )}
-            </button>
-
             {/* Settings & Connectors Button */}
             <button
               onClick={onOpenSettings}
@@ -295,14 +264,6 @@ export const Navbar: React.FC<NavbarProps> = ({
           >
             <Home className="w-3 h-3 text-cyan-600 dark:text-cyan-400" />
             <span>Quick listings ({quickListingsCount})</span>
-          </button>
-          <button
-            onClick={onOpenNotifications}
-            className="px-3 py-1 rounded-md text-xs font-medium whitespace-nowrap text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 flex items-center space-x-1 cursor-pointer"
-            title="Open Notifications & Task Reminders"
-          >
-            <Bell className="w-3 h-3 text-amber-600 dark:text-amber-400" />
-            <span>Reminders ({totalAlertsCount})</span>
           </button>
           <button
             onClick={() => setCurrentView('calendar')}
