@@ -9,7 +9,6 @@ import {
   Radio, 
   Sparkles, 
   Bell, 
-  Settings,
   Search,
   Command,
   Sun,
@@ -27,8 +26,6 @@ interface NavbarProps {
   recentNotifications: EmailNotificationLog[];
   onOpenNotifications: () => void;
   unreadNotificationsCount: number;
-  onOpenSettings: () => void;
-  activeConnectorsCount?: number;
   darkMode: boolean;
   onToggleDarkMode: () => void;
   onOpenCommandPalette: () => void;
@@ -43,14 +40,12 @@ export const Navbar: React.FC<NavbarProps> = ({
   pendingTasksCount,
   unreadNotificationsCount,
   onOpenNotifications,
-  onOpenSettings,
-  activeConnectorsCount = 8,
   darkMode,
   onToggleDarkMode,
   onOpenCommandPalette,
 }) => {
   return (
-    <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 sticky top-0 z-30 shadow-xs transition-colors duration-200">
+    <header className="bg-white/70 dark:bg-slate-900/60 backdrop-blur-xl border-b border-white/40 dark:border-slate-700/40 text-slate-900 dark:text-slate-100 sticky top-0 z-30 shadow-xs transition-colors duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/*
           Three-column grid, not flex justify-between: the CRM's own brand
@@ -202,16 +197,14 @@ export const Navbar: React.FC<NavbarProps> = ({
               )}
             </button>
 
-            {/* Settings & Connectors Button */}
-            <button
-              onClick={onOpenSettings}
-              className="flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200/80 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 text-xs font-semibold transition cursor-pointer"
-              title="Manage API Connectors, Property24, Gmail, Cal ID, and WhatsApp"
-            >
-              <Settings className="w-3.5 h-3.5 text-slate-700 dark:text-slate-300" />
-              <span className="hidden md:inline">Connectors</span>
-              <span className="w-2 h-2 rounded-full bg-emerald-500 hidden sm:inline-block" title="All connectors active" />
-            </button>
+            {/*
+              Settings & Connectors button removed from here -- this is
+              now reachable from the "Connectors" item in the main app's
+              user dropdown (top-right, next to the account email) so it
+              isn't duplicated as its own top-level entry point inside
+              the CRM. See App.tsx's onOpenCRMConnectors / CRMApp's
+              openConnectorsSignal prop for the wiring.
+            */}
 
             {/* Add Lead Primary Button */}
             <button
@@ -282,12 +275,6 @@ export const Navbar: React.FC<NavbarProps> = ({
             }`}
           >
             Reporting
-          </button>
-          <button
-            onClick={onOpenSettings}
-            className="px-3 py-1 rounded-md text-xs font-medium whitespace-nowrap text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800"
-          >
-            Connectors
           </button>
           <button
             onClick={onToggleDarkMode}

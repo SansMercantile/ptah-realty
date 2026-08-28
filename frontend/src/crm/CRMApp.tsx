@@ -31,7 +31,7 @@ import { formatCurrency, triggerDealWonConfetti } from './utils/formatters';
 import { getCrmState, saveCrmState } from '../services/api';
 import { Bell, CheckCircle2, Flame, Radio, X, Calendar as CalendarIcon, Sliders } from 'lucide-react';
 
-export default function App() {
+export default function App({ openConnectorsSignal }: { openConnectorsSignal?: number }) {
   // Load from local storage or mock data
   const [leads, setLeads] = useState<Lead[]>(() => {
     const saved = localStorage.getItem('ptah_crm_leads');
@@ -184,6 +184,23 @@ export default function App() {
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+
+  // Opens the Settings/Connectors modal when the outer app's header
+  // "Connectors" dropdown item is clicked (see App.tsx's
+  // handleOpenCRMConnectors / crmOpenConnectorsSignal). Connectors no
+  // longer has its own top-level button in this app's Navbar -- it's
+  // reached from there instead, so this signal is now the only trigger
+  // besides EmailAutomationsView's contextual link and the command
+  // palette. Guarded so signal 0 (the initial/default prop value) never
+  // fires this on mount.
+  const isInitialConnectorsSignalRef = useRef(true);
+  useEffect(() => {
+    if (isInitialConnectorsSignalRef.current) {
+      isInitialConnectorsSignalRef.current = false;
+      return;
+    }
+    if (openConnectorsSignal) setIsSettingsOpen(true);
+  }, [openConnectorsSignal]);
 
   // Global Cmd+K / Ctrl+K keyboard shortcut listener
   useEffect(() => {
@@ -428,7 +445,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100/70 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col font-sans selection:bg-emerald-500 selection:text-white transition-colors duration-200">
+    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-emerald-50/50 to-slate-200 dark:from-slate-950 dark:via-emerald-950/25 dark:to-slate-900 text-slate-900 dark:text-slate-100 flex flex-col font-sans selection:bg-emerald-500 selection:text-white transition-colors duration-200">
       {/* Backend persistence status -- see api/crm.py; small and
           unobtrusive, but visible enough to confirm saves are actually
           reaching the backend rather than only localStorage. */}
@@ -467,15 +484,16 @@ export default function App() {
         recentNotifications={allNotifications}
         onOpenNotifications={() => setIsNotificationsOpen(true)}
         unreadNotificationsCount={allNotifications.length}
-        onOpenSettings={() => setIsSettingsOpen(true)}
-        activeConnectorsCount={connectors.filter((c) => c.isEnabled).length}
         darkMode={isDarkMode}
         onToggleDarkMode={() => setIsDarkMode((prev) => !prev)}
         onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
       />
 
-      {/* Main View Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      {/* Main View Area -- widened from max-w-7xl (1280px), which was
+          crushing the 6-column Kanban board on any real monitor, to
+          max-w-[1920px] so it fills wide screens while still centering
+          with breathing room on ultra-wide ones. */}
+      <main className="flex-1 max-w-[1920px] w-full mx-auto px-4 sm:px-6 lg:px-10 py-6">
         {currentView === 'pipeline' && (
           <PipelineBoard
             leads={leads}

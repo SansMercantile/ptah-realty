@@ -118,7 +118,7 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
   return (
     <div className="space-y-4">
       {/* Top Controls & Metrics Strip */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-xs transition-colors">
+      <div className="bg-white/60 dark:bg-slate-900/50 backdrop-blur-xl rounded-2xl p-4 border border-white/50 dark:border-slate-700/40 shadow-lg transition-colors">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           {/* Quick Metrics */}
           <div className="flex flex-wrap items-center gap-3 sm:gap-6 text-xs text-slate-700 dark:text-slate-300">
@@ -221,7 +221,24 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
 
       {/* Kanban Board View */}
       {viewMode === 'kanban' ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 overflow-x-auto pb-4">
+        // Fixed breakpoint column counts (md:2, lg:3, xl:6) left each
+        // column at whatever 1/N share of the container that produced --
+        // with `main` capped at max-w-7xl (1280px) and 6 columns at
+        // xl:min-w-0 (min-width explicitly zeroed right at the
+        // breakpoint that turns ON 6 columns), that share crushed down
+        // to ~195px regardless of actual screen width. There are always
+        // exactly 6 pipeline stages, so this stays a fixed 6-column
+        // template (not auto-fit, which would wrap onto multiple rows
+        // on medium-width screens instead of the intended single
+        // horizontally-scrollable row) -- minmax(260px, 1fr) gives every
+        // column a real floor and lets them share whatever room `main`
+        // actually has (now max-w-[1920px], see CRMApp.tsx) instead of
+        // a fixed count fighting a fixed cap. overflow-x-auto on the
+        // container is the fallback below that floor.
+        <div
+          className="grid gap-4 overflow-x-auto pb-4"
+          style={{ gridTemplateColumns: 'repeat(6, minmax(260px, 1fr))' }}
+        >
           {PIPELINE_COLUMNS.map((col) => {
             const columnLeads = filteredLeads.filter((l) => l.status === col.id);
             const columnValue = columnLeads.reduce((acc, l) => acc + (l.dealValue || l.propertyPrice || 0), 0);
@@ -229,7 +246,7 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
             return (
               <div
                 key={col.id}
-                className="bg-slate-100/80 dark:bg-slate-900/90 rounded-2xl border border-slate-200 dark:border-slate-800 p-3 flex flex-col min-w-[280px] xl:min-w-0 transition-colors"
+                className="bg-white/40 dark:bg-slate-900/40 backdrop-blur-lg rounded-2xl border border-white/50 dark:border-slate-700/30 p-3 flex flex-col min-w-[260px] transition-colors"
               >
                 {/* Column Header */}
                 <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-200 dark:border-slate-800">
@@ -281,7 +298,7 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
                               layout: { duration: 0.28, ease: 'easeOut' }
                             }}
                             onClick={() => onSelectLead(lead)}
-                            className="group bg-white dark:bg-slate-800 hover:bg-white dark:hover:bg-slate-800/90 border border-slate-200 dark:border-slate-700/80 hover:border-emerald-500 dark:hover:border-emerald-500 rounded-xl p-3.5 shadow-xs hover:shadow-md transition-all cursor-pointer relative"
+                            className="group bg-white/70 dark:bg-slate-800/60 backdrop-blur-md hover:bg-white/90 dark:hover:bg-slate-800/80 border border-white/60 dark:border-slate-700/50 hover:border-emerald-500 dark:hover:border-emerald-500 rounded-xl p-3.5 shadow-xs hover:shadow-md transition-all cursor-pointer relative"
                           >
                             {/* Lead Score & Urgency indicator */}
                             <div className="flex items-center justify-between mb-2">

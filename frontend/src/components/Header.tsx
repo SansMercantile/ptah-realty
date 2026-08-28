@@ -18,7 +18,8 @@ import {
   Settings,
   Languages,
   CircleHelp,
-  Puzzle
+  Puzzle,
+  Cable
 } from 'lucide-react';
 
 export type ActiveTab = 'suburb' | 'search' | 'cma' | 'media' | 'pdf' | 'portals' | 'sales' | 'prospecting' | 'kyc' | 'crm';
@@ -32,6 +33,7 @@ interface HeaderProps {
   onOpenPDFReport: () => void;
   onOpenPortalSync: () => void;
   onOpenDocuments: () => void;
+  onOpenCRMConnectors: () => void;
   userEmail: string;
   onLogout: () => void;
   selectedPropertyAddress?: string;
@@ -46,6 +48,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenPDFReport,
   onOpenPortalSync,
   onOpenDocuments,
+  onOpenCRMConnectors,
   selectedPropertyAddress,
   userEmail,
   onLogout
@@ -53,7 +56,7 @@ export const Header: React.FC<HeaderProps> = ({
   const [isAccountMenuOpen, setIsAccountMenuOpen] = React.useState(false);
 
   return (
-    <header className="bg-slate-900 text-slate-100 shadow-md select-none border-b border-slate-800 z-30 shrink-0">
+    <header className="sticky top-0 bg-slate-900 text-slate-100 shadow-md select-none border-b border-slate-800 z-[100] shrink-0">
       {/* Top Main Navigation Bar */}
       <div className="flex items-center justify-between px-3 py-1.5 bg-[#0b1623] border-b border-slate-800/80">
         <div className="flex items-center gap-2.5">
@@ -219,21 +222,34 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
 
           {isAccountMenuOpen && (
-            <div className="absolute right-0 top-8 z-50 w-52 rounded border border-slate-700 bg-slate-900 py-1 shadow-xl" role="menu">
-              <button className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-slate-200 hover:bg-slate-800" role="menuitem">
+            <div
+              className="absolute right-0 top-8 z-[110] w-52 rounded-lg border border-white/10 bg-slate-900/70 backdrop-blur-xl py-1 shadow-2xl ring-1 ring-black/20"
+              role="menu"
+            >
+              <button className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-slate-200 hover:bg-white/10" role="menuitem">
                 <Settings className="w-3.5 h-3.5 text-slate-400" /> Settings
               </button>
-              <button className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-slate-200 hover:bg-slate-800" role="menuitem">
+              <button className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-slate-200 hover:bg-white/10" role="menuitem">
                 <Languages className="w-3.5 h-3.5 text-slate-400" /> Language
               </button>
-              <button className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-slate-200 hover:bg-slate-800" role="menuitem">
+              <button className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-slate-200 hover:bg-white/10" role="menuitem">
                 <CircleHelp className="w-3.5 h-3.5 text-slate-400" /> Support
               </button>
-              <button className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-slate-200 hover:bg-slate-800" role="menuitem">
+              <button className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-slate-200 hover:bg-white/10" role="menuitem">
                 <Puzzle className="w-3.5 h-3.5 text-slate-400" /> Apps and Extensions
               </button>
-              <div className="my-1 border-t border-slate-800" />
-              <button onClick={onLogout} className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-rose-300 hover:bg-slate-800" role="menuitem">
+              <button
+                onClick={() => {
+                  setIsAccountMenuOpen(false);
+                  onOpenCRMConnectors();
+                }}
+                className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-slate-200 hover:bg-white/10"
+                role="menuitem"
+              >
+                <Cable className="w-3.5 h-3.5 text-slate-400" /> Connectors
+              </button>
+              <div className="my-1 border-t border-white/10" />
+              <button onClick={onLogout} className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-rose-300 hover:bg-white/10" role="menuitem">
                 <LogOut className="w-3.5 h-3.5" /> Log out
               </button>
             </div>

@@ -39,6 +39,17 @@ export function App() {
   const [isPDFReportOpen, setIsPDFReportOpen] = useState(false);
   const [isPortalSyncOpen, setIsPortalSyncOpen] = useState(false);
 
+  // Bumped each time the header's "Connectors" dropdown item is clicked --
+  // CRMApp watches this prop and opens its Settings/Connectors modal in
+  // response. A counter (rather than a boolean) so clicking it again while
+  // already on the CRM tab still re-triggers the effect even though the
+  // "value" a boolean would've held (true) wouldn't have changed.
+  const [crmOpenConnectorsSignal, setCrmOpenConnectorsSignal] = useState(0);
+  const handleOpenCRMConnectors = () => {
+    setActiveNavTab('crm');
+    setCrmOpenConnectorsSignal((n) => n + 1);
+  };
+
   // Owner Contact Modal State
   const [isContactOwnerModalOpen, setIsContactOwnerModalOpen] = useState(false);
   const [contactOwnerProperty, setContactOwnerProperty] = useState<PropertyRecord | null>(null);
@@ -157,6 +168,7 @@ export function App() {
         onOpenPDFReport={() => setIsPDFReportOpen(true)}
         onOpenPortalSync={() => setIsPortalSyncOpen(true)}
         onOpenDocuments={() => setIsDocumentsModalOpen(true)}
+        onOpenCRMConnectors={handleOpenCRMConnectors}
         userEmail={user.email}
         onLogout={() => { logout(); setUser(null); }}
         selectedPropertyAddress={selectedProperty?.address}
@@ -164,7 +176,7 @@ export function App() {
       {/* Main Workspace Area (Google Maps & Cadastral Vector Canvas + Property Title Panel) */}
       <main className={`flex-1 overflow-hidden relative ${activeNavTab === 'crm' ? 'overflow-y-auto' : 'flex flex-row'}`}>
         {activeNavTab === 'crm' ? (
-          <CRMApp />
+          <CRMApp openConnectorsSignal={crmOpenConnectorsSignal} />
         ) : (
           <>
         {/* Cadastral Map View */}
