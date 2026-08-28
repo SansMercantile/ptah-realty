@@ -30,6 +30,7 @@ interface CadastralMapProps {
   onOpenPDFReport?: () => void;
   onOpenContactOwner?: (property: PropertyRecord) => void;
   onOpenPortalSync?: () => void;
+  onOpenQuickListing?: () => void;
 }
 
 export const CadastralMap: React.FC<CadastralMapProps> = ({
@@ -40,7 +41,8 @@ export const CadastralMap: React.FC<CadastralMapProps> = ({
   onOpenCMAEngine,
   onOpenPDFReport,
   onOpenContactOwner,
-  onOpenPortalSync
+  onOpenPortalSync,
+  onOpenQuickListing
 }) => {
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
   // Only pass a mapId to the Google Map when one is explicitly configured --
@@ -353,6 +355,7 @@ export const CadastralMap: React.FC<CadastralMapProps> = ({
             onOpenPDF={onOpenPDFReport}
             onOpenContact={() => onOpenContactOwner?.(selectedProperty)}
             onOpenPortalSync={onOpenPortalSync}
+            onOpenQuickListing={onOpenQuickListing}
           />
         </div>
       )}

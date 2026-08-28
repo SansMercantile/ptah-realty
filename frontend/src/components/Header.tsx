@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   Building2, 
   MapPin, 
@@ -11,29 +11,37 @@ import {
   Home, 
   Image as ImageIcon, 
   Globe, 
-  Share2, 
   LogOut,
-  Layers,
   ChevronDown,
-  Settings,
-  Languages,
-  CircleHelp,
+  Sliders,
+  History,
+  Coins,
+  Bell,
   Puzzle,
-  Cable
+  CreditCard,
+  Zap
 } from 'lucide-react';
 
-export type ActiveTab = 'suburb' | 'search' | 'cma' | 'media' | 'pdf' | 'portals' | 'sales' | 'prospecting' | 'kyc' | 'crm';
+export type ActiveTab = 'suburb' | 'search' | 'cma' | 'listings' | 'media' | 'pdf' | 'portals' | 'sales' | 'prospecting' | 'kyc' | 'crm';
 
 interface HeaderProps {
   activeTab: ActiveTab | null;
   onSelectTab: (tab: ActiveTab) => void;
+  onOpenQuickListing?: () => void;
   onOpenAccommodation: () => void;
   onOpenCMAEngine: () => void;
   onOpenMediaManagement: () => void;
   onOpenPDFReport: () => void;
   onOpenPortalSync: () => void;
   onOpenDocuments: () => void;
-  onOpenCRMConnectors: () => void;
+  onOpenUserSettings: (tab?: 'profile' | 'password' | 'billing' | 'language' | 'apps' | 'preferences') => void;
+  onOpenSearchHistoryModal: () => void;
+  onOpenCreditsModal: () => void;
+  onOpenBalanceDetails?: () => void;
+  dataCredits?: number;
+  ficaCredits?: number;
+  trustCredits?: number;
+  prepaidBalance?: number;
   userEmail: string;
   onLogout: () => void;
   selectedPropertyAddress?: string;
@@ -42,21 +50,79 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({
   activeTab,
   onSelectTab,
+  onOpenQuickListing,
   onOpenAccommodation,
   onOpenCMAEngine,
   onOpenMediaManagement,
   onOpenPDFReport,
   onOpenPortalSync,
   onOpenDocuments,
-  onOpenCRMConnectors,
-  selectedPropertyAddress,
+  onOpenUserSettings,
+  onOpenSearchHistoryModal,
+  onOpenCreditsModal,
+  onOpenBalanceDetails,
+  dataCredits = 250,
+  ficaCredits = 0,
+  trustCredits = 15,
+  prepaidBalance = 1250,
   userEmail,
-  onLogout
+  onLogout,
+  selectedPropertyAddress
 }) => {
-  const [isAccountMenuOpen, setIsAccountMenuOpen] = React.useState(false);
+  const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const notificationsRef = useRef<HTMLDivElement>(null);
+
+  const totalCombinedCredits = dataCredits + ficaCredits + trustCredits;
+  const initials = userEmail
+    .split(/[@.]/)[0]
+    .split(/[._-]/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((s) => s[0]?.toUpperCase())
+    .join('') || 'PR';
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsUserDropdownOpen(false);
+      }
+      if (notificationsRef.current && !notificationsRef.current.contains(event.target as Node)) {
+        setIsNotificationsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const NOTIFICATIONS_LIST = [
+    {
+      id: 'notif-1',
+      title: 'New Deeds Office Transfer',
+      desc: '3 Richmond Road transfer registered at R 7,450,000.',
+      time: '12m ago',
+      unread: true
+    },
+    {
+      id: 'notif-2',
+      title: 'KYC FICA Pre-Check Completed',
+      desc: 'Stephan Fridolin Muller identity & bureau clearance verified.',
+      time: '1h ago',
+      unread: true
+    },
+    {
+      id: 'notif-3',
+      title: 'Property24 Sync Successful',
+      desc: '5 Richmond Road listing updated with 3D cadastre tour.',
+      time: '3h ago',
+      unread: false
+    }
+  ];
 
   return (
-    <header className="sticky top-0 bg-slate-900 text-slate-100 shadow-md select-none border-b border-slate-800 z-[100] shrink-0">
+    <header className="bg-slate-900 text-slate-100 shadow-md select-none border-b border-slate-800 z-30 shrink-0 relative">
       {/* Top Main Navigation Bar */}
       <div className="flex items-center justify-between px-3 py-1.5 bg-[#0b1623] border-b border-slate-800/80">
         <div className="flex items-center gap-2.5">
@@ -88,17 +154,29 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
 
           <button
-            id="nav-tab-media"
-            onClick={() => onSelectTab('media')}
+            id="nav-tab-listings"
+            onClick={() => onSelectTab('listings')}
             className={`px-2.5 py-1 rounded text-xs font-semibold flex items-center gap-1.5 transition-all ${
-              activeTab === 'media'
+              activeTab === 'listings'
                 ? 'bg-[#006980] text-white shadow-sm ring-1 ring-cyan-400'
                 : 'bg-slate-800/90 text-slate-300 hover:bg-slate-700 hover:text-white'
             }`}
           >
-            <ImageIcon className="w-3.5 h-3.5 text-cyan-300" />
-            <span>Visual Assets</span>
+            <Building2 className="w-3.5 h-3.5 text-cyan-300" />
+            <span>My Listings</span>
           </button>
+
+          {onOpenQuickListing && (
+            <button
+              id="nav-tab-quick-listing"
+              onClick={onOpenQuickListing}
+              className="px-2.5 py-1 rounded text-xs font-bold flex items-center gap-1.5 transition-all bg-gradient-to-r from-emerald-700 to-teal-700 hover:from-emerald-600 hover:to-teal-600 text-white shadow-xs ring-1 ring-emerald-400/60"
+              title="Quick Listing Creator: Auto-fill property details, asking price & 1-click syndicate"
+            >
+              <Zap className="w-3.5 h-3.5 text-amber-300 fill-amber-300" />
+              <span>Quick Listing</span>
+            </button>
+          )}
 
           <button
             id="nav-tab-pdf"
@@ -188,7 +266,7 @@ export const Header: React.FC<HeaderProps> = ({
             }`}
           >
             <UserCheck className="w-3.5 h-3.5 text-emerald-300" />
-            <span>KYC</span>
+            <span>FICA Compliance</span>
           </button>
 
           <button
@@ -205,65 +283,171 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
         </nav>
 
-        {/* User Profile & Quick Actions */}
-        <div className="relative flex items-center gap-3 text-xs">
-          <button
-            type="button"
-            onClick={() => setIsAccountMenuOpen((open) => !open)}
-            className="hidden sm:flex items-center gap-1.5 text-slate-300 hover:text-white"
-            aria-expanded={isAccountMenuOpen}
-            aria-haspopup="menu"
+        {/* Right Section: Credits Badge, Quick Search, Notifications & User Dropdown */}
+        <div className="flex items-center gap-2.5 text-xs">
+          {/* Balance & Combined Available Credits Badge */}
+          <div 
+            id="header-balance-badge"
+            onClick={onOpenBalanceDetails || onOpenCreditsModal}
+            className="hidden xl:flex items-center gap-2 bg-slate-800/90 hover:bg-slate-700/90 border border-cyan-500/40 hover:border-cyan-400 px-3 py-1 rounded text-xs cursor-pointer transition-all shadow-xs group"
+            title="Click to view detailed available funds for all credits & billing"
           >
-            <div className="w-6 h-6 rounded-full bg-cyan-900 border border-cyan-700 flex items-center justify-center text-cyan-200 font-bold text-[10px]">
-              RR
+            <div className="w-4 h-4 rounded bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 group-hover:scale-110 transition-transform">
+              <Coins className="w-3 h-3" />
             </div>
-            <span className="font-semibold text-slate-200 text-xs">{userEmail}</span>
-            <ChevronDown className="w-3.5 h-3.5" />
-          </button>
+            <div className="flex items-center gap-1.5 font-medium">
+              <span className="text-slate-300 font-semibold uppercase tracking-wider text-[11px]">Balance:</span>
+              <span className="text-cyan-300 font-mono font-bold text-xs">{totalCombinedCredits} Credits</span>
+            </div>
+          </div>
 
-          {isAccountMenuOpen && (
-            <div
-              className="absolute right-0 top-8 z-[110] w-52 rounded-lg border border-white/10 bg-slate-900/70 backdrop-blur-xl py-1 shadow-2xl ring-1 ring-black/20"
-              role="menu"
+          {/* Notifications Button & Popover */}
+          <div className="relative" ref={notificationsRef}>
+            <button
+              id="btn-notifications-header"
+              onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+              className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-md transition-colors relative"
+              title="Notifications & Alerts"
             >
-              <button className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-slate-200 hover:bg-white/10" role="menuitem">
-                <Settings className="w-3.5 h-3.5 text-slate-400" /> Settings
-              </button>
-              <button className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-slate-200 hover:bg-white/10" role="menuitem">
-                <Languages className="w-3.5 h-3.5 text-slate-400" /> Language
-              </button>
-              <button className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-slate-200 hover:bg-white/10" role="menuitem">
-                <CircleHelp className="w-3.5 h-3.5 text-slate-400" /> Support
-              </button>
-              <button className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-slate-200 hover:bg-white/10" role="menuitem">
-                <Puzzle className="w-3.5 h-3.5 text-slate-400" /> Apps and Extensions
-              </button>
-              <button
-                onClick={() => {
-                  setIsAccountMenuOpen(false);
-                  onOpenCRMConnectors();
-                }}
-                className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-slate-200 hover:bg-white/10"
-                role="menuitem"
-              >
-                <Cable className="w-3.5 h-3.5 text-slate-400" /> Connectors
-              </button>
-              <div className="my-1 border-t border-white/10" />
-              <button onClick={onLogout} className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-rose-300 hover:bg-white/10" role="menuitem">
-                <LogOut className="w-3.5 h-3.5" /> Log out
-              </button>
-            </div>
-          )}
+              <Bell className="w-4 h-4" />
+              <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-cyan-400"></span>
+            </button>
 
+            {isNotificationsOpen && (
+              <div className="absolute right-0 mt-2 w-80 bg-white text-slate-800 rounded-lg shadow-2xl border border-slate-200 py-2 z-50 animate-fade-in text-xs">
+                <div className="px-3 py-1.5 border-b border-slate-100 font-bold text-slate-900 flex items-center justify-between">
+                  <span>Notifications & Alerts</span>
+                  <span className="text-[10px] text-cyan-600 font-medium cursor-pointer hover:underline">Mark all read</span>
+                </div>
+                <div className="divide-y divide-slate-100 max-h-60 overflow-y-auto">
+                  {NOTIFICATIONS_LIST.map((n) => (
+                    <div key={n.id} className="p-2.5 hover:bg-slate-50 transition-colors">
+                      <div className="flex items-center justify-between font-bold text-slate-800 text-[11px]">
+                        <span>{n.title}</span>
+                        <span className="text-[9px] text-slate-400 font-normal">{n.time}</span>
+                      </div>
+                      <p className="text-[11px] text-slate-600 mt-0.5">{n.desc}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Quick Search trigger */}
           <button
-            id="btn-logout"
-            onClick={onLogout}
-            className="text-slate-400 hover:text-rose-300 flex items-center gap-1 transition-colors text-xs"
-            title="Log out"
+            onClick={() => onSelectTab('search')}
+            className="hidden sm:flex items-center gap-1.5 text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 px-2 py-1 rounded transition-colors text-xs"
+            title="Quick Cadastre Search"
           >
-            <LogOut className="w-3.5 h-3.5" />
-            <span className="hidden lg:inline">Log out</span>
+            <Search className="w-3.5 h-3.5 text-cyan-300" />
+            <span className="hidden lg:inline">Quick Search</span>
           </button>
+
+          {/* User Profile Dropdown Button */}
+          <div className="relative" ref={dropdownRef}>
+            <button
+              id="btn-user-profile-dropdown"
+              onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
+              className="flex items-center gap-1.5 px-2 py-1 rounded bg-slate-800/90 hover:bg-slate-700/90 border border-slate-700/80 transition-all text-xs"
+            >
+              <div className="w-6 h-6 rounded-full bg-[#006980] border border-cyan-400 flex items-center justify-center text-cyan-100 font-bold text-[10px]">
+                {initials}
+              </div>
+              <span className="font-semibold text-slate-200 text-xs hidden sm:inline">
+                {userEmail}
+              </span>
+              <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${isUserDropdownOpen ? 'rotate-180 text-cyan-300' : ''}`} />
+            </button>
+
+            {/* Dropdown Menu */}
+            {isUserDropdownOpen && (
+              <div 
+                id="user-profile-dropdown-menu"
+                className="absolute right-0 mt-2 w-64 bg-white text-slate-800 rounded-lg shadow-2xl border border-slate-200 py-1.5 z-50 animate-fade-in text-xs font-medium"
+              >
+                {/* User Header Summary */}
+                <div className="px-4 py-2.5 border-b border-slate-100 bg-slate-50/70">
+                  <div className="font-bold text-slate-900 text-xs truncate">{userEmail}</div>
+                  <span className="inline-block mt-1 bg-cyan-100 text-cyan-800 font-bold text-[9px] px-1.5 py-0.2 rounded">
+                    Principal Property Practitioner (PPRA)
+                  </span>
+                </div>
+
+                {/* Dropdown Items */}
+                <div className="py-1">
+                  {/* 1. Settings (Contains Profile, Change Password, Billing & Credits, Language, Apps & Extensions, Preferences) */}
+                  <button
+                    id="dropdown-item-settings"
+                    onClick={() => {
+                      setIsUserDropdownOpen(false);
+                      onOpenUserSettings('profile');
+                    }}
+                    className="w-full text-left px-4 py-2 hover:bg-cyan-50 flex items-center gap-2.5 text-slate-700 hover:text-cyan-900 transition-colors"
+                  >
+                    <Sliders className="w-4 h-4 text-[#006980]" />
+                    <div>
+                      <div className="font-bold text-xs text-slate-900">Settings</div>
+                      <div className="text-[10px] text-slate-500 font-normal">Profile, Security, Language & Hub</div>
+                    </div>
+                  </button>
+
+                  {/* 2. Billing & Credits Direct Link */}
+                  <button
+                    id="dropdown-item-billing"
+                    onClick={() => {
+                      setIsUserDropdownOpen(false);
+                      onOpenUserSettings('billing');
+                    }}
+                    className="w-full text-left px-4 py-2 hover:bg-cyan-50 flex items-center gap-2.5 text-slate-700 hover:text-cyan-900 transition-colors"
+                  >
+                    <CreditCard className="w-4 h-4 text-emerald-600" />
+                    <div>
+                      <div className="font-bold text-xs text-slate-900 flex items-center gap-1.5">
+                        <span>Billing & Credits</span>
+                        <span className="bg-amber-100 text-amber-900 text-[9px] font-bold px-1.5 py-0.2 rounded font-mono">
+                          {totalCombinedCredits}
+                        </span>
+                      </div>
+                      <div className="text-[10px] text-slate-500 font-normal">Plans, Invoices & Top-ups</div>
+                    </div>
+                  </button>
+
+                  {/* 3. Search History */}
+                  <button
+                    id="dropdown-item-history"
+                    onClick={() => {
+                      setIsUserDropdownOpen(false);
+                      onOpenSearchHistoryModal();
+                    }}
+                    className="w-full text-left px-4 py-2 hover:bg-cyan-50 flex items-center gap-2.5 text-slate-700 hover:text-cyan-900 transition-colors"
+                  >
+                    <History className="w-4 h-4 text-cyan-700" />
+                    <div>
+                      <div className="font-semibold text-xs text-slate-800">Search History & Audit Log</div>
+                      <div className="text-[10px] text-slate-500 font-normal">72-Hour NCA & POPIA records</div>
+                    </div>
+                  </button>
+                </div>
+
+                {/* Divider */}
+                <div className="border-t border-slate-100 my-1"></div>
+
+                {/* Sign Out */}
+                <button
+                  id="dropdown-item-signout"
+                  onClick={() => {
+                    setIsUserDropdownOpen(false);
+                    onLogout();
+                  }}
+                  className="w-full text-left px-4 py-2 hover:bg-rose-50 text-rose-700 flex items-center gap-2.5 transition-colors"
+                >
+                  <LogOut className="w-4 h-4 text-rose-600" />
+                  <span className="font-semibold text-xs">Sign Out</span>
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

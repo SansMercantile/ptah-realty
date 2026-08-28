@@ -199,3 +199,14 @@ export function filterSurroundingParcels<T extends { street: string }>(
     return visibleStreets.has(street) || visibleStreets.size === 0;
   });
 }
+
+/**
+ * Format latitude and longitude coordinates into canonical WGS84 notation (e.g., "18.401027°E 33.908760°S")
+ */
+export function formatWGS84(lat: number, lng: number): string {
+  const lngDir = lng >= 0 ? 'E' : 'W';
+  const latDir = lat >= 0 ? 'N' : 'S';
+  const formattedLng = `${Math.abs(lng).toFixed(6)}°${lngDir}`;
+  const formattedLat = `${Math.abs(lat).toFixed(6)}°${latDir}`;
+  return `${formattedLng} ${formattedLat}`;
+}

@@ -195,6 +195,23 @@ export interface PropertyRecord {
   
   // Cadastral polygon coordinates for map drawing
   polygonPoints: [number, number][];
+
+  // Real Surveyor-General Cadastral Lot Boundary Pegs [[lng, lat], ...]
+  cadastralErfGeo?: Array<[number, number]>;
+
+  // Real Architectural Building Box & Footprint Geometry
+  buildingFootprint?: {
+    footprintType: 'residential_villa' | 'commercial_block' | 'sectional_duplex' | 'cottage' | 'estate_residence';
+    stories: number;
+    buildingHeightM: number;
+    roofType: 'hipped_tile' | 'flat_parapet' | 'pitched_slate' | 'terrace_deck';
+    footprintM2: number;
+    buildingGeoCoords: Array<[number, number]>; // [[lng, lat], ...]
+    garageGeoCoords?: Array<[number, number]>;
+    poolGeoCoords?: Array<[number, number]>;
+    porchGeoCoords?: Array<[number, number]>;
+    roofRidgeLines?: Array<[[number, number], [number, number]]>;
+  };
 }
 
 // Suburb Demographic & Statistical Analytics

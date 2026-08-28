@@ -16,6 +16,11 @@ import { CMAEngineModal } from './components/modals/CMAEngineModal';
 import { MediaManagementModal } from './components/modals/MediaManagementModal';
 import { PDFReportModal } from './components/modals/PDFReportModal';
 import { PortalSyncModal } from './components/modals/PortalSyncModal';
+import { MyListingsModal } from './components/modals/MyListingsModal';
+import { UserSettingsModal, SettingsTabType } from './components/modals/UserSettingsModal';
+import { BalanceDetailsModal } from './components/modals/BalanceDetailsModal';
+import { CreditsTopUpModal } from './components/modals/CreditsTopUpModal';
+import { SearchHistoryModal } from './components/modals/SearchHistoryModal';
 import CRMApp from './crm/CRMApp';
 import { LoginScreen } from './components/LoginScreen';
 import { PROPERTIES_DATA } from './services/mockData';
@@ -38,6 +43,26 @@ export function App() {
   const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
   const [isPDFReportOpen, setIsPDFReportOpen] = useState(false);
   const [isPortalSyncOpen, setIsPortalSyncOpen] = useState(false);
+  const [isMyListingsOpen, setIsMyListingsOpen] = useState(false);
+  const [isUserSettingsOpen, setIsUserSettingsOpen] = useState(false);
+  const [userSettingsInitialTab, setUserSettingsInitialTab] = useState<SettingsTabType>('profile');
+  const [isBalanceDetailsOpen, setIsBalanceDetailsOpen] = useState(false);
+  const [isCreditsTopUpOpen, setIsCreditsTopUpOpen] = useState(false);
+  const [isSearchHistoryOpen, setIsSearchHistoryOpen] = useState(false);
+
+  // Credits/billing balance -- shared between the header's Balance badge,
+  // BalanceDetailsModal, CreditsTopUpModal and UserSettingsModal's Billing
+  // tab so a top-up in any one of them is reflected everywhere at once.
+  const [dataCredits, setDataCredits] = useState(250);
+  const [ficaCredits, setFicaCredits] = useState(0);
+  const [trustCredits, setTrustCredits] = useState(15);
+  const [prepaidBalance, setPrepaidBalance] = useState(1250);
+  const handleTopUpSuccess = (nextData: number, nextFica: number, nextTrust: number, nextPrepaid?: number) => {
+    setDataCredits(nextData);
+    setFicaCredits(nextFica);
+    setTrustCredits(nextTrust);
+    if (nextPrepaid !== undefined) setPrepaidBalance(nextPrepaid);
+  };
 
   // Bumped each time the header's "Connectors" dropdown item is clicked --
   // CRMApp watches this prop and opens its Settings/Connectors modal in
@@ -121,6 +146,9 @@ export function App() {
     } else if (tab === 'portals') {
       setIsPortalSyncOpen(true);
       setActiveNavTab(null);
+    } else if (tab === 'listings') {
+      setIsMyListingsOpen(true);
+      setActiveNavTab(null);
     } else {
       setActiveNavTab(tab);
     }
@@ -162,13 +190,24 @@ export function App() {
       <Header
         activeTab={activeNavTab}
         onSelectTab={handleSelectTab}
+        onOpenQuickListing={() => setIsMyListingsOpen(true)}
         onOpenAccommodation={() => setIsAccommodationModalOpen(true)}
         onOpenCMAEngine={() => setIsCMAEngineOpen(true)}
         onOpenMediaManagement={() => setIsMediaModalOpen(true)}
         onOpenPDFReport={() => setIsPDFReportOpen(true)}
         onOpenPortalSync={() => setIsPortalSyncOpen(true)}
         onOpenDocuments={() => setIsDocumentsModalOpen(true)}
-        onOpenCRMConnectors={handleOpenCRMConnectors}
+        onOpenUserSettings={(tab) => {
+          setUserSettingsInitialTab(tab || 'profile');
+          setIsUserSettingsOpen(true);
+        }}
+        onOpenSearchHistoryModal={() => setIsSearchHistoryOpen(true)}
+        onOpenCreditsModal={() => setIsCreditsTopUpOpen(true)}
+        onOpenBalanceDetails={() => setIsBalanceDetailsOpen(true)}
+        dataCredits={dataCredits}
+        ficaCredits={ficaCredits}
+        trustCredits={trustCredits}
+        prepaidBalance={prepaidBalance}
         userEmail={user.email}
         onLogout={() => { logout(); setUser(null); }}
         selectedPropertyAddress={selectedProperty?.address}
@@ -189,6 +228,7 @@ export function App() {
           onOpenPDFReport={() => setIsPDFReportOpen(true)}
           onOpenContactOwner={handleOpenContactOwner}
           onOpenPortalSync={() => setIsPortalSyncOpen(true)}
+          onOpenQuickListing={() => setIsMyListingsOpen(true)}
         />
 
         {/* Right Collapsible Property & Title Information Sidebar */}
@@ -337,6 +377,58 @@ export function App() {
         property={contactOwnerProperty || selectedProperty}
         initialTab={contactOwnerTab}
         onOpenKYC={handleOpenKYCForOwner}
+      />
+
+      {/* 15. My Listings Portfolio, Deal View Pipeline & Quick Listing */}
+      <MyListingsModal
+        isOpen={isMyListingsOpen}
+        onClose={() => setIsMyListingsOpen(false)}
+        selectedProperty={selectedProperty}
+        onSelectProperty={handleSelectProperty}
+      />
+
+      {/* 16. User Settings (Profile, Password, Billing, Language, Apps & Extensions) */}
+      <UserSettingsModal
+        isOpen={isUserSettingsOpen}
+        onClose={() => setIsUserSettingsOpen(false)}
+        initialTab={userSettingsInitialTab}
+        dataCredits={dataCredits}
+        ficaCredits={ficaCredits}
+        trustCredits={trustCredits}
+        prepaidBalance={prepaidBalance}
+        onTopUpSuccess={handleTopUpSuccess}
+      />
+
+      {/* 17. Balance & Available Funds Details Modal */}
+      <BalanceDetailsModal
+        isOpen={isBalanceDetailsOpen}
+        onClose={() => setIsBalanceDetailsOpen(false)}
+        dataCredits={dataCredits}
+        ficaCredits={ficaCredits}
+        trustCredits={trustCredits}
+        prepaidBalance={prepaidBalance}
+        onTopUpSuccess={handleTopUpSuccess}
+        onOpenBillingSettings={() => {
+          setIsBalanceDetailsOpen(false);
+          setUserSettingsInitialTab('billing');
+          setIsUserSettingsOpen(true);
+        }}
+      />
+
+      {/* 18. Credits Top-Up Modal */}
+      <CreditsTopUpModal
+        isOpen={isCreditsTopUpOpen}
+        onClose={() => setIsCreditsTopUpOpen(false)}
+        currentDataCredits={dataCredits}
+        currentFicaCredits={ficaCredits}
+        currentTrustCredits={trustCredits}
+        onTopUpSuccess={handleTopUpSuccess}
+      />
+
+      {/* 19. Search History & 72-Hour NCA/POPIA Audit Log */}
+      <SearchHistoryModal
+        isOpen={isSearchHistoryOpen}
+        onClose={() => setIsSearchHistoryOpen(false)}
       />
     </div>
   );
