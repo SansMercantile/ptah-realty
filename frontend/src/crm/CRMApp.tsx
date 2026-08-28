@@ -638,7 +638,16 @@ export default function App({
         isOpen={isNotificationsOpen}
         onClose={() => setIsNotificationsOpen(false)}
         notifications={allNotifications}
-        onClearAll={() => {
+        leads={leads}
+        onToggleTask={handleToggleTask}
+        onSelectLead={(lead) => setSelectedLead(lead)}
+        onQuickWhatsApp={handleQuickWhatsApp}
+        onAddTask={handleAddTask}
+        onOpenFullTasksView={() => {
+          setIsNotificationsOpen(false);
+          setCurrentView('tasks');
+        }}
+        onClearAllNotifications={() => {
           setLeads((prev) => prev.map((l) => ({ ...l, emailLogs: [] })));
         }}
       />

@@ -8,28 +8,18 @@ import {
   Plus, 
   Radio, 
   Sparkles, 
-  ShieldCheck,
-  Settings,
-  Search,
-  Command,
   Sun,
   Moon,
-  Target,
-  LayoutDashboard,
   Home
 } from 'lucide-react';
-import { EmailNotificationLog } from '../types';
 
 interface NavbarProps {
-  currentView: 'dashboard' | 'pipeline' | 'tasks' | 'calendar' | 'automations' | 'reporting' | 'scrum';
-  setCurrentView: (view: 'dashboard' | 'pipeline' | 'tasks' | 'calendar' | 'automations' | 'reporting' | 'scrum') => void;
+  currentView: 'pipeline' | 'tasks' | 'calendar' | 'automations' | 'reporting';
+  setCurrentView: (view: 'pipeline' | 'tasks' | 'calendar' | 'automations' | 'reporting') => void;
   onOpenNewLead: () => void;
-  onOpenQuickListings: () => void;
-  quickListingsCount?: number;
+  onOpenQuickListing?: () => void;
   onOpenSimulator: () => void;
   onToggleAiAdvisor: () => void;
-  onOpenSettings: () => void;
-  activeConnectorsCount?: number;
   darkMode: boolean;
   onToggleDarkMode: () => void;
   onOpenCommandPalette: () => void;
@@ -39,18 +29,15 @@ export const Navbar: React.FC<NavbarProps> = ({
   currentView,
   setCurrentView,
   onOpenNewLead,
-  onOpenQuickListings,
-  quickListingsCount = 0,
+  onOpenQuickListing,
   onOpenSimulator,
   onToggleAiAdvisor,
-  onOpenSettings,
-  activeConnectorsCount = 8,
   darkMode,
   onToggleDarkMode,
   onOpenCommandPalette,
 }) => {
   return (
-    <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 sticky top-0 z-30 shadow-xs transition-colors duration-200">
+    <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 sticky top-0 z-20 shadow-xs transition-colors duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Brand Logo */}
@@ -68,18 +55,6 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Center Navigation Tabs */}
           <nav className="hidden md:flex items-center space-x-1 bg-slate-100/80 dark:bg-slate-800/80 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
             <button
-              onClick={() => setCurrentView('dashboard')}
-              className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
-                currentView === 'dashboard'
-                  ? 'bg-slate-900 dark:bg-emerald-600 text-white shadow-xs'
-                  : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-700/60'
-              }`}
-            >
-              <LayoutDashboard className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
-              <span>Dashboard</span>
-            </button>
-
-            <button
               onClick={() => setCurrentView('pipeline')}
               className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
                 currentView === 'pipeline'
@@ -92,8 +67,20 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
 
             <button
+              onClick={() => setCurrentView('tasks')}
+              className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                currentView === 'tasks'
+                  ? 'bg-slate-900 dark:bg-emerald-600 text-white shadow-xs'
+                  : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-700/60'
+              }`}
+            >
+              <Sparkles className="w-4 h-4 text-amber-500 dark:text-amber-400" />
+              <span>Task Reminders</span>
+            </button>
+
+            <button
               onClick={() => setCurrentView('calendar')}
-              className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
+              className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
                 currentView === 'calendar'
                   ? 'bg-slate-900 dark:bg-emerald-600 text-white shadow-xs'
                   : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-700/60'
@@ -105,7 +92,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             <button
               onClick={() => setCurrentView('automations')}
-              className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
+              className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
                 currentView === 'automations'
                   ? 'bg-slate-900 dark:bg-emerald-600 text-white shadow-xs'
                   : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-700/60'
@@ -117,7 +104,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             <button
               onClick={() => setCurrentView('reporting')}
-              className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
+              className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
                 currentView === 'reporting'
                   ? 'bg-slate-900 dark:bg-emerald-600 text-white shadow-xs'
                   : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-700/60'
@@ -126,49 +113,18 @@ export const Navbar: React.FC<NavbarProps> = ({
               <BarChart3 className="w-4 h-4" />
               <span>Reports & Analytics</span>
             </button>
-
-            <button
-              onClick={() => setCurrentView('scrum')}
-              className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
-                currentView === 'scrum'
-                  ? 'bg-slate-900 dark:bg-emerald-600 text-white shadow-xs'
-                  : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-700/60'
-              }`}
-            >
-              <Target className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-              <span>Scrum & Sprints</span>
-            </button>
           </nav>
 
           {/* Right Action Tools */}
           <div className="flex items-center space-x-2 sm:space-x-2.5">
-            {/* Global Command Palette Trigger (Cmd+K) */}
-            <button
-              onClick={onOpenCommandPalette}
-              className="flex items-center space-x-2 px-2.5 sm:px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition cursor-pointer text-xs group"
-              title="Global Search & Quick Actions (Press ⌘K or Ctrl+K)"
-              aria-label="Open Command Palette"
-            >
-              <Search className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition" />
-              <span className="hidden xl:inline text-slate-600 dark:text-slate-300 font-medium">Quick Search</span>
-              <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-[10px] font-mono text-slate-500 dark:text-slate-400 shadow-2xs font-semibold">
-                <span className="text-[9px]">⌘</span>K
-              </kbd>
-            </button>
-
-            {/* Dark Mode Theme Toggle Button */}
-            <button
-              onClick={onToggleDarkMode}
-              className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-amber-300 border border-slate-200 dark:border-slate-700 transition cursor-pointer flex items-center justify-center"
-              title={darkMode ? "Switch to Light Mode (Day Shift)" : "Switch to Dark Mode (Night Shift)"}
-              aria-label={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
-            >
-              {darkMode ? (
-                <Sun className="w-4 h-4 text-amber-400 animate-in spin-in-180 duration-300" />
-              ) : (
-                <Moon className="w-4 h-4 text-slate-700 animate-in spin-in-180 duration-300" />
-              )}
-            </button>
+            {/*
+              Quick Search / Command Palette trigger removed from here --
+              consolidated into the main app header's single Quick Search
+              button, which opens this same command palette while on the
+              CRM tab (see App.tsx's crmOpenCommandPaletteSignal / this
+              component's onOpenCommandPalette prop, still called directly
+              by Cmd+K in CRMApp.tsx).
+            */}
 
             {/* Live Inbound Lead Simulator */}
             <button
@@ -191,16 +147,23 @@ export const Navbar: React.FC<NavbarProps> = ({
               <span className="hidden sm:inline">AI Copilot</span>
             </button>
 
-            {/* Settings & Connectors Button */}
-            <button
-              onClick={onOpenSettings}
-              className="flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200/80 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 text-xs font-semibold transition cursor-pointer"
-              title="Manage API Connectors, Property24, Gmail, Cal ID, and WhatsApp"
-            >
-              <Settings className="w-3.5 h-3.5 text-slate-700 dark:text-slate-300" />
-              <span className="hidden md:inline">Connectors</span>
-              <span className="w-2 h-2 rounded-full bg-emerald-500 hidden sm:inline-block" title="All connectors active" />
-            </button>
+            {/*
+              Settings & Connectors button removed from here -- reachable
+              from the "Connectors" item in the main app's user dropdown
+              instead (App.tsx's onOpenCRMConnectors / openConnectorsSignal).
+            */}
+
+            {/* Quick Listing shortcut */}
+            {onOpenQuickListing && (
+              <button
+                onClick={onOpenQuickListing}
+                className="flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer bg-gradient-to-r from-emerald-700 to-teal-700 hover:from-emerald-600 hover:to-teal-600 text-white shadow-xs ring-1 ring-emerald-400/60"
+                title="Quick Listing Creator: Auto-fill property details, asking price & 1-click syndicate"
+              >
+                <Zap className="w-3.5 h-3.5 text-amber-300 fill-amber-300" />
+                <span className="hidden sm:inline">Quick Listing</span>
+              </button>
+            )}
 
             {/* Add Lead Primary Button */}
             <button
@@ -211,19 +174,23 @@ export const Navbar: React.FC<NavbarProps> = ({
               <span className="hidden sm:inline">New Lead</span>
             </button>
 
-            {/* Quick listings Button */}
+            {/* Dark Mode Theme Toggle -- far right, per explicit request.
+                The Notification Bell that used to sit next to this has
+                been removed entirely (not just repositioned): the main
+                app header's own bell now reaches this CRM's notification
+                drawer directly while on the CRM tab (see
+                openNotificationsSignal in CRMApp.tsx / Header.tsx), so
+                there is deliberately no second bell here to reposition. */}
             <button
-              onClick={onOpenQuickListings}
-              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white font-medium text-xs shadow-xs transition cursor-pointer"
-              title="Quick Listings & Syndication Hub"
+              onClick={onToggleDarkMode}
+              className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-amber-300 border border-slate-200 dark:border-slate-700 transition cursor-pointer flex items-center justify-center"
+              title={darkMode ? "Switch to Light Mode (Day Shift)" : "Switch to Dark Mode (Night Shift)"}
+              aria-label={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
             >
-              <Home className="w-4 h-4" />
-              <span className="hidden sm:inline">Quick listings</span>
-              <span className="sm:hidden">Quick</span>
-              {quickListingsCount > 0 && (
-                <span className="px-1.5 py-0.2 text-[10px] font-bold rounded-full bg-red-600 text-white shadow-2xs">
-                  {quickListingsCount}
-                </span>
+              {darkMode ? (
+                <Sun className="w-4 h-4 text-amber-400 animate-in spin-in-180 duration-300" />
+              ) : (
+                <Moon className="w-4 h-4 text-slate-700 animate-in spin-in-180 duration-300" />
               )}
             </button>
           </div>
@@ -232,44 +199,37 @@ export const Navbar: React.FC<NavbarProps> = ({
         {/* Mobile Navigation bar */}
         <div className="flex md:hidden py-2 border-t border-slate-200 dark:border-slate-800 overflow-x-auto space-x-1">
           <button
-            onClick={() => setCurrentView('dashboard')}
-            className={`px-3 py-1 rounded-md text-xs font-medium whitespace-nowrap cursor-pointer ${
-              currentView === 'dashboard' 
-                ? 'bg-slate-900 dark:bg-emerald-600 text-white' 
-                : 'text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800'
-            }`}
-          >
-            Dashboard
-          </button>
-          <button
             onClick={onOpenCommandPalette}
             className="px-3 py-1 rounded-md text-xs font-medium whitespace-nowrap text-slate-800 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center space-x-1 cursor-pointer"
           >
-            <Search className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+            <Home className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
             <span>Search (⌘K)</span>
           </button>
           <button
             onClick={() => setCurrentView('pipeline')}
-            className={`px-3 py-1 rounded-md text-xs font-medium whitespace-nowrap ${
-              currentView === 'pipeline' 
-                ? 'bg-slate-900 dark:bg-emerald-600 text-white' 
+            className={`px-3 py-1 rounded-md text-xs font-medium whitespace-nowrap cursor-pointer ${
+              currentView === 'pipeline'
+                ? 'bg-slate-900 dark:bg-emerald-600 text-white'
                 : 'text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800'
             }`}
           >
             Pipeline
           </button>
           <button
-            onClick={onOpenQuickListings}
-            className="px-3 py-1 rounded-md text-xs font-medium whitespace-nowrap text-cyan-800 dark:text-cyan-300 bg-cyan-50 dark:bg-cyan-950/60 border border-cyan-200 dark:border-cyan-800 flex items-center space-x-1 cursor-pointer"
+            onClick={() => setCurrentView('tasks')}
+            className={`px-3 py-1 rounded-md text-xs font-medium whitespace-nowrap cursor-pointer ${
+              currentView === 'tasks'
+                ? 'bg-slate-900 dark:bg-emerald-600 text-white'
+                : 'text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800'
+            }`}
           >
-            <Home className="w-3 h-3 text-cyan-600 dark:text-cyan-400" />
-            <span>Quick listings ({quickListingsCount})</span>
+            Tasks
           </button>
           <button
             onClick={() => setCurrentView('calendar')}
-            className={`px-3 py-1 rounded-md text-xs font-medium whitespace-nowrap ${
-              currentView === 'calendar' 
-                ? 'bg-slate-900 dark:bg-emerald-600 text-white' 
+            className={`px-3 py-1 rounded-md text-xs font-medium whitespace-nowrap cursor-pointer ${
+              currentView === 'calendar'
+                ? 'bg-slate-900 dark:bg-emerald-600 text-white'
                 : 'text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800'
             }`}
           >
@@ -277,9 +237,9 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button>
           <button
             onClick={() => setCurrentView('automations')}
-            className={`px-3 py-1 rounded-md text-xs font-medium whitespace-nowrap ${
-              currentView === 'automations' 
-                ? 'bg-slate-900 dark:bg-emerald-600 text-white' 
+            className={`px-3 py-1 rounded-md text-xs font-medium whitespace-nowrap cursor-pointer ${
+              currentView === 'automations'
+                ? 'bg-slate-900 dark:bg-emerald-600 text-white'
                 : 'text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800'
             }`}
           >
@@ -287,33 +247,17 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button>
           <button
             onClick={() => setCurrentView('reporting')}
-            className={`px-3 py-1 rounded-md text-xs font-medium whitespace-nowrap ${
-              currentView === 'reporting' 
-                ? 'bg-slate-900 dark:bg-emerald-600 text-white' 
+            className={`px-3 py-1 rounded-md text-xs font-medium whitespace-nowrap cursor-pointer ${
+              currentView === 'reporting'
+                ? 'bg-slate-900 dark:bg-emerald-600 text-white'
                 : 'text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800'
             }`}
           >
             Reporting
           </button>
           <button
-            onClick={() => setCurrentView('scrum')}
-            className={`px-3 py-1 rounded-md text-xs font-medium whitespace-nowrap ${
-              currentView === 'scrum' 
-                ? 'bg-slate-900 dark:bg-purple-600 text-white' 
-                : 'text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-800'
-            }`}
-          >
-            Scrum & Sprints
-          </button>
-          <button
-            onClick={onOpenSettings}
-            className="px-3 py-1 rounded-md text-xs font-medium whitespace-nowrap text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800"
-          >
-            Connectors
-          </button>
-          <button
             onClick={onToggleDarkMode}
-            className="px-3 py-1 rounded-md text-xs font-medium whitespace-nowrap text-slate-700 dark:text-amber-300 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center space-x-1"
+            className="px-3 py-1 rounded-md text-xs font-medium whitespace-nowrap text-slate-700 dark:text-amber-300 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center space-x-1 cursor-pointer"
           >
             {darkMode ? <Sun className="w-3 h-3 text-amber-400" /> : <Moon className="w-3 h-3 text-slate-600" />}
             <span>{darkMode ? 'Light' : 'Dark'}</span>
@@ -323,4 +267,3 @@ export const Navbar: React.FC<NavbarProps> = ({
     </header>
   );
 };
-

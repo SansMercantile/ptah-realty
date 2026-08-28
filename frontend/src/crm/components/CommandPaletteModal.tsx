@@ -25,9 +25,7 @@ import {
   Flame,
   CornerDownLeft,
   X,
-  Target,
   Bell,
-  LayoutDashboard,
   Home,
   Megaphone
 } from 'lucide-react';
@@ -47,7 +45,7 @@ interface CommandPaletteModalProps {
   onToggleAiAdvisor: () => void;
   onToggleDarkMode: () => void;
   darkMode: boolean;
-  onNavigateView: (view: 'dashboard' | 'pipeline' | 'tasks' | 'calendar' | 'automations' | 'reporting' | 'scrum') => void;
+  onNavigateView: (view: 'pipeline' | 'tasks' | 'calendar' | 'automations' | 'reporting') => void;
   onOpenQuickListings?: () => void;
   onOpenNotifications?: () => void;
   onOpenCampaigns?: () => void;
@@ -121,21 +119,15 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
     const result: PaletteItem[] = [];
 
     // 1. Navigation & System Actions
+    // NOTE: "Go to CRM Command Dashboard" / "...Scrum & Sprints Hub" entries
+    // that used to be here were removed -- CRMApp.tsx's <main> only renders
+    // the 5 views below ('pipeline'/'tasks'/'calendar'/'automations'/
+    // 'reporting'); calling onNavigateView('dashboard'/'scrum') set state to
+    // a value nothing renders for, i.e. a blank page. DashboardView.tsx and
+    // ScrumSprintView.tsx exist in the repo but aren't wired into CRMApp.tsx
+    // yet and have their own unrelated type errors (see chat) -- add these
+    // back once that's actually finished.
     const actionItems: PaletteItem[] = [
-      {
-        id: 'action-dashboard',
-        category: 'actions',
-        title: 'Go to CRM Command Dashboard',
-        subtitle: 'Client intelligence, Demographics, LSM scores, Show Houses & Calendar',
-        tag: 'Navigation',
-        badge: 'View',
-        badgeColor: 'bg-rose-50 dark:bg-rose-950/70 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800',
-        icon: <LayoutDashboard className="w-4 h-4 text-rose-500" />,
-        action: () => {
-          onNavigateView('dashboard');
-          onClose();
-        },
-      },
       {
         id: 'action-quick-listings',
         category: 'actions',
@@ -251,20 +243,6 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
         icon: <BarChart3 className="w-4 h-4 text-purple-600 dark:text-purple-400" />,
         action: () => {
           onNavigateView('reporting');
-          onClose();
-        },
-      },
-      {
-        id: 'action-scrum',
-        category: 'actions',
-        title: 'Go to Agile Real Estate Scrum & Sprints Hub',
-        subtitle: 'Manage active sprint velocity, story points, conveyancing blockers & VIP viewings',
-        tag: 'Navigation',
-        badge: 'View',
-        badgeColor: 'bg-purple-50 dark:bg-purple-950/70 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800',
-        icon: <Target className="w-4 h-4 text-purple-600 dark:text-purple-400" />,
-        action: () => {
-          onNavigateView('scrum');
           onClose();
         },
       },
