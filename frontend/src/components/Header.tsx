@@ -177,19 +177,6 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
 
           <button
-            id="nav-tab-portals"
-            onClick={() => onSelectTab('portals')}
-            className={`px-2.5 py-1 rounded text-xs font-semibold flex items-center gap-1.5 transition-all ${
-              activeTab === 'portals'
-                ? 'bg-[#006980] text-white shadow-sm ring-1 ring-cyan-400'
-                : 'bg-slate-800/90 text-slate-300 hover:bg-slate-700 hover:text-white'
-            }`}
-          >
-            <Globe className="w-3.5 h-3.5 text-indigo-300" />
-            <span>Portal Sync</span>
-          </button>
-
-          <button
             id="nav-tab-suburb"
             onClick={() => onSelectTab('suburb')}
             className={`px-2.5 py-1 rounded text-xs font-semibold flex items-center gap-1.5 transition-all ${

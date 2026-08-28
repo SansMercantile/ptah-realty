@@ -155,7 +155,7 @@ export const DealViewPipeline: React.FC<DealViewPipelineProps> = ({
       <div className="bg-[#748982] text-white px-4 py-2 flex items-center justify-between shadow-xs">
         <div className="flex items-center gap-2">
           <FileText className="w-4 h-4 text-slate-100" />
-          <span className="font-bold text-xs sm:text-sm tracking-wide">Deal View</span>
+          <span className="font-bold text-xs sm:text-sm tracking-wide">Deals</span>
         </div>
 
         <div className="flex items-center gap-2">
