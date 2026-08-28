@@ -352,18 +352,24 @@ export const CadastralMap: React.FC<CadastralMapProps> = ({
           <span>Pull Live Property24 Data</span>
         </button>
 
-        {/* Street / Precinct Filter Toggle */}
-        <button
-          onClick={() => setShowStreetFilters((prev) => !prev)}
-          className={`flex items-center gap-1.5 backdrop-blur-md px-3 py-1.5 rounded-lg border shadow-lg text-xs font-bold transition-colors ${
-            showStreetFilters
-              ? 'bg-[#006980] border-cyan-500 text-white'
-              : 'bg-slate-900/90 border-slate-700 text-slate-200 hover:text-white'
-          }`}
-        >
-          <SlidersHorizontal className="w-3.5 h-3.5" />
-          <span>Streets</span>
-        </button>
+        {/* Street / Precinct Filter Toggle -- Google Maps engine only.
+            On the vector engine this same toggle now lives inside
+            RealCadastreMap's own Basemap bar, next to "Deeds Plan
+            Light" (see showStreetFilters/onToggleStreetFilters props
+            passed to it below), so it isn't duplicated across engines. */}
+        {mapEngine !== 'vector' && (
+          <button
+            onClick={() => setShowStreetFilters((prev) => !prev)}
+            className={`flex items-center gap-1.5 backdrop-blur-md px-3 py-1.5 rounded-lg border shadow-lg text-xs font-bold transition-colors ${
+              showStreetFilters
+                ? 'bg-[#006980] border-cyan-500 text-white'
+                : 'bg-slate-900/90 border-slate-700 text-slate-200 hover:text-white'
+            }`}
+          >
+            <SlidersHorizontal className="w-3.5 h-3.5" />
+            <span>Streets</span>
+          </button>
+        )}
       </div>
 
       {/* Top-right: Compass/Orientation Tool (vector engine only -- it
@@ -625,6 +631,8 @@ export const CadastralMap: React.FC<CadastralMapProps> = ({
           show3DExtrusions={show3DExtrusions}
           onToggle3DExtrusions={setShow3DExtrusions}
           onCursorCoordsChange={setCursorCoords}
+          showStreetFilters={showStreetFilters}
+          onToggleStreetFilters={() => setShowStreetFilters((prev) => !prev)}
         />
       )}
 

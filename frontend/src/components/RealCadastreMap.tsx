@@ -16,7 +16,8 @@ import {
   ZoomIn,
   ZoomOut,
   RotateCcw,
-  Box
+  Box,
+  SlidersHorizontal
 } from 'lucide-react';
 import { PropertyRecord } from '../types';
 import { extractStreetName } from '../utils/cadastralFilters';
@@ -58,6 +59,13 @@ interface RealCadastreMapProps {
   show3DExtrusions?: boolean;
   onToggle3DExtrusions?: (show: boolean) => void;
   onCursorCoordsChange?: (coords: { lat: number; lng: number } | null) => void;
+  // Street & Cluster Filter toggle -- state and the StreetFilterControls
+  // panel itself still live in CadastralMap (the parent), this is just
+  // the trigger button, rendered here in the Basemap bar next to "Deeds
+  // Plan Light" per the user's requested layout, rather than in
+  // CadastralMap's own top bar (which is now Google Maps engine only).
+  showStreetFilters?: boolean;
+  onToggleStreetFilters?: () => void;
 }
 
 // Extract house number from address string
@@ -308,7 +316,9 @@ export const RealCadastreMap: React.FC<RealCadastreMapProps> = ({
   onBuildingRenderModeChange,
   show3DExtrusions = true,
   onToggle3DExtrusions,
-  onCursorCoordsChange
+  onCursorCoordsChange,
+  showStreetFilters = false,
+  onToggleStreetFilters
 }) => {
   const canvasRef = useRef<HTMLDivElement>(null);
 
@@ -1092,6 +1102,23 @@ export const RealCadastreMap: React.FC<RealCadastreMapProps> = ({
         >
           Deeds Plan Light
         </button>
+
+        {/* Street & Cluster Filter toggle -- moved here, next to the
+            basemap switches, per the requested layout. Panel + filter
+            state still live in CadastralMap (the parent); this is just
+            the trigger button. */}
+        {onToggleStreetFilters && (
+          <button
+            id="layer-street-cluster-filter"
+            onClick={onToggleStreetFilters}
+            className={`ml-1 pl-2 border-l border-slate-700 flex items-center gap-1.5 px-2.5 py-1 rounded text-[11px] font-semibold transition-all ${
+              showStreetFilters ? 'text-cyan-300' : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <SlidersHorizontal className="w-3 h-3" />
+            Streets
+          </button>
+        )}
       </div>
 
       {/* 4. QUICK NAVIGATION & RECENTER PRESETS */}

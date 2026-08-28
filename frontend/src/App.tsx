@@ -157,9 +157,6 @@ export function App() {
     } else if (tab === 'media') {
       setIsMediaModalOpen(true);
       setActiveNavTab(null);
-    } else if (tab === 'pdf') {
-      setIsPDFReportOpen(true);
-      setActiveNavTab(null);
     } else if (tab === 'portals') {
       setIsPortalSyncOpen(true);
       setActiveNavTab(null);

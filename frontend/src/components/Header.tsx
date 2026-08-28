@@ -21,7 +21,7 @@ import {
   CreditCard
 } from 'lucide-react';
 
-export type ActiveTab = 'suburb' | 'search' | 'cma' | 'listings' | 'media' | 'pdf' | 'portals' | 'sales' | 'prospecting' | 'kyc' | 'crm';
+export type ActiveTab = 'suburb' | 'search' | 'cma' | 'listings' | 'media' | 'portals' | 'sales' | 'prospecting' | 'kyc' | 'crm';
 
 interface HeaderProps {
   activeTab: ActiveTab | null;
@@ -197,19 +197,6 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
 
           <button
-            id="nav-tab-pdf"
-            onClick={() => onSelectTab('pdf')}
-            className={`px-2.5 py-1 rounded text-xs font-semibold flex items-center gap-1.5 transition-all ${
-              activeTab === 'pdf'
-                ? 'bg-[#006980] text-white shadow-sm ring-1 ring-cyan-400'
-                : 'bg-slate-800/90 text-slate-300 hover:bg-slate-700 hover:text-white'
-            }`}
-          >
-            <FileText className="w-3.5 h-3.5 text-amber-300" />
-            <span>PDF Reports</span>
-          </button>
-
-          <button
             id="nav-tab-suburb"
             onClick={() => onSelectTab('suburb')}
             className={`px-2.5 py-1 rounded text-xs font-semibold flex items-center gap-1.5 transition-all ${
@@ -220,19 +207,6 @@ export const Header: React.FC<HeaderProps> = ({
           >
             <MapPin className="w-3.5 h-3.5 text-cyan-300" />
             <span>Suburbs</span>
-          </button>
-
-          <button
-            id="nav-tab-search"
-            onClick={() => onSelectTab('search')}
-            className={`px-2.5 py-1 rounded text-xs font-semibold flex items-center gap-1.5 transition-all ${
-              activeTab === 'search'
-                ? 'bg-[#006980] text-white shadow-sm ring-1 ring-cyan-400'
-                : 'bg-slate-800/90 text-slate-300 hover:bg-slate-700 hover:text-white'
-            }`}
-          >
-            <Search className="w-3.5 h-3.5 text-cyan-300" />
-            <span>Search</span>
           </button>
 
           <button
