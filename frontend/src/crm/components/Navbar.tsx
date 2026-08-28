@@ -1,14 +1,12 @@
 import React from 'react';
 import { 
   Kanban, 
-  CheckSquare, 
   Calendar as CalendarIcon,
   Zap, 
   BarChart3, 
   Plus, 
   Radio, 
   Sparkles, 
-  Bell, 
   Search,
   Sun,
   Moon
@@ -24,8 +22,6 @@ interface NavbarProps {
   onToggleAiAdvisor: () => void;
   pendingTasksCount: number;
   recentNotifications: EmailNotificationLog[];
-  onOpenNotifications: () => void;
-  unreadNotificationsCount: number;
   darkMode: boolean;
   onToggleDarkMode: () => void;
   onOpenCommandPalette: () => void;
@@ -39,8 +35,6 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenSimulator,
   onToggleAiAdvisor,
   pendingTasksCount,
-  unreadNotificationsCount,
-  onOpenNotifications,
   darkMode,
   onToggleDarkMode,
   onOpenCommandPalette,
@@ -77,23 +71,6 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               <Kanban className="w-4 h-4" />
               <span>Lead Pipeline</span>
-            </button>
-
-            <button
-              onClick={() => setCurrentView('tasks')}
-              className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition relative ${
-                currentView === 'tasks'
-                  ? 'bg-slate-900 dark:bg-emerald-600 text-white shadow-xs'
-                  : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-700/60'
-              }`}
-            >
-              <CheckSquare className="w-4 h-4" />
-              <span>Task Reminders</span>
-              {pendingTasksCount > 0 && (
-                <span className="ml-1 px-1.5 py-0.2 text-[10px] font-bold rounded-full bg-amber-500 text-slate-950">
-                  {pendingTasksCount}
-                </span>
-              )}
             </button>
 
             <button

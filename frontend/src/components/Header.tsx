@@ -37,6 +37,7 @@ interface HeaderProps {
   onOpenSearchHistoryModal: () => void;
   onOpenCreditsModal: () => void;
   onOpenBalanceDetails?: () => void;
+  onOpenCRMNotifications?: () => void;
   dataCredits?: number;
   ficaCredits?: number;
   trustCredits?: number;
@@ -60,6 +61,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenSearchHistoryModal,
   onOpenCreditsModal,
   onOpenBalanceDetails,
+  onOpenCRMNotifications,
   dataCredits = 250,
   ficaCredits = 0,
   trustCredits = 15,
@@ -120,6 +122,21 @@ export const Header: React.FC<HeaderProps> = ({
     }
   ];
 
+  // On the CRM tab, this bell now IS the CRM's own notifications & task
+  // reminders drawer -- CRM's own Navbar used to have a second, redundant
+  // bell icon triggering a separate drawer; that's been deleted (see
+  // Navbar.tsx) and this bridges to it instead via a signal, same
+  // consolidation pattern already used for Quick Search / Connectors
+  // (see App.tsx's crmOpenConnectorsSignal). Everywhere else, unchanged:
+  // toggles this header's own local dropdown.
+  const handleBellClick = () => {
+    if (activeTab === 'crm' && onOpenCRMNotifications) {
+      onOpenCRMNotifications();
+    } else {
+      setIsNotificationsOpen((prev) => !prev);
+    }
+  };
+
   return (
     <header className="bg-slate-900 text-slate-100 shadow-md select-none border-b border-slate-800 z-30 shrink-0 relative">
       {/* Top Main Navigation Bar */}
@@ -139,17 +156,31 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Primary Functional Tabs */}
         <nav className="flex items-center gap-1 overflow-x-auto py-0.5">
+          {/* Balance & Combined Available Credits -- moved here as the
+              first tab (was a badge in the right-hand section). Same
+              click behaviour, restyled to match the other nav pills. */}
           <button
-            id="nav-tab-cma"
-            onClick={() => onSelectTab('cma')}
+            id="header-balance-badge"
+            onClick={onOpenBalanceDetails || onOpenCreditsModal}
+            className="px-2.5 py-1 rounded text-xs font-semibold flex items-center gap-1.5 transition-all bg-slate-800/90 hover:bg-slate-700/90 border border-cyan-500/40 hover:border-cyan-400 text-slate-200 shadow-xs group"
+            title="Click to view detailed available funds for all credits & billing"
+          >
+            <Coins className="w-3.5 h-3.5 text-amber-400 group-hover:scale-110 transition-transform" />
+            <span className="text-slate-300 font-semibold uppercase tracking-wider text-[11px]">Balance:</span>
+            <span className="text-cyan-300 font-mono font-bold text-xs">{totalCombinedCredits} Credits</span>
+          </button>
+
+          <button
+            id="nav-tab-kyc"
+            onClick={() => onSelectTab('kyc')}
             className={`px-2.5 py-1 rounded text-xs font-semibold flex items-center gap-1.5 transition-all ${
-              activeTab === 'cma'
+              activeTab === 'kyc'
                 ? 'bg-[#006980] text-white shadow-sm ring-1 ring-cyan-400'
                 : 'bg-slate-800/90 text-slate-300 hover:bg-slate-700 hover:text-white'
             }`}
           >
-            <Calculator className="w-3.5 h-3.5 text-cyan-300" />
-            <span>CMA Engine</span>
+            <UserCheck className="w-3.5 h-3.5 text-emerald-300" />
+            <span>FICA Compliance</span>
           </button>
 
           <button
@@ -231,19 +262,6 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
 
           <button
-            id="nav-tab-kyc"
-            onClick={() => onSelectTab('kyc')}
-            className={`px-2.5 py-1 rounded text-xs font-semibold flex items-center gap-1.5 transition-all ${
-              activeTab === 'kyc'
-                ? 'bg-[#006980] text-white shadow-sm ring-1 ring-cyan-400'
-                : 'bg-slate-800/90 text-slate-300 hover:bg-slate-700 hover:text-white'
-            }`}
-          >
-            <UserCheck className="w-3.5 h-3.5 text-emerald-300" />
-            <span>FICA Compliance</span>
-          </button>
-
-          <button
             id="nav-tab-crm"
             onClick={() => onSelectTab('crm')}
             className={`px-2.5 py-1 rounded text-xs font-semibold flex items-center gap-1.5 transition-all ${
@@ -257,29 +275,18 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
         </nav>
 
-        {/* Right Section: Credits Badge, Quick Search, Notifications & User Dropdown */}
+        {/* Right Section: Quick Search, Notifications & User Dropdown --
+            Balance moved into the nav tabs above (first position), so
+            it's no longer duplicated here. */}
         <div className="flex items-center gap-2.5 text-xs">
-          {/* Balance & Combined Available Credits Badge */}
-          <div 
-            id="header-balance-badge"
-            onClick={onOpenBalanceDetails || onOpenCreditsModal}
-            className="hidden xl:flex items-center gap-2 bg-slate-800/90 hover:bg-slate-700/90 border border-cyan-500/40 hover:border-cyan-400 px-3 py-1 rounded text-xs cursor-pointer transition-all shadow-xs group"
-            title="Click to view detailed available funds for all credits & billing"
-          >
-            <div className="w-4 h-4 rounded bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 group-hover:scale-110 transition-transform">
-              <Coins className="w-3 h-3" />
-            </div>
-            <div className="flex items-center gap-1.5 font-medium">
-              <span className="text-slate-300 font-semibold uppercase tracking-wider text-[11px]">Balance:</span>
-              <span className="text-cyan-300 font-mono font-bold text-xs">{totalCombinedCredits} Credits</span>
-            </div>
-          </div>
-
-          {/* Notifications Button & Popover */}
+          {/* Notifications Button & Popover -- on the CRM tab this opens
+              CRM's own notifications & task reminders drawer instead (see
+              handleBellClick above); CRM's own second bell icon that used
+              to trigger this same kind of drawer has been removed. */}
           <div className="relative" ref={notificationsRef}>
             <button
               id="btn-notifications-header"
-              onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+              onClick={handleBellClick}
               className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-md transition-colors relative"
               title="Notifications & Alerts"
             >
@@ -287,7 +294,7 @@ export const Header: React.FC<HeaderProps> = ({
               <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-cyan-400"></span>
             </button>
 
-            {isNotificationsOpen && (
+            {isNotificationsOpen && activeTab !== 'crm' && (
               <div className="absolute right-0 mt-2 w-80 bg-white text-slate-800 rounded-lg shadow-2xl border border-slate-200 py-2 z-50 animate-fade-in text-xs">
                 <div className="px-3 py-1.5 border-b border-slate-100 font-bold text-slate-900 flex items-center justify-between">
                   <span>Notifications & Alerts</span>
