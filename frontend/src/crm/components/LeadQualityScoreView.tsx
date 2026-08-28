@@ -295,7 +295,7 @@ export const LeadQualityScoreView: React.FC<LeadQualityScoreViewProps> = ({
               className="px-4 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition flex items-center justify-center space-x-2 shadow-sm cursor-pointer disabled:opacity-50 whitespace-nowrap"
             >
               <RefreshCw className={`w-4 h-4 ${isRecalculating ? 'animate-spin' : ''}`} />
-              <span>{isRecalculating ? 'Evaluating AI Signals...' : 'Recalibrate with Gemini AI'}</span>
+              <span>{isRecalculating ? 'Evaluating AI Signals...' : 'Recalibrate with AI'}</span>
             </button>
           </div>
         </div>
