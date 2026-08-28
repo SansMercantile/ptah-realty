@@ -289,7 +289,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 <Users className="w-3.5 h-3.5" />
                 <span>CLIENT TYPE</span>
               </div>
-              <Info className="w-3.5 h-3.5 text-slate-400 cursor-pointer" title="Breakdown of leads by relationship type" />
+              <span title="Breakdown of leads by relationship type">
+                <Info className="w-3.5 h-3.5 text-slate-400 cursor-pointer" />
+              </span>
             </div>
 
             <div className="flex items-center justify-between mt-3">
