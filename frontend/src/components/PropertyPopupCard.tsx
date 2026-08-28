@@ -18,8 +18,7 @@ import {
   Globe, 
   Layers,
   Camera,
-  CheckCircle2,
-  Zap
+  CheckCircle2
 } from 'lucide-react';
 import { PropertyRecord } from '../types';
 import { INITIAL_PROPERTY_MEDIA } from '../services/mockData';
@@ -28,7 +27,6 @@ import { listMedia } from '../services/api';
 interface PropertyPopupCardProps {
   property: PropertyRecord | null;
   onClose: () => void;
-  onOpenQuickListing?: () => void;
   onOpenCMA?: () => void;
   onOpenPDF?: () => void;
   onOpenContact?: () => void;
@@ -38,7 +36,6 @@ interface PropertyPopupCardProps {
 export const PropertyPopupCard: React.FC<PropertyPopupCardProps> = ({
   property,
   onClose,
-  onOpenQuickListing,
   onOpenCMA,
   onOpenPDF,
   onOpenContact,
@@ -364,18 +361,6 @@ export const PropertyPopupCard: React.FC<PropertyPopupCardProps> = ({
 
         {/* Action Buttons Row */}
         <div className="pt-2 border-t border-slate-800 flex items-center gap-1.5">
-          {onOpenQuickListing && (
-            <button
-              id="btn-popup-open-quick-listing"
-              onClick={onOpenQuickListing}
-              className="py-2 px-2.5 bg-emerald-700 hover:bg-emerald-600 text-white font-bold text-xs rounded-xl transition-all shadow-md flex items-center justify-center gap-1"
-              title="Quick Listing Creator (1-Click Syndicate)"
-            >
-              <Zap className="w-3.5 h-3.5 text-amber-300 fill-amber-300" />
-              <span>Quick List</span>
-            </button>
-          )}
-
           {onOpenCMA && (
             <button
               id="btn-popup-open-cma"

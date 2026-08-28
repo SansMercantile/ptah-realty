@@ -30,7 +30,6 @@ interface CadastralMapProps {
   onOpenPDFReport?: () => void;
   onOpenContactOwner?: (property: PropertyRecord) => void;
   onOpenPortalSync?: () => void;
-  onOpenQuickListing?: () => void;
   // Bubbles newly-pulled live Property24 listings up to App.tsx so they
   // actually render as pins/polygons on the map -- previously
   // handlePullRadiusListings only showed a "Pulled N listings" toast and
@@ -47,7 +46,6 @@ export const CadastralMap: React.FC<CadastralMapProps> = ({
   onOpenPDFReport,
   onOpenContactOwner,
   onOpenPortalSync,
-  onOpenQuickListing,
   onLivePropertiesAdded
 }) => {
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
@@ -386,7 +384,6 @@ export const CadastralMap: React.FC<CadastralMapProps> = ({
             onOpenPDF={onOpenPDFReport}
             onOpenContact={() => onOpenContactOwner?.(selectedProperty)}
             onOpenPortalSync={onOpenPortalSync}
-            onOpenQuickListing={onOpenQuickListing}
           />
         </div>
       )}

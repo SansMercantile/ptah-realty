@@ -20,6 +20,7 @@ interface NavbarProps {
   currentView: 'pipeline' | 'tasks' | 'calendar' | 'automations' | 'reporting';
   setCurrentView: (view: 'pipeline' | 'tasks' | 'calendar' | 'automations' | 'reporting') => void;
   onOpenNewLead: () => void;
+  onOpenQuickListing?: () => void;
   onOpenSimulator: () => void;
   onToggleAiAdvisor: () => void;
   pendingTasksCount: number;
@@ -35,6 +36,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   currentView,
   setCurrentView,
   onOpenNewLead,
+  onOpenQuickListing,
   onOpenSimulator,
   onToggleAiAdvisor,
   pendingTasksCount,
@@ -205,6 +207,21 @@ export const Navbar: React.FC<NavbarProps> = ({
               the CRM. See App.tsx's onOpenCRMConnectors / CRMApp's
               openConnectorsSignal prop for the wiring.
             */}
+
+            {/* Quick Listing shortcut -- moved here from the main app's
+                top nav, the map property popup, and the "New Listings"
+                pipeline card, so it now appears in exactly one place
+                (see chat). Same styling it had in Header.tsx. */}
+            {onOpenQuickListing && (
+              <button
+                onClick={onOpenQuickListing}
+                className="flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer bg-gradient-to-r from-emerald-700 to-teal-700 hover:from-emerald-600 hover:to-teal-600 text-white shadow-xs ring-1 ring-emerald-400/60"
+                title="Quick Listing Creator: Auto-fill property details, asking price & 1-click syndicate"
+              >
+                <Zap className="w-3.5 h-3.5 text-amber-300 fill-amber-300" />
+                <span className="hidden sm:inline">Quick Listing</span>
+              </button>
+            )}
 
             {/* Add Lead Primary Button */}
             <button

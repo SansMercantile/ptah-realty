@@ -36,7 +36,6 @@ import {
 import { PropertyRecord } from '../../types';
 import { PROPERTIES_DATA } from '../../services/mockData';
 import { DealViewPipeline } from '../dealView/DealViewPipeline';
-import { QuickListingModal } from '../dealView/QuickListingModal';
 import { 
   DealStage, 
   ViewingAppointment, 
@@ -56,6 +55,10 @@ interface MyListingsModalProps {
   onClose: () => void;
   selectedProperty?: PropertyRecord | null;
   onSelectProperty?: (property: PropertyRecord) => void;
+  // Lifted to App.tsx so the Quick Listing shortcut (CRM header only, see
+  // chat) can add to the same list from outside this modal's tree.
+  listings: ListingDealRecord[];
+  setListings: React.Dispatch<React.SetStateAction<ListingDealRecord[]>>;
 }
 
 export interface ListingDealRecord {
@@ -82,7 +85,7 @@ export interface ListingDealRecord {
   imageUrl: string;
 }
 
-const INITIAL_MY_LISTINGS: ListingDealRecord[] = [
+export const INITIAL_MY_LISTINGS: ListingDealRecord[] = [
   {
     id: 'list-1',
     title: 'Contemporary Architectural Masterpiece',
@@ -181,21 +184,23 @@ export const MyListingsModal: React.FC<MyListingsModalProps> = ({
   isOpen,
   onClose,
   selectedProperty,
-  onSelectProperty
+  onSelectProperty,
+  listings,
+  setListings
 }) => {
   // Modal View: 'LISTINGS_GRID' or 'SYNDICATION_WIZARD'
   const [currentView, setCurrentView] = useState<'LISTINGS_GRID' | 'SYNDICATION_WIZARD'>('LISTINGS_GRID');
   
   // Deal View Pipeline State
   const [activeDealStage, setActiveDealStage] = useState<DealStage>('NEW_LISTINGS');
-  const [isQuickListingOpen, setIsQuickListingOpen] = useState(false);
   const [viewings, setViewings] = useState<ViewingAppointment[]>(INITIAL_VIEWINGS);
   const [otps, setOtps] = useState<OfferToPurchaseRecord[]>(INITIAL_OTPS);
   const [conveyancing, setConveyancing] = useState<AttorneyConveyancingRecord[]>(INITIAL_CONVEYANCING);
   const [lodgements, setLodgements] = useState<DeedsLodgementRecord[]>(INITIAL_LODGEMENTS);
 
-  // Listings List State
-  const [listings, setListings] = useState<ListingDealRecord[]>(INITIAL_MY_LISTINGS);
+  // Listings state now lives in App.tsx (see MyListingsModalProps) so the
+  // Quick Listing shortcut in the CRM header can add to it from outside
+  // this modal's tree.
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
 
@@ -391,7 +396,6 @@ export const MyListingsModal: React.FC<MyListingsModalProps> = ({
               listings={listings}
               activeStage={activeDealStage}
               onSelectStage={setActiveDealStage}
-              onQuickListingClick={() => setIsQuickListingOpen(true)}
               onStartFullSyndication={() => handleStartNewSyndication()}
               viewings={viewings}
               onAddViewing={(v) => setViewings(prev => [v, ...prev])}
@@ -1489,16 +1493,6 @@ export const MyListingsModal: React.FC<MyListingsModalProps> = ({
 
           </div>
         )}
-
-        {/* Quick Listing Creator Modal */}
-        <QuickListingModal
-          isOpen={isQuickListingOpen}
-          onClose={() => setIsQuickListingOpen(false)}
-          selectedProperty={selectedProperty}
-          onAddListing={(newListing) => {
-            setListings(prev => [newListing, ...prev]);
-          }}
-        />
 
       </div>
     </div>

@@ -18,8 +18,7 @@ import {
   Coins,
   Bell,
   Puzzle,
-  CreditCard,
-  Zap
+  CreditCard
 } from 'lucide-react';
 
 export type ActiveTab = 'suburb' | 'search' | 'cma' | 'listings' | 'media' | 'pdf' | 'portals' | 'sales' | 'prospecting' | 'kyc' | 'crm';
@@ -27,7 +26,6 @@ export type ActiveTab = 'suburb' | 'search' | 'cma' | 'listings' | 'media' | 'pd
 interface HeaderProps {
   activeTab: ActiveTab | null;
   onSelectTab: (tab: ActiveTab) => void;
-  onOpenQuickListing?: () => void;
   onOpenAccommodation: () => void;
   onOpenCMAEngine: () => void;
   onOpenMediaManagement: () => void;
@@ -50,7 +48,6 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({
   activeTab,
   onSelectTab,
-  onOpenQuickListing,
   onOpenAccommodation,
   onOpenCMAEngine,
   onOpenMediaManagement,
@@ -165,18 +162,6 @@ export const Header: React.FC<HeaderProps> = ({
             <Building2 className="w-3.5 h-3.5 text-cyan-300" />
             <span>My Listings</span>
           </button>
-
-          {onOpenQuickListing && (
-            <button
-              id="nav-tab-quick-listing"
-              onClick={onOpenQuickListing}
-              className="px-2.5 py-1 rounded text-xs font-bold flex items-center gap-1.5 transition-all bg-gradient-to-r from-emerald-700 to-teal-700 hover:from-emerald-600 hover:to-teal-600 text-white shadow-xs ring-1 ring-emerald-400/60"
-              title="Quick Listing Creator: Auto-fill property details, asking price & 1-click syndicate"
-            >
-              <Zap className="w-3.5 h-3.5 text-amber-300 fill-amber-300" />
-              <span>Quick Listing</span>
-            </button>
-          )}
 
           <button
             id="nav-tab-pdf"

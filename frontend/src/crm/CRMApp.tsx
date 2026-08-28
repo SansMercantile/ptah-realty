@@ -31,7 +31,13 @@ import { formatCurrency, triggerDealWonConfetti } from './utils/formatters';
 import { getCrmState, saveCrmState } from '../services/api';
 import { Bell, CheckCircle2, Flame, Radio, X, Calendar as CalendarIcon, Sliders } from 'lucide-react';
 
-export default function App({ openConnectorsSignal }: { openConnectorsSignal?: number }) {
+export default function App({
+  openConnectorsSignal,
+  onOpenQuickListing,
+}: {
+  openConnectorsSignal?: number;
+  onOpenQuickListing?: () => void;
+}) {
   // Load from local storage or mock data
   const [leads, setLeads] = useState<Lead[]>(() => {
     const saved = localStorage.getItem('ptah_crm_leads');
@@ -478,6 +484,7 @@ export default function App({ openConnectorsSignal }: { openConnectorsSignal?: n
         currentView={currentView}
         setCurrentView={setCurrentView}
         onOpenNewLead={() => setIsNewLeadOpen(true)}
+        onOpenQuickListing={onOpenQuickListing}
         onOpenSimulator={() => setIsSimulatorOpen(true)}
         onToggleAiAdvisor={() => setIsAiAdvisorOpen(!isAiAdvisorOpen)}
         pendingTasksCount={pendingTasksCount}

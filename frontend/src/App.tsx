@@ -16,7 +16,8 @@ import { CMAEngineModal } from './components/modals/CMAEngineModal';
 import { MediaManagementModal } from './components/modals/MediaManagementModal';
 import { PDFReportModal } from './components/modals/PDFReportModal';
 import { PortalSyncModal } from './components/modals/PortalSyncModal';
-import { MyListingsModal } from './components/modals/MyListingsModal';
+import { MyListingsModal, INITIAL_MY_LISTINGS, type ListingDealRecord } from './components/modals/MyListingsModal';
+import { QuickListingModal } from './components/dealView/QuickListingModal';
 import { UserSettingsModal, SettingsTabType } from './components/modals/UserSettingsModal';
 import { BalanceDetailsModal } from './components/modals/BalanceDetailsModal';
 import { CreditsTopUpModal } from './components/modals/CreditsTopUpModal';
@@ -44,6 +45,11 @@ export function App() {
   const [isPDFReportOpen, setIsPDFReportOpen] = useState(false);
   const [isPortalSyncOpen, setIsPortalSyncOpen] = useState(false);
   const [isMyListingsOpen, setIsMyListingsOpen] = useState(false);
+  // Listings pipeline data now lives here (not inside MyListingsModal) so
+  // the Quick Listing shortcut -- CRM header only, see chat -- can add to
+  // it from the CRM tab without My Listings needing to be open.
+  const [listings, setListings] = useState<ListingDealRecord[]>(INITIAL_MY_LISTINGS);
+  const [isQuickListingOpen, setIsQuickListingOpen] = useState(false);
   const [isUserSettingsOpen, setIsUserSettingsOpen] = useState(false);
   const [userSettingsInitialTab, setUserSettingsInitialTab] = useState<SettingsTabType>('profile');
   const [isBalanceDetailsOpen, setIsBalanceDetailsOpen] = useState(false);
@@ -202,7 +208,6 @@ export function App() {
       <Header
         activeTab={activeNavTab}
         onSelectTab={handleSelectTab}
-        onOpenQuickListing={() => setIsMyListingsOpen(true)}
         onOpenAccommodation={() => setIsAccommodationModalOpen(true)}
         onOpenCMAEngine={() => setIsCMAEngineOpen(true)}
         onOpenMediaManagement={() => setIsMediaModalOpen(true)}
@@ -227,7 +232,10 @@ export function App() {
       {/* Main Workspace Area (Google Maps & Cadastral Vector Canvas + Property Title Panel) */}
       <main className={`flex-1 overflow-hidden relative ${activeNavTab === 'crm' ? 'overflow-y-auto' : 'flex flex-row'}`}>
         {activeNavTab === 'crm' ? (
-          <CRMApp openConnectorsSignal={crmOpenConnectorsSignal} />
+          <CRMApp
+            openConnectorsSignal={crmOpenConnectorsSignal}
+            onOpenQuickListing={() => setIsQuickListingOpen(true)}
+          />
         ) : (
           <>
         {/* Cadastral Map View */}
@@ -240,7 +248,6 @@ export function App() {
           onOpenPDFReport={() => setIsPDFReportOpen(true)}
           onOpenContactOwner={handleOpenContactOwner}
           onOpenPortalSync={() => setIsPortalSyncOpen(true)}
-          onOpenQuickListing={() => setIsMyListingsOpen(true)}
           onLivePropertiesAdded={handleLivePropertiesAdded}
         />
 
@@ -392,12 +399,26 @@ export function App() {
         onOpenKYC={handleOpenKYCForOwner}
       />
 
-      {/* 15. My Listings Portfolio, Deal View Pipeline & Quick Listing */}
+      {/* 15. My Listings Portfolio & Deal View Pipeline */}
       <MyListingsModal
         isOpen={isMyListingsOpen}
         onClose={() => setIsMyListingsOpen(false)}
         selectedProperty={selectedProperty}
         onSelectProperty={handleSelectProperty}
+        listings={listings}
+        setListings={setListings}
+      />
+
+      {/* Quick Listing shortcut lives only in the CRM header now (see
+          chat) -- rendered here at the top level, not inside
+          MyListingsModal, so it works from the CRM tab regardless of
+          whether My Listings is open. Feeds the same `listings` state
+          above. */}
+      <QuickListingModal
+        isOpen={isQuickListingOpen}
+        onClose={() => setIsQuickListingOpen(false)}
+        selectedProperty={selectedProperty}
+        onAddListing={(newListing) => setListings(prev => [newListing, ...prev])}
       />
 
       {/* 16. User Settings (Profile, Password, Billing, Language, Apps & Extensions) */}
