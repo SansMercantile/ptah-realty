@@ -26,6 +26,7 @@ export type ActiveTab = 'suburb' | 'search' | 'cma' | 'listings' | 'media' | 'pd
 interface HeaderProps {
   activeTab: ActiveTab | null;
   onSelectTab: (tab: ActiveTab) => void;
+  onQuickSearch?: () => void;
   onOpenAccommodation: () => void;
   onOpenCMAEngine: () => void;
   onOpenMediaManagement: () => void;
@@ -48,6 +49,7 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({
   activeTab,
   onSelectTab,
+  onQuickSearch,
   onOpenAccommodation,
   onOpenCMAEngine,
   onOpenMediaManagement,
@@ -306,11 +308,15 @@ export const Header: React.FC<HeaderProps> = ({
             )}
           </div>
 
-          {/* Quick Search trigger */}
+          {/* Quick Search trigger -- consolidated entry point: on the CRM
+              tab this opens the CRM's own command palette (leads/tasks/
+              sync/actions, formerly behind a separate button in the CRM's
+              own toolbar); everywhere else it switches to the cadastre
+              search tab, as before. */}
           <button
-            onClick={() => onSelectTab('search')}
+            onClick={() => (onQuickSearch ? onQuickSearch() : onSelectTab('search'))}
             className="hidden sm:flex items-center gap-1.5 text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 px-2 py-1 rounded transition-colors text-xs"
-            title="Quick Cadastre Search"
+            title={activeTab === 'crm' ? 'Search Leads, Tasks & CRM Actions' : 'Quick Cadastre Search'}
           >
             <Search className="w-3.5 h-3.5 text-cyan-300" />
             <span className="hidden lg:inline">Quick Search</span>
@@ -423,7 +429,14 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
-      {/* Sub-Header Action Bar */}
+      {/* Sub-Header Action Bar -- property/cadastre-specific (Selected
+          Subject Cadastre, CMA Engine, Media Studio, PDF, Portal Sync,
+          Accommodation, Deeds), so it has no meaning on the CRM tab. It
+          used to render unconditionally, sitting directly above the CRM's
+          own toolbar (Lead Pipeline / Task Reminders / etc.) as
+          irrelevant clutter squeezing that content down. Hidden here
+          instead so the CRM's own bar comes right after the main nav. */}
+      {activeTab !== 'crm' && (
       <div className="flex items-center justify-between px-3 py-1 bg-slate-900 border-t border-slate-800 text-xs">
         <div className="flex items-center gap-2 text-slate-300">
           <span className="text-[11px] text-slate-400 font-medium">Selected Subject Cadastre:</span>
@@ -488,6 +501,7 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
         </div>
       </div>
+      )}
     </header>
   );
 };

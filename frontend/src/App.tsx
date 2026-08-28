@@ -81,6 +81,17 @@ export function App() {
     setCrmOpenConnectorsSignal((n) => n + 1);
   };
 
+  // Consolidated Quick Search: the main header's Quick Search button used
+  // to always switch to the cadastre 'search' tab. The CRM had its own
+  // separate command palette (leads/tasks/sync/actions) behind its own
+  // Quick Search button. Per explicit request, that CRM-only entry point
+  // is now removed -- the single header button opens whichever search
+  // makes sense for the active tab (see handleQuickSearch below), reusing
+  // this same signal pattern rather than lifting CRM's lead/task/sync
+  // state out of CRMApp (which only loads that data while actually
+  // mounted on the CRM tab).
+  const [crmOpenCommandPaletteSignal, setCrmOpenCommandPaletteSignal] = useState(0);
+
   // Owner Contact Modal State
   const [isContactOwnerModalOpen, setIsContactOwnerModalOpen] = useState(false);
   const [contactOwnerProperty, setContactOwnerProperty] = useState<PropertyRecord | null>(null);
@@ -160,6 +171,19 @@ export function App() {
     }
   };
 
+  // Single Quick Search entry point (header button), context-aware: while
+  // on the CRM tab it opens the CRM's own command palette (leads/tasks/
+  // sync/actions -- see crmOpenCommandPaletteSignal above); everywhere
+  // else it keeps the original behaviour of switching to the cadastre
+  // 'search' tab. Replaces the CRM's own separate Quick Search button.
+  const handleQuickSearch = () => {
+    if (activeNavTab === 'crm') {
+      setCrmOpenCommandPaletteSignal((n) => n + 1);
+    } else {
+      handleSelectTab('search');
+    }
+  };
+
   const handleCloseNavModal = () => {
     setActiveNavTab(null);
   };
@@ -208,6 +232,7 @@ export function App() {
       <Header
         activeTab={activeNavTab}
         onSelectTab={handleSelectTab}
+        onQuickSearch={handleQuickSearch}
         onOpenAccommodation={() => setIsAccommodationModalOpen(true)}
         onOpenCMAEngine={() => setIsCMAEngineOpen(true)}
         onOpenMediaManagement={() => setIsMediaModalOpen(true)}
@@ -234,6 +259,7 @@ export function App() {
         {activeNavTab === 'crm' ? (
           <CRMApp
             openConnectorsSignal={crmOpenConnectorsSignal}
+            openCommandPaletteSignal={crmOpenCommandPaletteSignal}
             onOpenQuickListing={() => setIsQuickListingOpen(true)}
           />
         ) : (

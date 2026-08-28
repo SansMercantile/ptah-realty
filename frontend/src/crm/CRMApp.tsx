@@ -33,9 +33,11 @@ import { Bell, CheckCircle2, Flame, Radio, X, Calendar as CalendarIcon, Sliders 
 
 export default function App({
   openConnectorsSignal,
+  openCommandPaletteSignal,
   onOpenQuickListing,
 }: {
   openConnectorsSignal?: number;
+  openCommandPaletteSignal?: number;
   onOpenQuickListing?: () => void;
 }) {
   // Load from local storage or mock data
@@ -207,6 +209,20 @@ export default function App({
     }
     if (openConnectorsSignal) setIsSettingsOpen(true);
   }, [openConnectorsSignal]);
+
+  // Same signal pattern as openConnectorsSignal above, for the main app
+  // header's now-consolidated Quick Search button -- CRM no longer has
+  // its own separate Quick Search entry point in the Navbar (see chat),
+  // so this is the only remaining way the command palette opens by click
+  // (Cmd+K below still works independently).
+  const isInitialCommandPaletteSignalRef = useRef(true);
+  useEffect(() => {
+    if (isInitialCommandPaletteSignalRef.current) {
+      isInitialCommandPaletteSignalRef.current = false;
+      return;
+    }
+    if (openCommandPaletteSignal) setIsCommandPaletteOpen(true);
+  }, [openCommandPaletteSignal]);
 
   // Global Cmd+K / Ctrl+K keyboard shortcut listener
   useEffect(() => {

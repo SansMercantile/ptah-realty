@@ -10,7 +10,6 @@ import {
   Sparkles, 
   Bell, 
   Search,
-  Command,
   Sun,
   Moon
 } from 'lucide-react';
@@ -136,33 +135,14 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {/* Right Action Tools */}
           <div className="flex items-center space-x-2 sm:space-x-2.5 justify-self-end">
-            {/* Global Command Palette Trigger (Cmd+K) */}
-            <button
-              onClick={onOpenCommandPalette}
-              className="flex items-center space-x-2 px-2.5 sm:px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition cursor-pointer text-xs group"
-              title="Global Search & Quick Actions (Press ⌘K or Ctrl+K)"
-              aria-label="Open Command Palette"
-            >
-              <Search className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition" />
-              <span className="hidden xl:inline text-slate-600 dark:text-slate-300 font-medium">Quick Search</span>
-              <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-[10px] font-mono text-slate-500 dark:text-slate-400 shadow-2xs font-semibold">
-                <span className="text-[9px]">⌘</span>K
-              </kbd>
-            </button>
-
-            {/* Dark Mode Theme Toggle Button */}
-            <button
-              onClick={onToggleDarkMode}
-              className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-amber-300 border border-slate-200 dark:border-slate-700 transition cursor-pointer flex items-center justify-center"
-              title={darkMode ? "Switch to Light Mode (Day Shift)" : "Switch to Dark Mode (Night Shift)"}
-              aria-label={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
-            >
-              {darkMode ? (
-                <Sun className="w-4 h-4 text-amber-400 animate-in spin-in-180 duration-300" />
-              ) : (
-                <Moon className="w-4 h-4 text-slate-700 animate-in spin-in-180 duration-300" />
-              )}
-            </button>
+            {/*
+              Quick Search / Command Palette trigger removed from here --
+              consolidated into the main app header's single Quick Search
+              button, which now opens this same command palette while on
+              the CRM tab (see App.tsx's crmOpenCommandPaletteSignal /
+              CRMApp's openCommandPaletteSignal prop). Cmd+K still opens
+              it directly regardless of which button triggered it.
+            */}
 
             {/* Live Inbound Lead Simulator */}
             <button
@@ -183,20 +163,6 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               <Sparkles className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
               <span className="hidden sm:inline">AI Copilot</span>
-            </button>
-
-            {/* Notification Bell */}
-            <button
-              onClick={onOpenNotifications}
-              className="p-2 rounded-lg bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white relative transition cursor-pointer border border-slate-200 dark:border-slate-700"
-              title="Email Notifications & Alerts"
-            >
-              <Bell className="w-4 h-4" />
-              {unreadNotificationsCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">
-                  {unreadNotificationsCount}
-                </span>
-              )}
             </button>
 
             {/*
@@ -230,6 +196,36 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               <Plus className="w-4 h-4" />
               <span className="hidden sm:inline">New Lead</span>
+            </button>
+
+            {/* Dark Mode Theme Toggle & Notification Bell -- moved to the
+                far right of this toolbar per explicit request (were
+                previously up front, next to the now-removed Quick
+                Search). */}
+            <button
+              onClick={onToggleDarkMode}
+              className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-amber-300 border border-slate-200 dark:border-slate-700 transition cursor-pointer flex items-center justify-center"
+              title={darkMode ? "Switch to Light Mode (Day Shift)" : "Switch to Dark Mode (Night Shift)"}
+              aria-label={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+            >
+              {darkMode ? (
+                <Sun className="w-4 h-4 text-amber-400 animate-in spin-in-180 duration-300" />
+              ) : (
+                <Moon className="w-4 h-4 text-slate-700 animate-in spin-in-180 duration-300" />
+              )}
+            </button>
+
+            <button
+              onClick={onOpenNotifications}
+              className="p-2 rounded-lg bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white relative transition cursor-pointer border border-slate-200 dark:border-slate-700"
+              title="Email Notifications & Alerts"
+            >
+              <Bell className="w-4 h-4" />
+              {unreadNotificationsCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">
+                  {unreadNotificationsCount}
+                </span>
+              )}
             </button>
           </div>
         </div>
