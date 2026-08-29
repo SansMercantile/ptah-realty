@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
   Users,
   UploadCloud,
@@ -28,7 +28,12 @@ import {
   Award,
   ArrowUpRight,
   ShieldCheck,
-  Crown
+  Crown,
+  X,
+  Table2,
+  Download,
+  Copy,
+  Phone
 } from 'lucide-react';
 import { Lead, PropertyListing, ShowHouseRecord } from '../types';
 import { formatCurrency } from '../utils/formatters';
@@ -40,6 +45,154 @@ import luxuryVillaImg from '../assets/images/luxury_estate_hero_1787979917947.jp
 import youngBuyerImg from '../assets/images/age_bracket_young_1787979933078.jpg';
 import midBuyerImg from '../assets/images/age_bracket_mid_1787979946226.jpg';
 import seniorPatronImg from '../assets/images/age_bracket_senior_1787979958991.jpg';
+
+interface ChartMenuProps {
+  onViewAsTable: () => void;
+  onCopyData: () => void;
+  onExportCsv: () => void;
+}
+
+// Functional dropdown for the small header "..." menu icon on the LSM/
+// Suburb Attractiveness and Likelihood to Buy & Sell chart cards -- was
+// previously decorative (no onClick at all).
+const ChartMenu: React.FC<ChartMenuProps> = ({ onViewAsTable, onCopyData, onExportCsv }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setIsOpen(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setIsOpen((v) => !v)}
+        className="p-0.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+        title="Chart options"
+      >
+        <Menu className="w-3.5 h-3.5 text-slate-400" />
+      </button>
+      {isOpen && (
+        <div className="absolute right-0 top-6 z-20 w-44 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 py-1 text-xs animate-fade-in">
+          <button
+            onClick={() => { setIsOpen(false); onViewAsTable(); }}
+            className="w-full text-left px-3 py-1.5 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 text-slate-700 dark:text-slate-200"
+          >
+            <Table2 className="w-3.5 h-3.5 text-slate-400" />
+            <span>View as Table</span>
+          </button>
+          <button
+            onClick={() => { setIsOpen(false); onCopyData(); }}
+            className="w-full text-left px-3 py-1.5 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 text-slate-700 dark:text-slate-200"
+          >
+            <Copy className="w-3.5 h-3.5 text-slate-400" />
+            <span>Copy Data</span>
+          </button>
+          <button
+            onClick={() => { setIsOpen(false); onExportCsv(); }}
+            className="w-full text-left px-3 py-1.5 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 text-slate-700 dark:text-slate-200"
+          >
+            <Download className="w-3.5 h-3.5 text-slate-400" />
+            <span>Export as CSV</span>
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Downloads a small CSV client-side -- no backend needed for a chart export.
+function downloadCsv(filename: string, rows: (string | number)[][]) {
+  const csv = rows.map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+interface AgeGroupLeadsModalProps {
+  bracket: { key: string; label: string; persona: string } | null;
+  leads: Lead[];
+  onClose: () => void;
+  onSelectLead: (lead: Lead) => void;
+}
+
+// Popup for the Demographic Intelligence age bracket cards -- shows the
+// actual CRM leads that produced that bracket's percentage (matched on
+// Lead.ageBracket), not just the illustrative stat.
+const AgeGroupLeadsModal: React.FC<AgeGroupLeadsModalProps> = ({ bracket, leads, onClose, onSelectLead }) => {
+  if (!bracket) return null;
+  const matchingLeads = leads.filter((l) => getAgeGroupKey(l.ageBracket) === bracket.key);
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={onClose}>
+      <div
+        className="bg-white dark:bg-slate-850 rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-800">
+          <div>
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+              {bracket.label} <span className="text-slate-400 font-normal">({bracket.key})</span>
+            </h3>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400">{bracket.persona} — {matchingLeads.length} client{matchingLeads.length === 1 ? '' : 's'} in your CRM</p>
+          </div>
+          <button onClick={onClose} className="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800">
+            <X className="w-4 h-4 text-slate-400" />
+          </button>
+        </div>
+
+        <div className="overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800">
+          {matchingLeads.length === 0 ? (
+            <div className="p-6 text-center text-xs text-slate-400 italic">
+              No leads in this age bracket yet.
+            </div>
+          ) : (
+            matchingLeads.map((lead) => (
+              <button
+                key={lead.id}
+                onClick={() => { onSelectLead(lead); onClose(); }}
+                className="w-full text-left px-5 py-3 hover:bg-slate-50 dark:hover:bg-slate-800/60 flex items-center justify-between transition-colors"
+              >
+                <div>
+                  <div className="text-xs font-bold text-slate-800 dark:text-slate-100">{lead.name}</div>
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400">{lead.propertyTitle}</div>
+                  <div className="flex items-center gap-2 mt-0.5 text-[10px] text-slate-400">
+                    <span className="flex items-center gap-0.5"><Phone className="w-2.5 h-2.5" />{lead.phone}</span>
+                    <span>•</span>
+                    <span>{lead.source}</span>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-slate-300 shrink-0" />
+              </button>
+            ))
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Maps a free-form Lead.ageBracket string ("35-49", "62", "60+") onto one
+// of the four Demographic Intelligence buckets by its lower bound, so the
+// card's percentage and its popup are backed by the same real data.
+function getAgeGroupKey(ageBracket?: string): string | null {
+  if (!ageBracket) return null;
+  const match = ageBracket.match(/\d+/);
+  if (!match) return null;
+  const low = parseInt(match[0], 10);
+  if (low >= 60) return '60+';
+  if (low >= 40) return '40-59';
+  if (low >= 30) return '30-39';
+  return '18-29';
+}
 
 interface DashboardViewProps {
   leads: Lead[];
@@ -76,6 +229,27 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isPortfolioShareOpen, setIsPortfolioShareOpen] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
+
+  // Chart view-mode toggles (View as Table, from the chart menu) and the
+  // Demographic Intelligence age-bracket drilldown popup.
+  const [lsmViewAsTable, setLsmViewAsTable] = useState(false);
+  const [propensityViewAsTable, setPropensityViewAsTable] = useState(false);
+  const [selectedAgeBracket, setSelectedAgeBracket] = useState<{ key: string; label: string; persona: string } | null>(null);
+
+  // Real per-bracket lead counts, computed from Lead.ageBracket so the
+  // Demographic Intelligence percentages match what the drilldown popup
+  // actually shows -- not a static illustrative number.
+  const ageBracketCounts = useMemo(() => {
+    const counts: Record<string, number> = { '18-29': 0, '30-39': 0, '40-59': 0, '60+': 0 };
+    leads.forEach((l) => {
+      const key = getAgeGroupKey(l.ageBracket);
+      if (key) counts[key] += 1;
+    });
+    return counts;
+  }, [leads]);
+  const totalWithAgeBracket = Object.values(ageBracketCounts).reduce((a, b) => a + b, 0);
+  const ageBracketPct = (key: string) =>
+    totalWithAgeBracket > 0 ? `${Math.round((ageBracketCounts[key] / totalWithAgeBracket) * 100)}%` : '0%';
 
   // Filtered show houses
   const openShowHouses = showHouses.filter(
@@ -582,24 +756,21 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <div className="grid grid-cols-2 gap-3">
               {[
                 {
-                  bracket: '18 - 29',
-                  pct: '22%',
+                  bracket: '18-29',
                   label: 'Next-Gen UHNW',
                   persona: 'Tech Innovators & Founders',
                   img: youngBuyerImg,
                   accent: 'border-amber-400/40 text-amber-500 dark:text-amber-400',
                 },
                 {
-                  bracket: '30 - 39',
-                  pct: '12%',
+                  bracket: '30-39',
                   label: 'Executive Leaders',
                   persona: 'Corporate Partners & Ex-pats',
                   img: youngBuyerImg,
                   accent: 'border-sky-400/40 text-sky-500 dark:text-sky-400',
                 },
                 {
-                  bracket: '40 - 59',
-                  pct: '22%',
+                  bracket: '40-59',
                   label: 'Private Wealth',
                   persona: 'Principals & Family Offices',
                   img: midBuyerImg,
@@ -607,16 +778,17 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 },
                 {
                   bracket: '60+',
-                  pct: '44%',
                   label: 'Legacy Trustees',
                   persona: 'Portfolio Patriarchs & Matriarchs',
                   img: seniorPatronImg,
                   accent: 'border-purple-400/40 text-purple-500 dark:text-purple-400',
                 },
               ].map((item) => (
-                <div
+                <button
                   key={item.bracket}
-                  className="group relative flex flex-col items-center p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-750/80 hover:border-slate-300 dark:hover:border-slate-650 transition duration-200 shadow-2xs hover:shadow-xs"
+                  onClick={() => setSelectedAgeBracket({ key: item.bracket, label: item.label, persona: item.persona })}
+                  className="group relative flex flex-col items-center p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-750/80 hover:border-cyan-400 dark:hover:border-cyan-500 transition duration-200 shadow-2xs hover:shadow-xs text-left cursor-pointer"
+                  title={`View ${ageBracketCounts[item.bracket]} client(s) in the ${item.bracket} age bracket`}
                 >
                   {/* Luxury Portrait Frame */}
                   <div className="relative w-16 h-16 rounded-full p-0.5 bg-gradient-to-tr from-slate-300 via-amber-200/50 to-slate-400 dark:from-slate-700 dark:via-amber-500/30 dark:to-slate-600 shadow-xs mb-2 overflow-hidden group-hover:scale-105 transition duration-300">
@@ -640,16 +812,18 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   {/* Sleek Dark Badge with Bracket & Percentage */}
                   <div className="w-full flex items-center justify-between px-2 py-0.5 rounded-md bg-slate-900 text-white text-[10px] font-mono font-semibold shadow-2xs border border-slate-800">
                     <span className="text-slate-300">{item.bracket}</span>
-                    <span className={item.accent.split(' ')[1] || 'text-cyan-400'}>{item.pct}</span>
+                    <span className={item.accent.split(' ')[1] || 'text-cyan-400'}>{ageBracketPct(item.bracket)}</span>
                   </div>
-                </div>
+                </button>
               ))}
             </div>
           </div>
 
           <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
             <span>Primary Core Segment</span>
-            <span className="font-semibold text-slate-700 dark:text-slate-200">60+ Trustees (44%)</span>
+            <span className="font-semibold text-slate-700 dark:text-slate-200">
+              60+ Trustees ({ageBracketPct('60+')})
+            </span>
           </div>
         </div>
 
@@ -670,46 +844,85 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
                 Number of Clients
               </span>
-              <Menu className="w-3.5 h-3.5 text-slate-400" />
+              <ChartMenu
+                onViewAsTable={() => setLsmViewAsTable((v) => !v)}
+                onCopyData={() => {
+                  const text = 'Score Tier\tLSM Score\tSuburb Attractiveness\n0-3\t0\t2\n4-7\t2\t0\n8-10\t3\t5';
+                  navigator.clipboard.writeText(text);
+                }}
+                onExportCsv={() => downloadCsv('lsm-suburb-attractiveness.csv', [
+                  ['Score Tier', 'LSM Score', 'Suburb Attractiveness'],
+                  ['0-3', 0, 2],
+                  ['4-7', 2, 0],
+                  ['8-10', 3, 5],
+                ])}
+              />
             </div>
 
-            {/* Visual Bar Chart */}
-            <div className="h-44 flex items-end justify-between px-4 pt-4 border-b border-l border-slate-200 dark:border-slate-700 relative">
-              {/* Y-axis guide labels */}
-              <div className="absolute -left-5 top-0 bottom-0 flex flex-col justify-between text-[9px] font-mono text-slate-400">
-                <span>10</span>
-                <span>8</span>
-                <span>6</span>
-                <span>4</span>
-                <span>2</span>
-                <span>0</span>
+            {lsmViewAsTable ? (
+              <table className="w-full text-xs mt-2">
+                <thead>
+                  <tr className="text-slate-400 border-b border-slate-100 dark:border-slate-800">
+                    <th className="text-left font-semibold py-1.5">Score Tier</th>
+                    <th className="text-right font-semibold py-1.5">LSM Score</th>
+                    <th className="text-right font-semibold py-1.5">Suburb Attractiveness</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {[['0-3', 0, 2], ['4-7', 2, 0], ['8-10', 3, 5]].map((row) => (
+                    <tr key={row[0]}>
+                      <td className="py-1.5 font-semibold text-slate-700 dark:text-slate-200">{row[0]}</td>
+                      <td className="py-1.5 text-right text-slate-600 dark:text-slate-300">{row[1]}</td>
+                      <td className="py-1.5 text-right text-slate-600 dark:text-slate-300">{row[2]}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+            <div className="flex gap-2">
+              {/* Y-axis guide labels -- reserved-width column, not
+                  negatively offset, so it can never poke past the card's
+                  own left padding (see chat: was misaligned with the
+                  header divider above). */}
+              <div className="flex flex-col justify-between text-[9px] font-mono text-slate-400 h-44 text-right w-3.5 shrink-0">
+                <span>10</span><span>8</span><span>6</span><span>4</span><span>2</span><span>0</span>
               </div>
 
-              {/* Group 0-3 */}
-              <div className="flex items-end space-x-1.5 h-full">
-                <div className="w-6 bg-gradient-to-t from-rose-800 to-rose-600 rounded-t-sm transition-all duration-300 hover:brightness-110" style={{ height: '0%' }} title="LSM: 0" />
-                <div className="w-6 bg-gradient-to-t from-cyan-700 to-cyan-500 rounded-t-sm transition-all duration-300 hover:brightness-110" style={{ height: '20%' }} title="Suburb Attractiveness: 2" />
-              </div>
+              <div className="flex-1 min-w-0">
+                {/* Visual Bar Chart -- flex-1 so its left/right edges
+                    match the header row's, since neither has extra
+                    horizontal padding beyond the card's own p-5. */}
+                <div className="h-44 flex items-end justify-around border-b border-l border-slate-200 dark:border-slate-700">
+                  {/* Group 0-3 */}
+                  <div className="flex items-end space-x-1.5 h-full">
+                    <div className="w-6 bg-gradient-to-t from-rose-800 to-rose-600 rounded-t-sm transition-all duration-300 hover:brightness-110" style={{ height: '0%' }} title="LSM: 0" />
+                    <div className="w-6 bg-gradient-to-t from-cyan-700 to-cyan-500 rounded-t-sm transition-all duration-300 hover:brightness-110" style={{ height: '20%' }} title="Suburb Attractiveness: 2" />
+                  </div>
 
-              {/* Group 4-7 */}
-              <div className="flex items-end space-x-1.5 h-full">
-                <div className="w-6 bg-gradient-to-t from-rose-800 to-rose-600 rounded-t-sm transition-all duration-300 hover:brightness-110" style={{ height: '20%' }} title="LSM: 2" />
-                <div className="w-6 bg-gradient-to-t from-cyan-700 to-cyan-500 rounded-t-sm transition-all duration-300 hover:brightness-110" style={{ height: '0%' }} title="Suburb Attractiveness: 0" />
-              </div>
+                  {/* Group 4-7 */}
+                  <div className="flex items-end space-x-1.5 h-full">
+                    <div className="w-6 bg-gradient-to-t from-rose-800 to-rose-600 rounded-t-sm transition-all duration-300 hover:brightness-110" style={{ height: '20%' }} title="LSM: 2" />
+                    <div className="w-6 bg-gradient-to-t from-cyan-700 to-cyan-500 rounded-t-sm transition-all duration-300 hover:brightness-110" style={{ height: '0%' }} title="Suburb Attractiveness: 0" />
+                  </div>
 
-              {/* Group 8-10 */}
-              <div className="flex items-end space-x-1.5 h-full">
-                <div className="w-6 bg-gradient-to-t from-rose-800 to-rose-600 rounded-t-sm transition-all duration-300 hover:brightness-110" style={{ height: '30%' }} title="LSM: 3" />
-                <div className="w-6 bg-gradient-to-t from-cyan-700 to-cyan-500 rounded-t-sm transition-all duration-300 hover:brightness-110" style={{ height: '50%' }} title="Suburb Attractiveness: 5" />
+                  {/* Group 8-10 */}
+                  <div className="flex items-end space-x-1.5 h-full">
+                    <div className="w-6 bg-gradient-to-t from-rose-800 to-rose-600 rounded-t-sm transition-all duration-300 hover:brightness-110" style={{ height: '30%' }} title="LSM: 3" />
+                    <div className="w-6 bg-gradient-to-t from-cyan-700 to-cyan-500 rounded-t-sm transition-all duration-300 hover:brightness-110" style={{ height: '50%' }} title="Suburb Attractiveness: 5" />
+                  </div>
+                </div>
+
+                {/* X-axis labels -- justify-around, matching the bars
+                    above, so each label sits under its bar group with no
+                    independent padding of its own. */}
+                <div className="flex justify-around pt-1 text-xs font-semibold text-slate-600 dark:text-slate-400">
+                  <span>0-3</span>
+                  <span>4-7</span>
+                  <span>8-10</span>
+                </div>
               </div>
             </div>
-
-            {/* X-axis labels */}
-            <div className="flex justify-between px-6 pt-1 text-xs font-semibold text-slate-600 dark:text-slate-400">
-              <span>0-3</span>
-              <span>4-7</span>
-              <span>8-10</span>
-            </div>
+            )}
             <div className="text-center text-xs font-bold text-slate-700 dark:text-slate-300 mt-1">
               Score Tier
             </div>
@@ -745,60 +958,103 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
                 Number of Clients
               </span>
-              <Menu className="w-3.5 h-3.5 text-slate-400" />
+              <ChartMenu
+                onViewAsTable={() => setPropensityViewAsTable((v) => !v)}
+                onCopyData={() => {
+                  const text = 'Propensity Tier\tLikelihood To Buy\tLikelihood To Sell\nVery Unlikely\t3\t2\nUnlikely\t0\t0\nSomewhat Likely\t0\t1\nLikely\t0\t1\nHighly Likely\t0\t3';
+                  navigator.clipboard.writeText(text);
+                }}
+                onExportCsv={() => downloadCsv('client-likelihood-buy-sell.csv', [
+                  ['Propensity Tier', 'Likelihood To Buy', 'Likelihood To Sell'],
+                  ['Very Unlikely', 3, 2],
+                  ['Unlikely', 0, 0],
+                  ['Somewhat Likely', 0, 1],
+                  ['Likely', 0, 1],
+                  ['Highly Likely', 0, 3],
+                ])}
+              />
             </div>
 
-            {/* Visual Bar Chart */}
-            <div className="h-44 flex items-end justify-between px-2 pt-4 border-b border-l border-slate-200 dark:border-slate-700 relative">
-              {/* Y-axis guide */}
-              <div className="absolute -left-5 top-0 bottom-0 flex flex-col justify-between text-[9px] font-mono text-slate-400">
-                <span>10</span>
-                <span>8</span>
-                <span>6</span>
-                <span>4</span>
-                <span>2</span>
-                <span>0</span>
+            {propensityViewAsTable ? (
+              <table className="w-full text-xs mt-2">
+                <thead>
+                  <tr className="text-slate-400 border-b border-slate-100 dark:border-slate-800">
+                    <th className="text-left font-semibold py-1.5">Propensity Tier</th>
+                    <th className="text-right font-semibold py-1.5">To Buy</th>
+                    <th className="text-right font-semibold py-1.5">To Sell</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {[
+                    ['Very Unlikely', 3, 2],
+                    ['Unlikely', 0, 0],
+                    ['Somewhat Likely', 0, 1],
+                    ['Likely', 0, 1],
+                    ['Highly Likely', 0, 3],
+                  ].map((row) => (
+                    <tr key={row[0]}>
+                      <td className="py-1.5 font-semibold text-slate-700 dark:text-slate-200">{row[0]}</td>
+                      <td className="py-1.5 text-right text-slate-600 dark:text-slate-300">{row[1]}</td>
+                      <td className="py-1.5 text-right text-slate-600 dark:text-slate-300">{row[2]}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+            <div className="flex gap-2">
+              {/* Y-axis guide -- reserved-width column, not negatively
+                  offset (see chat: was misaligned with the header
+                  divider above). */}
+              <div className="flex flex-col justify-between text-[9px] font-mono text-slate-400 h-44 text-right w-3.5 shrink-0">
+                <span>10</span><span>8</span><span>6</span><span>4</span><span>2</span><span>0</span>
               </div>
 
-              {/* Very Unlikely */}
-              <div className="flex items-end space-x-1 h-full">
-                <div className="w-3.5 bg-gradient-to-t from-rose-800 to-rose-600 rounded-t-sm" style={{ height: '30%' }} title="Buy: 3" />
-                <div className="w-3.5 bg-gradient-to-t from-cyan-700 to-cyan-500 rounded-t-sm" style={{ height: '20%' }} title="Sell: 2" />
-              </div>
+              <div className="flex-1 min-w-0">
+                {/* Visual Bar Chart -- flex-1 so its edges match the
+                    header row's (neither has extra horizontal padding). */}
+                <div className="h-44 flex items-end justify-around border-b border-l border-slate-200 dark:border-slate-700">
+                  {/* Very Unlikely */}
+                  <div className="flex items-end space-x-1 h-full">
+                    <div className="w-3.5 bg-gradient-to-t from-rose-800 to-rose-600 rounded-t-sm" style={{ height: '30%' }} title="Buy: 3" />
+                    <div className="w-3.5 bg-gradient-to-t from-cyan-700 to-cyan-500 rounded-t-sm" style={{ height: '20%' }} title="Sell: 2" />
+                  </div>
 
-              {/* Unlikely */}
-              <div className="flex items-end space-x-1 h-full">
-                <div className="w-3.5 bg-gradient-to-t from-rose-800 to-rose-600 rounded-t-sm" style={{ height: '0%' }} />
-                <div className="w-3.5 bg-gradient-to-t from-cyan-700 to-cyan-500 rounded-t-sm" style={{ height: '0%' }} />
-              </div>
+                  {/* Unlikely */}
+                  <div className="flex items-end space-x-1 h-full">
+                    <div className="w-3.5 bg-gradient-to-t from-rose-800 to-rose-600 rounded-t-sm" style={{ height: '0%' }} />
+                    <div className="w-3.5 bg-gradient-to-t from-cyan-700 to-cyan-500 rounded-t-sm" style={{ height: '0%' }} />
+                  </div>
 
-              {/* Somewhat Likely */}
-              <div className="flex items-end space-x-1 h-full">
-                <div className="w-3.5 bg-gradient-to-t from-rose-800 to-rose-600 rounded-t-sm" style={{ height: '0%' }} />
-                <div className="w-3.5 bg-gradient-to-t from-cyan-700 to-cyan-500 rounded-t-sm" style={{ height: '10%' }} title="Sell: 1" />
-              </div>
+                  {/* Somewhat Likely */}
+                  <div className="flex items-end space-x-1 h-full">
+                    <div className="w-3.5 bg-gradient-to-t from-rose-800 to-rose-600 rounded-t-sm" style={{ height: '0%' }} />
+                    <div className="w-3.5 bg-gradient-to-t from-cyan-700 to-cyan-500 rounded-t-sm" style={{ height: '10%' }} title="Sell: 1" />
+                  </div>
 
-              {/* Likely */}
-              <div className="flex items-end space-x-1 h-full">
-                <div className="w-3.5 bg-gradient-to-t from-rose-800 to-rose-600 rounded-t-sm" style={{ height: '0%' }} />
-                <div className="w-3.5 bg-gradient-to-t from-cyan-700 to-cyan-500 rounded-t-sm" style={{ height: '10%' }} title="Sell: 1" />
-              </div>
+                  {/* Likely */}
+                  <div className="flex items-end space-x-1 h-full">
+                    <div className="w-3.5 bg-gradient-to-t from-rose-800 to-rose-600 rounded-t-sm" style={{ height: '0%' }} />
+                    <div className="w-3.5 bg-gradient-to-t from-cyan-700 to-cyan-500 rounded-t-sm" style={{ height: '10%' }} title="Sell: 1" />
+                  </div>
 
-              {/* Highly Likely */}
-              <div className="flex items-end space-x-1 h-full">
-                <div className="w-3.5 bg-gradient-to-t from-rose-800 to-rose-600 rounded-t-sm" style={{ height: '0%' }} />
-                <div className="w-3.5 bg-gradient-to-t from-cyan-700 to-cyan-500 rounded-t-sm" style={{ height: '30%' }} title="Sell: 3" />
+                  {/* Highly Likely */}
+                  <div className="flex items-end space-x-1 h-full">
+                    <div className="w-3.5 bg-gradient-to-t from-rose-800 to-rose-600 rounded-t-sm" style={{ height: '0%' }} />
+                    <div className="w-3.5 bg-gradient-to-t from-cyan-700 to-cyan-500 rounded-t-sm" style={{ height: '30%' }} title="Sell: 3" />
+                  </div>
+                </div>
+
+                {/* X-axis labels -- justify-around, matching the bars. */}
+                <div className="flex justify-around pt-1 text-[10px] font-medium text-slate-500 dark:text-slate-400">
+                  <span className="text-center leading-tight">Very<br />Unlikely</span>
+                  <span className="text-center leading-tight">Unlikely</span>
+                  <span className="text-center leading-tight">Somewhat<br />Likely</span>
+                  <span className="text-center leading-tight">Likely</span>
+                  <span className="text-center leading-tight">Highly<br />Likely</span>
+                </div>
               </div>
             </div>
-
-            {/* X-axis labels */}
-            <div className="flex justify-between px-1 pt-1 text-[10px] font-medium text-slate-500 dark:text-slate-400">
-              <span className="text-center leading-tight">Very<br />Unlikely</span>
-              <span className="text-center leading-tight">Unlikely</span>
-              <span className="text-center leading-tight">Somewhat<br />Likely</span>
-              <span className="text-center leading-tight">Likely</span>
-              <span className="text-center leading-tight">Highly<br />Likely</span>
-            </div>
+            )}
             <div className="text-center text-xs font-bold text-slate-700 dark:text-slate-300 mt-1">
               Propensity Tier
             </div>
@@ -1132,6 +1388,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
         </div>
       )}
+
+      {/* Demographic Intelligence Age Bracket Drilldown */}
+      <AgeGroupLeadsModal
+        bracket={selectedAgeBracket}
+        leads={leads}
+        onClose={() => setSelectedAgeBracket(null)}
+        onSelectLead={onSelectLead}
+      />
     </div>
   );
 };
