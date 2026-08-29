@@ -159,7 +159,7 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
       {/* 1. ELEVATED LEAD METRICS STRIP */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
         {/* Metric 1: Total Pipeline Value */}
-        <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-xs relative overflow-hidden transition hover:shadow-md">
+        <div className="bg-white/60 dark:bg-slate-900/50 backdrop-blur-xl rounded-2xl p-4 border border-white/50 dark:border-slate-700/40 shadow-lg relative overflow-hidden transition hover:shadow-xl">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Active Pipeline Value</span>
             <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400">
@@ -205,7 +205,7 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
         </div>
 
         {/* Metric 3: Active Agency Leads & Inflow */}
-        <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-xs relative overflow-hidden transition hover:shadow-md">
+        <div className="bg-white/60 dark:bg-slate-900/50 backdrop-blur-xl rounded-2xl p-4 border border-white/50 dark:border-slate-700/40 shadow-lg relative overflow-hidden transition hover:shadow-xl">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Active Agency Leads</span>
             <div className="p-2 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400">
@@ -222,7 +222,7 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
         </div>
 
         {/* Metric 4: Closed Deals & Conversion */}
-        <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-xs relative overflow-hidden transition hover:shadow-md">
+        <div className="bg-white/60 dark:bg-slate-900/50 backdrop-blur-xl rounded-2xl p-4 border border-white/50 dark:border-slate-700/40 shadow-lg relative overflow-hidden transition hover:shadow-xl">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Closed & Won Deals</span>
             <div className="p-2 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400">
@@ -283,7 +283,7 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
       )}
 
       {/* 3. CONTROLS & FILTER STRIP */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-xs transition-colors">
+      <div className="bg-white/60 dark:bg-slate-900/50 backdrop-blur-xl rounded-2xl p-4 border border-white/50 dark:border-slate-700/40 shadow-lg transition-colors">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
           {/* Search bar */}
           <div className="relative flex-1">
@@ -362,7 +362,21 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
 
       {/* 4. PIPELINE VIEW (KANBAN OR TABLE) */}
       {viewMode === 'kanban' ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 overflow-x-auto pb-4">
+        // Fixed breakpoint column counts (md:2, lg:3, xl:6) left each
+        // column at whatever 1/N share of the container that produced --
+        // combined with min-w-[280px] xl:min-w-0 (min-width zeroed right
+        // at the breakpoint that turns on 6 columns) and `main` capped at
+        // max-w-7xl (1280px), that crushed every column to ~195px
+        // regardless of actual screen width. There are always exactly 6
+        // pipeline stages, so this stays a fixed 6-column template (not
+        // auto-fit, which would wrap onto multiple rows on medium-width
+        // screens instead of the intended single horizontally-scrollable
+        // row) -- minmax(260px, 1fr) gives every column a real floor and
+        // lets them share whatever room `main` actually has (now
+        // max-w-[1920px], see CRMApp.tsx) instead of a fixed count
+        // fighting a fixed cap. overflow-x-auto is the fallback below
+        // that floor.
+        <div className="grid gap-4 overflow-x-auto pb-4" style={{ gridTemplateColumns: 'repeat(6, minmax(260px, 1fr))' }}>
           {PIPELINE_COLUMNS.map((col) => {
             const columnLeads = filteredLeads.filter((l) => l.status === col.id);
             const columnValue = columnLeads.reduce((acc, l) => acc + (l.dealValue || l.propertyPrice || 0), 0);
@@ -391,12 +405,12 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
                     handleDropLead(pickedUpLead.id, col.id);
                   }
                 }}
-                className={`rounded-2xl border p-3 flex flex-col min-w-[280px] xl:min-w-0 transition-all ${
+                className={`rounded-2xl border p-3 flex flex-col min-w-[260px] backdrop-blur-lg transition-all ${
                   isDragOver
                     ? 'bg-emerald-50/70 dark:bg-emerald-950/50 border-emerald-500 ring-2 ring-emerald-400'
                     : isDropTargetActive && pickedUpLead?.status !== col.id
                     ? 'bg-emerald-50/30 dark:bg-emerald-950/20 border-emerald-400 dark:border-emerald-700/60'
-                    : 'bg-slate-100/80 dark:bg-slate-900/90 border-slate-200 dark:border-slate-800'
+                    : 'bg-white/40 dark:bg-slate-900/40 border-white/50 dark:border-slate-700/30'
                 }`}
               >
                 {/* Column Header */}
@@ -470,7 +484,16 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
                               layout: { duration: 0.28, ease: 'easeOut' }
                             }}
                             draggable={true}
-                            onDragStart={(e) => {
+                            // framer-motion's motion.div types onDragStart/
+                            // onDragEnd for its own pointer-based drag
+                            // gesture (MouseEvent | PointerEvent |
+                            // TouchEvent), not native HTML5 drag-and-drop --
+                            // but draggable=true still fires real browser
+                            // dragstart/dragend events with a real
+                            // DataTransfer at runtime regardless of what
+                            // TS infers here, so this is a type-only `any`
+                            // to unblock that mismatch, not a behavior change.
+                            onDragStart={(e: any) => {
                               e.dataTransfer.setData('text/plain', lead.id);
                               setDraggedLeadId(lead.id);
                             }}
@@ -478,12 +501,12 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
                               setDraggedLeadId(null);
                             }}
                             onClick={() => onSelectLead(lead)}
-                            className={`group bg-white dark:bg-slate-800 hover:bg-white dark:hover:bg-slate-800/90 border rounded-xl p-3.5 shadow-xs hover:shadow-md transition-all cursor-pointer relative ${
+                            className={`group bg-white/70 dark:bg-slate-800/60 backdrop-blur-md hover:bg-white/90 dark:hover:bg-slate-800/80 border rounded-xl p-3.5 shadow-xs hover:shadow-md transition-all cursor-pointer relative ${
                               isPickedUp
                                 ? 'border-emerald-500 ring-2 ring-emerald-400 bg-emerald-50/20 dark:bg-emerald-950/20'
                                 : isDragging
                                 ? 'opacity-40 border-dashed border-emerald-500'
-                                : 'border-slate-200 dark:border-slate-700/80 hover:border-emerald-500 dark:hover:border-emerald-500'
+                                : 'border-white/60 dark:border-slate-700/50 hover:border-emerald-500 dark:hover:border-emerald-500'
                             }`}
                           >
                             {/* THE HOT TAG MOVED TO TOP RIGHT CORNER OF THE CARD */}

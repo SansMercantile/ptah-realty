@@ -6,17 +6,25 @@ import { TaskRemindersView } from './components/TaskRemindersView';
 import { AgentScheduleCalendar } from './components/AgentScheduleCalendar';
 import { EmailAutomationsView } from './components/EmailAutomationsView';
 import { ReportingAnalyticsView } from './components/ReportingAnalyticsView';
+import { ScrumSprintView } from './components/ScrumSprintView';
+import { DashboardView } from './components/DashboardView';
+import { QuickListingsModal } from './components/QuickListingsModal';
 import { InboundSimulatorModal } from './components/InboundSimulatorModal';
 import { NewLeadModal } from './components/NewLeadModal';
 import { AiAdvisorDrawer } from './components/AiAdvisorDrawer';
 import { NotificationDrawer } from './components/NotificationDrawer';
 import { SettingsConnectorsModal } from './components/SettingsConnectorsModal';
 import { CommandPaletteModal } from './components/CommandPaletteModal';
+import { CampaignsHubModal } from './components/CampaignsHubModal';
 import {
   INITIAL_LEADS,
   INITIAL_AUTOMATION_RULES,
   INITIAL_CONNECTORS,
   INITIAL_CONNECTOR_SYNC_EVENTS,
+  INITIAL_SPRINT,
+  INITIAL_LISTINGS,
+  INITIAL_SHOW_HOUSES,
+  INITIAL_CAMPAIGNS,
 } from './data/mockData';
 import {
   Lead,
@@ -26,6 +34,11 @@ import {
   TaskItem,
   ConnectorItem,
   ConnectorSyncEvent,
+  ScrumSprint,
+  PropertyListing,
+  ShowHouseRecord,
+  MarketingCampaign,
+  ConnectorCategory,
 } from './types';
 import { formatCurrency, triggerDealWonConfetti } from './utils/formatters';
 import { getCrmState, saveCrmState } from '../services/api';
@@ -129,15 +142,80 @@ export default function App({
     localStorage.setItem('ptah_crm_connector_events', JSON.stringify(connectorSyncEvents));
   }, [connectorSyncEvents]);
 
+  // Scrum Sprint State
+  const [sprint, setSprint] = useState<ScrumSprint>(() => {
+    const saved = localStorage.getItem('ptah_crm_sprint');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        return INITIAL_SPRINT;
+      }
+    }
+    return INITIAL_SPRINT;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('ptah_crm_sprint', JSON.stringify(sprint));
+  }, [sprint]);
+
+  // Property Listings State
+  const [listings, setListings] = useState<PropertyListing[]>(() => {
+    const saved = localStorage.getItem('ptah_crm_listings');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        return INITIAL_LISTINGS;
+      }
+    }
+    return INITIAL_LISTINGS;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('ptah_crm_listings', JSON.stringify(listings));
+  }, [listings]);
+
+  // Show Houses State
+  const [showHouses, setShowHouses] = useState<ShowHouseRecord[]>(() => {
+    const saved = localStorage.getItem('ptah_crm_show_houses');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        return INITIAL_SHOW_HOUSES;
+      }
+    }
+    return INITIAL_SHOW_HOUSES;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('ptah_crm_show_houses', JSON.stringify(showHouses));
+  }, [showHouses]);
+
+  // Campaigns State
+  const [campaigns, setCampaigns] = useState<MarketingCampaign[]>(() => {
+    const saved = localStorage.getItem('ptah_crm_campaigns');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        return INITIAL_CAMPAIGNS;
+      }
+    }
+    return INITIAL_CAMPAIGNS;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('ptah_crm_campaigns', JSON.stringify(campaigns));
+  }, [campaigns]);
+
   // ---------------------------------------------------------------------
-  // Backend persistence. localStorage above stays as an instant-paint
-  // cache, but the backend (see api/crm.py -- GET/PUT
-  // /api/v1/realty/crm/state) is now the source of truth: on mount this
-  // loads whatever this tenant last saved (falling back to the
-  // localStorage/mock data already loaded above if nothing's been saved
-  // yet), then every subsequent change to leads/rules/connectors/events
-  // gets debounced and pushed back to the backend, same trigger points
-  // as the localStorage effects above.
+  // Backend persistence -- loads the tenant's saved CRM state on mount
+  // (falling back to the localStorage/mock data above if the backend has
+  // nothing yet or is unreachable), then debounce-saves the whole state
+  // back to it on every change. Ptah's backend is the source of truth;
+  // localStorage remains a same-browser cache/offline fallback only.
   // ---------------------------------------------------------------------
   const [crmSyncStatus, setCrmSyncStatus] = useState<'loading' | 'synced' | 'saving' | 'offline'>('loading');
   const isInitialCrmLoadRef = useRef(true);
@@ -150,8 +228,12 @@ export default function App({
         if (state.initialized) {
           if (state.leads?.length) setLeads(state.leads);
           setAutomationRules(state.automationRules?.length ? state.automationRules : INITIAL_AUTOMATION_RULES);
-          setConnectors(state.connectors?.length ? state.connectors : INITIAL_CONNECTORS);
-          setConnectorSyncEvents(state.connectorSyncEvents ?? INITIAL_CONNECTOR_SYNC_EVENTS);
+          if (state.connectors?.length) setConnectors(state.connectors);
+          if (state.connectorSyncEvents?.length) setConnectorSyncEvents(state.connectorSyncEvents);
+          if (state.sprint && Object.keys(state.sprint).length) setSprint(state.sprint);
+          if (state.listings?.length) setListings(state.listings);
+          if (state.showHouses?.length) setShowHouses(state.showHouses);
+          if (state.campaigns?.length) setCampaigns(state.campaigns);
         }
         setCrmSyncStatus('synced');
       } catch (err) {
@@ -172,7 +254,7 @@ export default function App({
     if (crmSaveDebounceRef.current) clearTimeout(crmSaveDebounceRef.current);
     crmSaveDebounceRef.current = setTimeout(() => {
       setCrmSyncStatus('saving');
-      saveCrmState({ leads, automationRules, connectors, connectorSyncEvents })
+      saveCrmState({ leads, automationRules, connectors, connectorSyncEvents, sprint, listings, showHouses, campaigns })
         .then(() => setCrmSyncStatus('synced'))
         .catch((err) => {
           console.error('CRM: failed to save state to backend (kept in localStorage only):', err);
@@ -183,12 +265,15 @@ export default function App({
       if (crmSaveDebounceRef.current) clearTimeout(crmSaveDebounceRef.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [leads, automationRules, connectors, connectorSyncEvents, crmSyncStatus]);
+  }, [leads, automationRules, connectors, connectorSyncEvents, sprint, listings, showHouses, campaigns, crmSyncStatus]);
 
   // Views & Modal States
-  const [currentView, setCurrentView] = useState<'pipeline' | 'tasks' | 'calendar' | 'automations' | 'reporting'>('pipeline');
+  const [currentView, setCurrentView] = useState<'dashboard' | 'pipeline' | 'tasks' | 'calendar' | 'automations' | 'reporting' | 'scrum'>('dashboard');
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [isNewLeadOpen, setIsNewLeadOpen] = useState(false);
+  const [isQuickListingsOpen, setIsQuickListingsOpen] = useState(false);
+  const [isCampaignsModalOpen, setIsCampaignsModalOpen] = useState(false);
+  const [settingsInitialTab, setSettingsInitialTab] = useState<ConnectorCategory>('portals');
   const [isSimulatorOpen, setIsSimulatorOpen] = useState(false);
   const [isAiAdvisorOpen, setIsAiAdvisorOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
@@ -213,10 +298,10 @@ export default function App({
   }, [openConnectorsSignal]);
 
   // Same signal pattern as openConnectorsSignal above, for the main app
-  // header's now-consolidated Quick Search button -- CRM no longer has
-  // its own separate Quick Search entry point in the Navbar (see chat),
-  // so this is the only remaining way the command palette opens by click
-  // (Cmd+K below still works independently).
+  // header's consolidated Quick Search button -- CRM no longer has its
+  // own separate Quick Search entry point in the Navbar, so this is the
+  // only remaining way the command palette opens by click (Cmd+K below
+  // still works independently).
   const isInitialCommandPaletteSignalRef = useRef(true);
   useEffect(() => {
     if (isInitialCommandPaletteSignalRef.current) {
@@ -226,11 +311,10 @@ export default function App({
     if (openCommandPaletteSignal) setIsCommandPaletteOpen(true);
   }, [openCommandPaletteSignal]);
 
-  // Same signal pattern, for the main app header's notification bell.
-  // Navbar's own "Alerts" bell (Task Reminders + email notifications
-  // combined) has been removed as redundant now that the main header's
-  // bell reaches this same drawer -- see App.tsx's
-  // handleOpenCRMNotifications / crmOpenNotificationsSignal.
+  // Same signal pattern again, for the main app header's bell icon --
+  // the unified Notifications & Reminders drawer opens directly from
+  // there while on the CRM tab; Navbar no longer has its own bell (see
+  // Navbar.tsx's removal comment).
   const isInitialNotificationsSignalRef = useRef(true);
   useEffect(() => {
     if (isInitialNotificationsSignalRef.current) {
@@ -482,11 +566,40 @@ export default function App({
     window.open(`https://wa.me/${cleanNum}?text=${encodeURIComponent(text)}`, '_blank');
   };
 
+  // Property Listings & Show House Handlers
+  const handleAddListing = (newListing: PropertyListing) => {
+    setListings((prev) => [newListing, ...prev]);
+    setToastAlert({
+      title: 'Quick Listing Published & Syndicated!',
+      message: `${newListing.title} (${newListing.referenceNumber}) is active on Property24 & Private Property.`,
+      type: 'lead',
+    });
+  };
+
+  const handleUpdateListing = (updatedListing: PropertyListing) => {
+    setListings((prev) => prev.map((l) => (l.id === updatedListing.id ? updatedListing : l)));
+  };
+
+  const handleAddShowHouse = (newShowHouse: ShowHouseRecord) => {
+    setShowHouses((prev) => [newShowHouse, ...prev]);
+    // Also mark property status as show_house
+    setListings((prev) =>
+      prev.map((l) => (l.id === newShowHouse.propertyId ? { ...l, status: 'show_house' } : l))
+    );
+    setToastAlert({
+      title: 'Show House Scheduled!',
+      message: `${newShowHouse.propertyName} is opened for Sunday inspection.`,
+      type: 'task',
+    });
+  };
+
+  const handleUpdateShowHouse = (updated: ShowHouseRecord) => {
+    setShowHouses((prev) => prev.map((sh) => (sh.id === updated.id ? updated : sh)));
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-100 via-emerald-50/50 to-slate-200 dark:from-slate-950 dark:via-emerald-950/25 dark:to-slate-900 text-slate-900 dark:text-slate-100 flex flex-col font-sans selection:bg-emerald-500 selection:text-white transition-colors duration-200">
-      {/* Backend persistence status -- see api/crm.py; small and
-          unobtrusive, but visible enough to confirm saves are actually
-          reaching the backend rather than only localStorage. */}
+      {/* Backend sync status pill */}
       <div
         className={`fixed bottom-3 right-3 z-[100] flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium shadow-md transition-colors ${
           crmSyncStatus === 'offline'
@@ -516,7 +629,8 @@ export default function App({
         currentView={currentView}
         setCurrentView={setCurrentView}
         onOpenNewLead={() => setIsNewLeadOpen(true)}
-        onOpenQuickListing={onOpenQuickListing}
+        onOpenQuickListings={() => setIsQuickListingsOpen(true)}
+        quickListingsCount={listings.length}
         onOpenSimulator={() => setIsSimulatorOpen(true)}
         onToggleAiAdvisor={() => setIsAiAdvisorOpen(!isAiAdvisorOpen)}
         darkMode={isDarkMode}
@@ -529,6 +643,21 @@ export default function App({
           max-w-[1920px] so it fills wide screens while still centering
           with breathing room on ultra-wide ones. */}
       <main className="flex-1 max-w-[1920px] w-full mx-auto px-4 sm:px-6 lg:px-10 py-6">
+        {currentView === 'dashboard' && (
+          <DashboardView
+            leads={leads}
+            listings={listings}
+            showHouses={showHouses}
+            onOpenQuickListings={() => setIsQuickListingsOpen(true)}
+            onSelectLead={(lead) => setSelectedLead(lead)}
+            onNavigateView={(view) => setCurrentView(view)}
+            onAddShowHouse={handleAddShowHouse}
+            onUpdateShowHouse={handleUpdateShowHouse}
+            onQuickWhatsApp={handleQuickWhatsApp}
+            onOpenCampaigns={() => setIsCampaignsModalOpen(true)}
+          />
+        )}
+
         {currentView === 'pipeline' && (
           <PipelineBoard
             leads={leads}
@@ -565,10 +694,12 @@ export default function App({
 
               <div className="flex items-center space-x-2">
                 <button
-                  onClick={() => setCurrentView('tasks')}
-                  className="px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold transition cursor-pointer"
+                  onClick={() => setIsNotificationsOpen(true)}
+                  className="px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold transition cursor-pointer flex items-center space-x-1.5"
+                  title="Open Notifications & Task Reminders"
                 >
-                  View Tasks & SLA Cadence
+                  <Bell className="w-3.5 h-3.5 text-amber-500" />
+                  <span>Task Reminders & SLAs ({pendingTasksCount})</span>
                 </button>
               </div>
             </div>
@@ -599,6 +730,16 @@ export default function App({
         {currentView === 'reporting' && (
           <ReportingAnalyticsView
             leads={leads}
+            onSelectLead={(lead) => setSelectedLead(lead)}
+          />
+        )}
+
+        {currentView === 'scrum' && (
+          <ScrumSprintView
+            leads={leads}
+            sprint={sprint}
+            onUpdateSprint={setSprint}
+            onUpdateLead={handleUpdateLead}
             onSelectLead={(lead) => setSelectedLead(lead)}
           />
         )}
@@ -639,6 +780,9 @@ export default function App({
         onClose={() => setIsNotificationsOpen(false)}
         notifications={allNotifications}
         leads={leads}
+        onClearAllNotifications={() => {
+          setLeads((prev) => prev.map((l) => ({ ...l, emailLogs: [] })));
+        }}
         onToggleTask={handleToggleTask}
         onSelectLead={(lead) => setSelectedLead(lead)}
         onQuickWhatsApp={handleQuickWhatsApp}
@@ -647,14 +791,15 @@ export default function App({
           setIsNotificationsOpen(false);
           setCurrentView('tasks');
         }}
-        onClearAllNotifications={() => {
-          setLeads((prev) => prev.map((l) => ({ ...l, emailLogs: [] })));
-        }}
       />
 
       <SettingsConnectorsModal
         isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
+        onClose={() => {
+          setIsSettingsOpen(false);
+          setSettingsInitialTab('portals');
+        }}
+        initialTab={settingsInitialTab}
         connectors={connectors}
         onUpdateConnector={handleUpdateConnector}
         onAddConnector={handleAddConnector}
@@ -670,13 +815,68 @@ export default function App({
         onSelectLead={(lead) => setSelectedLead(lead)}
         onToggleTask={handleToggleTask}
         syncEvents={connectorSyncEvents}
-        onOpenSettings={() => setIsSettingsOpen(true)}
+        onOpenSettings={() => {
+          setSettingsInitialTab('portals');
+          setIsSettingsOpen(true);
+        }}
         onOpenSimulator={() => setIsSimulatorOpen(true)}
         onOpenNewLead={() => setIsNewLeadOpen(true)}
+        onOpenQuickListings={() => setIsQuickListingsOpen(true)}
+        onOpenCampaigns={() => setIsCampaignsModalOpen(true)}
         onToggleAiAdvisor={() => setIsAiAdvisorOpen(!isAiAdvisorOpen)}
         onToggleDarkMode={() => setIsDarkMode((prev) => !prev)}
         darkMode={isDarkMode}
         onNavigateView={(view) => setCurrentView(view)}
+        onOpenNotifications={() => setIsNotificationsOpen(true)}
+      />
+
+      <QuickListingsModal
+        isOpen={isQuickListingsOpen}
+        onClose={() => setIsQuickListingsOpen(false)}
+        listings={listings}
+        onAddListing={handleAddListing}
+        onUpdateListing={handleUpdateListing}
+        leads={leads}
+        onStartShowHouseForProperty={(property) => {
+          handleAddShowHouse({
+            id: `sh-${Date.now()}`,
+            propertyId: property.id,
+            propertyName: property.title,
+            propertyLocation: property.location,
+            ownerName: property.ownerName || 'Direct Principal',
+            startDate: '2026-08-30 14:00',
+            endDate: '2026-08-30 17:00',
+            status: 'opened',
+            agentInCharge: 'privjapan (Senior Principal)',
+            attendeeCount: 0,
+            notes: 'Opened via Quick Listing',
+          });
+        }}
+      />
+
+      <CampaignsHubModal
+        isOpen={isCampaignsModalOpen}
+        onClose={() => setIsCampaignsModalOpen(false)}
+        campaigns={campaigns}
+        onAddCampaign={(newCampaign) => {
+          setCampaigns((prev) => [newCampaign, ...prev]);
+          setToastAlert({
+            title: 'Marketing Campaign Saved & Dispatched!',
+            message: `${newCampaign.title} synced across ${newCampaign.connectedApps.join(', ')}.`,
+            type: 'email',
+          });
+        }}
+        onUpdateCampaign={(updatedCampaign) => {
+          setCampaigns((prev) => prev.map((c) => (c.id === updatedCampaign.id ? updatedCampaign : c)));
+        }}
+        listings={listings}
+        leads={leads}
+        connectors={connectors}
+        onOpenConnectorsMarketingTab={() => {
+          setSettingsInitialTab('marketing_campaigns');
+          setIsSettingsOpen(true);
+        }}
+        onAddSyncEvent={handleAddSyncEvent}
       />
 
       {/* Toast Inbound Lead Alert */}

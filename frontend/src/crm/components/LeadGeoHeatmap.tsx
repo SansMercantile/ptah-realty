@@ -255,6 +255,21 @@ interface PropertyHub {
   keywords: string[];
 }
 
+// hubStats (below) maps each PropertyHub to one of these -- the actual
+// per-hub lead rollup used for the leaderboard and detail card. activeHub
+// holds one of these enriched objects (from a hubStats entry), not a
+// bare PropertyHub, hence the separate type.
+interface PropertyHubWithStats extends PropertyHub {
+  leads: Lead[];
+  count: number;
+  totalValue: number;
+  dealsWon: number;
+  urgentCount: number;
+  avgScore: number;
+  topSource: string;
+  conversionRate: string;
+}
+
 const PROPERTY_HUBS: PropertyHub[] = [
   {
     id: 'hub-clifton',
@@ -343,7 +358,7 @@ export const LeadGeoHeatmap: React.FC<LeadGeoHeatmapProps> = ({ leads, onSelectL
   const [selectedMetric, setSelectedMetric] = useState<'volume' | 'value' | 'conversion' | 'urgent'>('value');
   const [selectedPortal, setSelectedPortal] = useState<string>('all');
   const [selectedProvince, setSelectedProvince] = useState<string>('all');
-  const [activeHub, setActiveHub] = useState<PropertyHub | null>(null);
+  const [activeHub, setActiveHub] = useState<PropertyHubWithStats | null>(null);
   const [mapPosition, setMapPosition] = useState<{ coordinates: [number, number]; zoom: number }>({
     coordinates: [24.8, -29.2],
     zoom: 1

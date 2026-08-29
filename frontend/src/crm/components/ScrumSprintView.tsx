@@ -491,7 +491,16 @@ export const ScrumSprintView: React.FC<ScrumSprintViewProps> = ({
                           animate={{ opacity: 1, y: 0, scale: 1 }}
                           exit={{ opacity: 0, scale: 0.94 }}
                           draggable={true}
-                          onDragStart={(e) => {
+                          // framer-motion's motion.div types onDragStart/
+                          // onDragEnd for its own pointer-based drag
+                          // gesture (MouseEvent | PointerEvent |
+                          // TouchEvent), not native HTML5 drag-and-drop --
+                          // but draggable=true still fires real browser
+                          // dragstart/dragend events with a real
+                          // DataTransfer at runtime regardless of what TS
+                          // infers here, so this is a type-only `any` to
+                          // unblock that mismatch, not a behavior change.
+                          onDragStart={(e: any) => {
                             e.dataTransfer.setData('text/plain', lead.id);
                             setDraggedLeadId(lead.id);
                           }}

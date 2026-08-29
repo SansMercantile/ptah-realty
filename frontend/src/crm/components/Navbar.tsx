@@ -1,6 +1,7 @@
 import React from 'react';
 import { 
   Building2, 
+  LayoutDashboard,
   Kanban, 
   Calendar as CalendarIcon,
   Zap, 
@@ -10,14 +11,16 @@ import {
   Sparkles, 
   Sun,
   Moon,
-  Home
+  Home,
+  Rows3
 } from 'lucide-react';
 
 interface NavbarProps {
-  currentView: 'pipeline' | 'tasks' | 'calendar' | 'automations' | 'reporting';
-  setCurrentView: (view: 'pipeline' | 'tasks' | 'calendar' | 'automations' | 'reporting') => void;
+  currentView: 'dashboard' | 'pipeline' | 'tasks' | 'calendar' | 'automations' | 'reporting' | 'scrum';
+  setCurrentView: (view: 'dashboard' | 'pipeline' | 'tasks' | 'calendar' | 'automations' | 'reporting' | 'scrum') => void;
   onOpenNewLead: () => void;
-  onOpenQuickListing?: () => void;
+  onOpenQuickListings?: () => void;
+  quickListingsCount?: number;
   onOpenSimulator: () => void;
   onToggleAiAdvisor: () => void;
   darkMode: boolean;
@@ -29,7 +32,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   currentView,
   setCurrentView,
   onOpenNewLead,
-  onOpenQuickListing,
+  onOpenQuickListings,
+  quickListingsCount,
   onOpenSimulator,
   onToggleAiAdvisor,
   darkMode,
@@ -37,9 +41,18 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenCommandPalette,
 }) => {
   return (
-    <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 sticky top-0 z-20 shadow-xs transition-colors duration-200">
+    <header className="bg-white/70 dark:bg-slate-900/60 backdrop-blur-xl border-b border-white/40 dark:border-slate-700/40 text-slate-900 dark:text-slate-100 sticky top-0 z-30 shadow-xs transition-colors duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+        {/*
+          Three-column grid, not flex justify-between: the left side is
+          now just a small home-icon button (branding/link box removed
+          per explicit request), which is much narrower than the right
+          action cluster -- under justify-between that imbalance pushes
+          the center nav visibly left instead of centering it. A grid
+          with two 1fr flanks keeps the nav centered regardless of either
+          side's width.
+        */}
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center h-16 gap-4">
           {/* Brand Logo */}
           <div className="flex items-center">
             <button
@@ -53,7 +66,19 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
 
           {/* Center Navigation Tabs */}
-          <nav className="hidden md:flex items-center space-x-1 bg-slate-100/80 dark:bg-slate-800/80 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
+          <nav className="hidden md:flex items-center space-x-1 bg-slate-100/80 dark:bg-slate-800/80 p-1 rounded-xl border border-slate-200 dark:border-slate-700 justify-self-center">
+            <button
+              onClick={() => setCurrentView('dashboard')}
+              className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                currentView === 'dashboard'
+                  ? 'bg-slate-900 dark:bg-emerald-600 text-white shadow-xs'
+                  : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-700/60'
+              }`}
+            >
+              <LayoutDashboard className="w-4 h-4" />
+              <span>Dashboard</span>
+            </button>
+
             <button
               onClick={() => setCurrentView('pipeline')}
               className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
@@ -113,10 +138,22 @@ export const Navbar: React.FC<NavbarProps> = ({
               <BarChart3 className="w-4 h-4" />
               <span>Reports & Analytics</span>
             </button>
+
+            <button
+              onClick={() => setCurrentView('scrum')}
+              className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                currentView === 'scrum'
+                  ? 'bg-slate-900 dark:bg-emerald-600 text-white shadow-xs'
+                  : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-700/60'
+              }`}
+            >
+              <Rows3 className="w-4 h-4 text-purple-500 dark:text-purple-400" />
+              <span>Sprints</span>
+            </button>
           </nav>
 
           {/* Right Action Tools */}
-          <div className="flex items-center space-x-2 sm:space-x-2.5">
+          <div className="flex items-center space-x-2 sm:space-x-2.5 justify-self-end">
             {/*
               Quick Search / Command Palette trigger removed from here --
               consolidated into the main app header's single Quick Search
@@ -153,18 +190,6 @@ export const Navbar: React.FC<NavbarProps> = ({
               instead (App.tsx's onOpenCRMConnectors / openConnectorsSignal).
             */}
 
-            {/* Quick Listing shortcut */}
-            {onOpenQuickListing && (
-              <button
-                onClick={onOpenQuickListing}
-                className="flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer bg-gradient-to-r from-emerald-700 to-teal-700 hover:from-emerald-600 hover:to-teal-600 text-white shadow-xs ring-1 ring-emerald-400/60"
-                title="Quick Listing Creator: Auto-fill property details, asking price & 1-click syndicate"
-              >
-                <Zap className="w-3.5 h-3.5 text-amber-300 fill-amber-300" />
-                <span className="hidden sm:inline">Quick Listing</span>
-              </button>
-            )}
-
             {/* Add Lead Primary Button */}
             <button
               onClick={onOpenNewLead}
@@ -173,6 +198,24 @@ export const Navbar: React.FC<NavbarProps> = ({
               <Plus className="w-4 h-4" />
               <span className="hidden sm:inline">New Lead</span>
             </button>
+
+            {/* Quick Listings & Syndication Hub shortcut -- directly
+                after New Lead, per explicit request. */}
+            {onOpenQuickListings && (
+              <button
+                onClick={onOpenQuickListings}
+                className="relative flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer bg-gradient-to-r from-emerald-700 to-teal-700 hover:from-emerald-600 hover:to-teal-600 text-white shadow-xs ring-1 ring-emerald-400/60"
+                title="Quick Listings & Syndication Hub: browse inventory, toggle Show House, syndicate to Property24 / Private Property / Ptah Web"
+              >
+                <Zap className="w-3.5 h-3.5 text-amber-300 fill-amber-300" />
+                <span className="hidden sm:inline">Quick Listings</span>
+                {typeof quickListingsCount === 'number' && (
+                  <span className="ml-0.5 min-w-[1.1rem] h-[1.1rem] px-1 rounded-full bg-white text-emerald-800 text-[10px] font-black flex items-center justify-center">
+                    {quickListingsCount}
+                  </span>
+                )}
+              </button>
+            )}
 
             {/* Dark Mode Theme Toggle -- far right, per explicit request.
                 The Notification Bell that used to sit next to this has
@@ -204,6 +247,16 @@ export const Navbar: React.FC<NavbarProps> = ({
           >
             <Home className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
             <span>Search (⌘K)</span>
+          </button>
+          <button
+            onClick={() => setCurrentView('dashboard')}
+            className={`px-3 py-1 rounded-md text-xs font-medium whitespace-nowrap cursor-pointer ${
+              currentView === 'dashboard'
+                ? 'bg-slate-900 dark:bg-emerald-600 text-white'
+                : 'text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800'
+            }`}
+          >
+            Dashboard
           </button>
           <button
             onClick={() => setCurrentView('pipeline')}
@@ -254,6 +307,16 @@ export const Navbar: React.FC<NavbarProps> = ({
             }`}
           >
             Reporting
+          </button>
+          <button
+            onClick={() => setCurrentView('scrum')}
+            className={`px-3 py-1 rounded-md text-xs font-medium whitespace-nowrap cursor-pointer ${
+              currentView === 'scrum'
+                ? 'bg-slate-900 dark:bg-emerald-600 text-white'
+                : 'text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800'
+            }`}
+          >
+            Sprints
           </button>
           <button
             onClick={onToggleDarkMode}
