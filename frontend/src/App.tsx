@@ -289,6 +289,7 @@ export function App() {
         onLogout={() => { logout(); setUser(null); }}
         selectedPropertyAddress={selectedProperty?.address}
         onOpenCRMNotifications={handleOpenCRMNotifications}
+        onOpenQuickListing={() => setIsQuickListingOpen(true)}
       />
       {/* Main Workspace Area (Google Maps & Cadastral Vector Canvas + Property Title Panel) */}
       <main className={`flex-1 overflow-hidden relative ${activeNavTab === 'crm' ? '' : 'flex flex-row'}`}>

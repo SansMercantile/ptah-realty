@@ -18,8 +18,12 @@ import {
   Coins,
   Bell,
   Puzzle,
-  CreditCard
+  CreditCard,
+  Zap,
+  Check,
+  ChevronRight
 } from 'lucide-react';
+import { LANGUAGES_DATA } from './modals/UserSettingsModal';
 
 export type ActiveTab = 'suburb' | 'search' | 'cma' | 'listings' | 'media' | 'portals' | 'sales' | 'prospecting' | 'kyc' | 'crm';
 
@@ -38,6 +42,7 @@ interface HeaderProps {
   onOpenCreditsModal: () => void;
   onOpenBalanceDetails?: () => void;
   onOpenCRMNotifications?: () => void;
+  onOpenQuickListing?: () => void;
   dataCredits?: number;
   ficaCredits?: number;
   trustCredits?: number;
@@ -62,6 +67,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenCreditsModal,
   onOpenBalanceDetails,
   onOpenCRMNotifications,
+  onOpenQuickListing,
   dataCredits = 250,
   ficaCredits = 0,
   trustCredits = 15,
@@ -72,8 +78,22 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [selectedLanguage, setSelectedLanguage] = useState<string>(() => {
+    return localStorage.getItem('ptah_user_language') || 'en-ZA';
+  });
+  const [isLanguageSubmenuOpen, setIsLanguageSubmenuOpen] = useState(false);
+  const [languageToast, setLanguageToast] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const notificationsRef = useRef<HTMLDivElement>(null);
+
+  const handleLanguageChange = (code: string) => {
+    setSelectedLanguage(code);
+    localStorage.setItem('ptah_user_language', code);
+    setLanguageToast(true);
+    setTimeout(() => setLanguageToast(false), 2500);
+  };
+
+  const activeLanguageObj = LANGUAGES_DATA.find(l => l.code === selectedLanguage) || LANGUAGES_DATA[0];
 
   const totalCombinedCredits = dataCredits + ficaCredits + trustCredits;
   const initials = userEmail
@@ -247,6 +267,18 @@ export const Header: React.FC<HeaderProps> = ({
             <Puzzle className="w-3.5 h-3.5 text-emerald-300" />
             <span>CRM</span>
           </button>
+
+          {onOpenQuickListing && (
+            <button
+              id="nav-tab-quick-listing"
+              onClick={onOpenQuickListing}
+              className="px-2.5 py-1 rounded text-xs font-bold flex items-center gap-1.5 transition-all bg-gradient-to-r from-emerald-700 to-teal-700 hover:from-emerald-600 hover:to-teal-600 text-white shadow-xs ring-1 ring-emerald-400/60"
+              title="Quick Listing Creator: Auto-fill property details, asking price & 1-click syndicate"
+            >
+              <Zap className="w-3.5 h-3.5 text-amber-300 fill-amber-300" />
+              <span>Quick Listing</span>
+            </button>
+          )}
         </nav>
 
         {/* Right Section: Quick Search, Notifications & User Dropdown --
@@ -351,7 +383,87 @@ export const Header: React.FC<HeaderProps> = ({
                     </div>
                   </button>
 
-                  {/* 2. Billing & Credits Direct Link */}
+                  {/* 2. Application & Report Language */}
+                  <div className="border-t border-b border-slate-100 bg-slate-50/40">
+                    <button
+                      id="dropdown-item-header-language-toggle"
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsLanguageSubmenuOpen(!isLanguageSubmenuOpen);
+                      }}
+                      className="w-full text-left px-4 py-2.5 hover:bg-cyan-50/70 flex items-center justify-between gap-2 text-slate-700 hover:text-cyan-900 transition-colors cursor-pointer"
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <Globe className="w-4 h-4 text-indigo-600 shrink-0" />
+                        <div className="min-w-0">
+                          <div className="font-bold text-xs text-slate-900 flex items-center gap-1.5 truncate">
+                            <span>Language:</span>
+                            <span className="font-semibold text-cyan-800 flex items-center gap-1 truncate">
+                              <span>{activeLanguageObj.flag}</span>
+                              <span className="truncate">{activeLanguageObj.name}</span>
+                            </span>
+                          </div>
+                          <div className="text-[10px] text-slate-500 font-normal truncate">
+                            Report & Dashboard ({activeLanguageObj.native})
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1 shrink-0">
+                        {languageToast && (
+                          <span className="text-[10px] text-emerald-600 font-bold flex items-center gap-0.5 mr-1 animate-pulse">
+                            <Check className="w-3 h-3 text-emerald-600" /> Saved
+                          </span>
+                        )}
+                        <ChevronRight 
+                          className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${
+                            isLanguageSubmenuOpen ? 'rotate-90 text-cyan-600' : 'text-slate-400'
+                          }`} 
+                        />
+                      </div>
+                    </button>
+
+                    {/* Pop-up Dropdown List for Languages */}
+                    {isLanguageSubmenuOpen && (
+                      <div className="bg-white border-t border-slate-200 px-2 py-2 max-h-56 overflow-y-auto space-y-1 shadow-inner animate-in fade-in slide-in-from-top-1 duration-150">
+                        <div className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between border-b border-slate-100 pb-1">
+                          <span>Select Language</span>
+                          <span className="font-mono text-cyan-700 text-[9px]">{LANGUAGES_DATA.length} Available</span>
+                        </div>
+                        {LANGUAGES_DATA.map((lang) => {
+                          const isSelected = selectedLanguage === lang.code;
+                          return (
+                            <button
+                              key={lang.code}
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleLanguageChange(lang.code);
+                                setIsLanguageSubmenuOpen(false);
+                              }}
+                              className={`w-full text-left px-2.5 py-1.5 rounded text-xs flex items-center justify-between gap-2 transition-all cursor-pointer ${
+                                isSelected
+                                  ? 'bg-cyan-50 text-cyan-950 font-bold border border-cyan-300 shadow-2xs'
+                                  : 'hover:bg-slate-50 text-slate-700 hover:text-slate-900 border border-transparent'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2 min-w-0">
+                                <span className="text-base shrink-0">{lang.flag}</span>
+                                <div className="truncate">
+                                  <div className="truncate text-xs font-semibold">{lang.name}</div>
+                                  <div className="text-[10px] text-slate-400 font-normal truncate">{lang.native}</div>
+                                </div>
+                              </div>
+                              {isSelected && <Check className="w-3.5 h-3.5 text-cyan-700 shrink-0 font-bold" />}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 3. Billing & Credits Direct Link */}
                   <button
                     id="dropdown-item-billing"
                     onClick={() => {
@@ -372,7 +484,7 @@ export const Header: React.FC<HeaderProps> = ({
                     </div>
                   </button>
 
-                  {/* 3. Search History */}
+                  {/* 4. Search History */}
                   <button
                     id="dropdown-item-history"
                     onClick={() => {
