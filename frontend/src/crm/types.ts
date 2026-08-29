@@ -339,7 +339,7 @@ export type CampaignConnectedApp = 'canva' | 'mailchimp' | 'zapier' | 'meta_ads'
 export interface MarketingCampaign {
   id: string;
   title: string;
-  objective: 'show_house' | 'just_listed' | 'vip_buyer_blast' | 'price_reduction' | 'market_report' | 'custom';
+  objective: 'show_house' | 'just_listed' | 'vip_buyer_blast' | 'price_reduction' | 'birthday_greeting' | 'market_report' | 'custom';
   status: 'draft' | 'scheduled' | 'sent' | 'syncing';
   propertyId?: string;
   propertyTitle?: string;

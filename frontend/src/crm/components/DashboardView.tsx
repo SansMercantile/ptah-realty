@@ -22,7 +22,6 @@ import {
   BarChart2,
   Menu,
   Eye,
-  Gift,
   RefreshCw,
   Clock,
   Home,
@@ -76,7 +75,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
   // Dialog states for dashboard actions
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-  const [isBirthdayModalOpen, setIsBirthdayModalOpen] = useState(false);
   const [isSyncingCalendar, setIsSyncingCalendar] = useState(false);
   const [calendarSyncSuccess, setCalendarSyncSuccess] = useState(false);
   const [isPortfolioShareOpen, setIsPortfolioShareOpen] = useState(false);
@@ -197,24 +195,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </button>
 
           <button
-            onClick={() => {
-              if (onOpenCampaigns) {
-                onOpenCampaigns();
-              } else {
-                onNavigateView('automations');
-              }
-            }}
-            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-900/60 text-amber-900 dark:text-amber-200 text-xs font-bold border border-amber-300 dark:border-amber-700 transition cursor-pointer shadow-xs"
-            title="Launch Omnichannel Marketing Hub (Canva, Mailchimp, Zapier & AI)"
-          >
-            <Megaphone className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-            <span>CAMPAIGNS</span>
-            <span className="text-[9px] px-1 py-0.2 bg-amber-200 dark:bg-amber-800 text-amber-900 dark:text-amber-100 rounded-full font-extrabold uppercase">
-              AI
-            </span>
-          </button>
-
-          <button
             onClick={() => setIsPortfolioShareOpen(true)}
             className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold border border-slate-200 dark:border-slate-700 transition cursor-pointer"
           >
@@ -230,14 +210,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <span>DEAL TRACKER</span>
           </button>
 
-          <button
-            onClick={() => setIsBirthdayModalOpen(true)}
-            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-cyan-50 hover:bg-cyan-100 dark:bg-cyan-950/40 dark:hover:bg-cyan-900/60 text-cyan-800 dark:text-cyan-300 text-xs font-semibold border border-cyan-200 dark:border-cyan-800 transition cursor-pointer"
-            title="Automated birthday greetings for VIP clients"
-          >
-            <Gift className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
-            <span>BIRTHDAY CAMPAIGN</span>
-          </button>
+          {/* Birthday Campaign button removed from here -- birthday
+              greetings are now one of the objective presets inside the
+              Campaigns AI hub (CampaignsHubModal.tsx: "🎁 VIP Birthday
+              Greeting"), reached via the CAMPAIGNS AI card below,
+              instead of being a separate standalone pill+modal. */}
 
           <button
             onClick={handleSyncGoogleCalendar}
@@ -344,22 +321,21 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
               <button
                 onClick={() => onNavigateView('pipeline')}
-                className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline flex items-center space-x-1"
+                className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center space-x-0.5"
               >
-                <Users className="w-3.5 h-3.5" />
                 <span>My Clients</span>
+                <ChevronRight className="w-3 h-3" />
               </button>
             </div>
 
             {/* Type items grid */}
-            <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mt-4 pt-2 text-center">
+            <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 mt-4 pt-2 text-center">
               {[
                 { label: 'Buyer', count: leads.filter((l) => l.buyerType === 'Cash Buyer' || l.buyerType === 'First-Time Buyer').length },
                 { label: 'Seller', count: 0 },
                 { label: 'Tenant', count: leads.filter((l) => l.buyerType === 'Tenant').length },
                 { label: 'Landlord', count: 0 },
                 { label: 'Agent', count: 0 },
-                { label: 'Buyer and Seller', count: 0 },
               ].map((item) => {
                 const pct = leads.length ? Math.round((item.count / leads.length) * 100) : 0;
                 return (
@@ -368,7 +344,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     <div className="text-[10px] text-slate-400">{pct}%</div>
                     <button
                       onClick={() => onNavigateView('pipeline')}
-                      className="text-[11px] font-medium text-blue-600 dark:text-blue-400 underline truncate hover:text-blue-800 dark:hover:text-blue-300 cursor-pointer"
+                      className="text-[11px] font-medium text-blue-600 dark:text-blue-400 truncate hover:underline hover:text-blue-800 dark:hover:text-blue-300 cursor-pointer"
                       title={`View ${item.label} clients in Lead Pipeline`}
                     >
                       {item.label}
@@ -390,50 +366,50 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
         </div>
 
-        {/* CLIENT STATUS (Circular Gauges) */}
-        <div className="lg:col-span-2 bg-white dark:bg-slate-850 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between">
-          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
-            <div className="flex items-center space-x-1.5 text-xs font-bold uppercase tracking-wider text-cyan-600 dark:text-cyan-400">
-              <CheckCircle2 className="w-3.5 h-3.5" />
-              <span>CLIENT STATUS</span>
+        {/* CAMPAIGNS AI (whole card clickable -- launches the Omnichannel
+            Marketing Hub, matching the AI Quality Index card pattern from
+            TopStatsOverview.tsx: group/hover "View" hint, hover border/shadow
+            lift, header+content+footer structure) */}
+        <div
+          onClick={() => {
+            if (onOpenCampaigns) {
+              onOpenCampaigns();
+            } else {
+              onNavigateView('automations');
+            }
+          }}
+          className="group relative lg:col-span-2 bg-white dark:bg-slate-850 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 hover:border-amber-400 dark:hover:border-amber-500 shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col justify-between"
+          title="Launch the Omnichannel Marketing Hub"
+        >
+          <div>
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
+              <div className="flex items-center space-x-1.5 text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                <Megaphone className="w-3.5 h-3.5" />
+                <span>CAMPAIGNS</span>
+              </div>
+              <span className="opacity-0 group-hover:opacity-100 transition text-[10px] text-amber-600 dark:text-amber-400 font-semibold flex items-center">
+                <Eye className="w-2.5 h-2.5 mr-0.5" /> View
+              </span>
             </div>
-            <Info className="w-3.5 h-3.5 text-slate-400" />
+
+            <div className="flex flex-col items-center justify-center pt-3">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-xs">
+                <Sparkles className="w-5 h-5 text-white" />
+              </div>
+              <span className="text-xs font-extrabold text-slate-900 dark:text-white mt-2 text-center">
+                AI Marketing Hub
+              </span>
+              <span className="text-[10px] text-slate-400 text-center">
+                Canva • Mailchimp • Zapier
+              </span>
+            </div>
           </div>
 
-          <div className="flex items-center justify-around my-auto py-2">
-            {/* Validated Gauge */}
-            <div className="flex flex-col items-center">
-              <div className="relative w-14 h-14 rounded-full bg-slate-900 dark:bg-slate-800 flex items-center justify-center text-white border-2 border-slate-800 shadow-xs">
-                <div className="text-center">
-                  <span className="text-xs font-bold block">{leads.length}</span>
-                  <span className="text-[9px] text-slate-400 block">100%</span>
-                </div>
-              </div>
-              <button
-                onClick={() => onNavigateView('pipeline')}
-                className="text-xs font-semibold text-blue-600 dark:text-blue-400 underline mt-2 hover:text-blue-800 dark:hover:text-blue-300 cursor-pointer"
-                title="View validated clients in Lead Pipeline"
-              >
-                Validated
-              </button>
-            </div>
-
-            {/* Obtained Consent Gauge */}
-            <div className="flex flex-col items-center">
-              <div className="relative w-14 h-14 rounded-full bg-slate-850 dark:bg-slate-800 flex items-center justify-center text-white border-2 border-slate-700/60 shadow-xs">
-                <div className="text-center">
-                  <span className="text-xs font-bold block">0</span>
-                  <span className="text-[9px] text-slate-400 block">0%</span>
-                </div>
-              </div>
-              <button
-                onClick={() => onNavigateView('pipeline')}
-                className="text-xs font-semibold text-blue-600 dark:text-blue-400 underline mt-2 text-center max-w-[80px] hover:text-blue-800 dark:hover:text-blue-300 cursor-pointer"
-                title="View clients pending consent in Lead Pipeline"
-              >
-                Obtained Consent
-              </button>
-            </div>
+          <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-center text-[11px]">
+            <span className="text-xs font-bold text-amber-600 dark:text-amber-400 flex items-center space-x-0.5">
+              <span>Launch Hub</span>
+              <ChevronRight className="w-3 h-3" />
+            </span>
           </div>
         </div>
 
@@ -444,7 +420,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <UploadCloud className="w-3.5 h-3.5" />
               <span>CLIENT SOURCE</span>
             </div>
-            <Info className="w-3.5 h-3.5 text-slate-400" />
+            <span title="Breakdown of leads by acquisition channel">
+              <Info className="w-3.5 h-3.5 text-slate-400 cursor-pointer" />
+            </span>
           </div>
 
           <div className="grid grid-cols-3 gap-1 my-auto py-2">
@@ -696,7 +674,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 <BarChart2 className="w-3.5 h-3.5" />
                 <span>LSM & SUBURB ATTRACTIVENESS</span>
               </div>
-              <Info className="w-3.5 h-3.5 text-slate-400" />
+              <span title="Living Standards Measure vs. suburb desirability score across your client base">
+                <Info className="w-3.5 h-3.5 text-slate-400 cursor-pointer" />
+              </span>
             </div>
 
             <div className="flex items-center justify-between mt-3 mb-2">
@@ -769,7 +749,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 <BarChart2 className="w-3.5 h-3.5" />
                 <span>CLIENT LIKELIHOOD TO BUY & SELL</span>
               </div>
-              <Info className="w-3.5 h-3.5 text-slate-400" />
+              <span title="Predicted propensity to transact, modeled from engagement and lifecycle signals">
+                <Info className="w-3.5 h-3.5 text-slate-400 cursor-pointer" />
+              </span>
             </div>
 
             <div className="flex items-center justify-between mt-3 mb-2">
@@ -858,7 +840,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <MapPin className="w-3.5 h-3.5" />
               <span>SHOW HOUSE SELECT</span>
             </div>
-            <Info className="w-3.5 h-3.5 text-slate-400" />
+            <span title="Start a new show house session by pairing a client with the property on show">
+              <Info className="w-3.5 h-3.5 text-slate-400 cursor-pointer" />
+            </span>
           </div>
 
           <form onSubmit={handleStartShowHouse} className="mt-4 space-y-3">
@@ -923,7 +907,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <FileSpreadsheet className="w-3.5 h-3.5" />
               <span>CURRENT SHOW HOUSES</span>
             </div>
-            <Info className="w-3.5 h-3.5 text-slate-400" />
+            <span title="Show houses currently open, with a quick action to mark them closed">
+              <Info className="w-3.5 h-3.5 text-slate-400 cursor-pointer" />
+            </span>
           </div>
 
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
@@ -1007,7 +993,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <FileSpreadsheet className="w-3.5 h-3.5" />
               <span>CURRENT CLOSED SHOW HOUSES</span>
             </div>
-            <Info className="w-3.5 h-3.5 text-slate-400" />
+            <span title="Completed show house sessions, including registered attendee counts">
+              <Info className="w-3.5 h-3.5 text-slate-400 cursor-pointer" />
+            </span>
           </div>
 
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
@@ -1083,38 +1071,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
         </div>
       </div>
-
-      {/* Birthday Campaign Modal */}
-      {isBirthdayModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm">
-          <div className="bg-white dark:bg-black rounded-2xl p-6 max-w-md w-full border border-slate-200 dark:border-slate-800 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <Gift className="w-5 h-5 text-rose-500" />
-                <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                  Automated Birthday Campaign
-                </h3>
-              </div>
-              <button onClick={() => setIsBirthdayModalOpen(false)} className="text-slate-400 hover:text-slate-600">
-                ✕
-              </button>
-            </div>
-            <p className="text-xs text-slate-600 dark:text-slate-300">
-              Automatically send personalized luxury champagne & birthday wishes to VIP clients in your CRM on their special day via WhatsApp & Email.
-            </p>
-            <div className="p-3 bg-rose-50 dark:bg-rose-950/40 rounded-xl border border-rose-200 dark:border-rose-800 text-xs text-rose-800 dark:text-rose-300 space-y-1">
-              <span className="font-bold">Next upcoming milestone:</span>
-              <p>Sophia Mokoena • September 4 • VIP Tier</p>
-            </div>
-            <button
-              onClick={() => setIsBirthdayModalOpen(false)}
-              className="w-full py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition"
-            >
-              Activate Automated Campaign
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* File Import Modal */}
       {isImportModalOpen && (

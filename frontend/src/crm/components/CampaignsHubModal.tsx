@@ -155,7 +155,7 @@ export const CampaignsHubModal: React.FC<CampaignsHubModalProps> = ({
 
       const newCampaignDraft: Partial<MarketingCampaign> = {
         id: `cmp-ai-${Date.now()}`,
-        title: data.title || `${objective === 'show_house' ? 'Sunday Show House' : 'Exclusive Showcase'}: ${currentProperty?.title || 'Luxury Residence'}`,
+        title: data.title || (objective === 'show_house' ? 'Sunday Show House' : objective === 'birthday_greeting' ? 'VIP Birthday Greeting' : 'Exclusive Showcase') + `: ${objective === 'birthday_greeting' ? 'VIP Client' : currentProperty?.title || 'Luxury Residence'}`,
         objective,
         status: 'draft',
         propertyId: currentProperty?.id,
@@ -479,6 +479,18 @@ export const CampaignsHubModal: React.FC<CampaignsHubModalProps> = ({
                         }`}
                       >
                         📉 Price Reduction
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setObjective('birthday_greeting')}
+                        className={`p-2 rounded-xl text-left text-xs font-semibold border transition ${
+                          objective === 'birthday_greeting'
+                            ? 'bg-amber-50 dark:bg-amber-950/40 border-amber-400 text-amber-900 dark:text-amber-200 shadow-2xs font-bold'
+                            : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300'
+                        }`}
+                      >
+                        🎁 VIP Birthday Greeting
                       </button>
                     </div>
                   </div>
