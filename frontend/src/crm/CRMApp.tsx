@@ -220,6 +220,21 @@ export default function App({
   const isInitialCrmLoadRef = useRef(true);
   const crmSaveDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // The sync pill is intentionally NOT a permanent fixture -- it only
+  // flashes on screen around an actual save-after-changes event (both
+  // when the debounced save kicks off and again once its outcome is
+  // known, which also refreshes the auto-hide window so it doesn't
+  // vanish mid-save), then auto-hides a few seconds later. The initial
+  // load on mount below never calls this, so it stays invisible until
+  // the person actually changes something.
+  const [showSyncBadge, setShowSyncBadge] = useState(false);
+  const syncBadgeHideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const flashSyncBadge = () => {
+    setShowSyncBadge(true);
+    if (syncBadgeHideTimeoutRef.current) clearTimeout(syncBadgeHideTimeoutRef.current);
+    syncBadgeHideTimeoutRef.current = setTimeout(() => setShowSyncBadge(false), 3000);
+  };
+
   useEffect(() => {
     (async () => {
       try {
@@ -253,12 +268,14 @@ export default function App({
     if (crmSaveDebounceRef.current) clearTimeout(crmSaveDebounceRef.current);
     crmSaveDebounceRef.current = setTimeout(() => {
       setCrmSyncStatus('saving');
+      flashSyncBadge();
       saveCrmState({ leads, automationRules, connectors, connectorSyncEvents, sprint, listings, showHouses, campaigns })
         .then(() => setCrmSyncStatus('synced'))
         .catch((err) => {
           console.error('CRM: failed to save state to backend (kept in localStorage only):', err);
           setCrmSyncStatus('offline');
-        });
+        })
+        .finally(() => flashSyncBadge());
     }, 800);
     return () => {
       if (crmSaveDebounceRef.current) clearTimeout(crmSaveDebounceRef.current);
@@ -622,39 +639,42 @@ export default function App({
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-emerald-50/50 to-slate-200 dark:from-slate-950 dark:via-emerald-950/25 dark:to-slate-900 text-slate-900 dark:text-slate-100 flex flex-col font-sans selection:bg-emerald-500 selection:text-white transition-colors duration-200">
-      {/* Backend sync status pill */}
-      <div
-        className={`fixed bottom-3 right-3 z-[100] flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium shadow-md transition-colors ${
-          crmSyncStatus === 'offline'
-            ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-200'
-            : crmSyncStatus === 'saving'
-            ? 'bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
-            : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300'
-        }`}
-        title={
-          crmSyncStatus === 'offline'
-            ? 'Could not reach the backend -- changes are only saved in this browser (localStorage) until it recovers.'
-            : 'CRM data is persisted to the backend.'
-        }
-      >
-        <span
-          className={`h-1.5 w-1.5 rounded-full ${
-            crmSyncStatus === 'offline' ? 'bg-amber-500' : crmSyncStatus === 'saving' ? 'bg-slate-400 animate-pulse' : 'bg-emerald-500'
+    <div className="h-screen bg-gradient-to-br from-slate-100 via-emerald-50/50 to-slate-200 dark:from-slate-950 dark:via-emerald-950/25 dark:to-slate-900 text-slate-900 dark:text-slate-100 flex flex-col font-sans selection:bg-emerald-500 selection:text-white transition-colors duration-200">
+      {/* Backend sync status pill -- transient, not a permanent fixture:
+          only rendered while showSyncBadge is true (flashed on around an
+          actual save-after-changes event above, auto-hiding a few
+          seconds later), per explicit request. Never shown for the
+          initial mount-time load, only for genuine subsequent saves. */}
+      {showSyncBadge && (
+        <div
+          className={`fixed bottom-3 right-3 z-[100] flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium shadow-md transition-colors animate-in fade-in slide-in-from-bottom-1 duration-200 ${
+            crmSyncStatus === 'offline'
+              ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-200'
+              : crmSyncStatus === 'saving'
+              ? 'bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
+              : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300'
           }`}
-        />
-        {crmSyncStatus === 'loading' && 'Loading…'}
-        {crmSyncStatus === 'saving' && 'Saving…'}
-        {crmSyncStatus === 'synced' && 'Synced'}
-        {crmSyncStatus === 'offline' && 'Saved locally only'}
-      </div>
+          title={
+            crmSyncStatus === 'offline'
+              ? 'Could not reach the backend -- changes are only saved in this browser (localStorage) until it recovers.'
+              : 'CRM data is persisted to the backend.'
+          }
+        >
+          <span
+            className={`h-1.5 w-1.5 rounded-full ${
+              crmSyncStatus === 'offline' ? 'bg-amber-500' : crmSyncStatus === 'saving' ? 'bg-slate-400 animate-pulse' : 'bg-emerald-500'
+            }`}
+          />
+          {crmSyncStatus === 'saving' && 'Saving…'}
+          {crmSyncStatus === 'synced' && 'Synced'}
+          {crmSyncStatus === 'offline' && 'Saved locally only'}
+        </div>
+      )}
       {/* Top Navigation */}
       <Navbar
         currentView={currentView}
         setCurrentView={setCurrentView}
         onOpenNewLead={() => setIsNewLeadOpen(true)}
-        onOpenQuickListings={() => setIsQuickListingsOpen(true)}
-        quickListingsCount={listings.length}
         onOpenSimulator={() => setIsSimulatorOpen(true)}
         darkMode={isDarkMode}
         onToggleDarkMode={() => setIsDarkMode((prev) => !prev)}

@@ -1,6 +1,5 @@
 import React from 'react';
 import { 
-  Building2, 
   LayoutDashboard,
   Kanban, 
   Calendar as CalendarIcon,
@@ -18,8 +17,6 @@ interface NavbarProps {
   currentView: 'dashboard' | 'pipeline' | 'calendar' | 'automations' | 'reporting' | 'scrum';
   setCurrentView: (view: 'dashboard' | 'pipeline' | 'calendar' | 'automations' | 'reporting' | 'scrum') => void;
   onOpenNewLead: () => void;
-  onOpenQuickListings?: () => void;
-  quickListingsCount?: number;
   onOpenSimulator: () => void;
   darkMode: boolean;
   onToggleDarkMode: () => void;
@@ -30,8 +27,6 @@ export const Navbar: React.FC<NavbarProps> = ({
   currentView,
   setCurrentView,
   onOpenNewLead,
-  onOpenQuickListings,
-  quickListingsCount,
   onOpenSimulator,
   darkMode,
   onToggleDarkMode,
@@ -41,29 +36,15 @@ export const Navbar: React.FC<NavbarProps> = ({
     <header className="bg-white/70 dark:bg-slate-900/60 backdrop-blur-xl border-b border-white/40 dark:border-slate-700/40 text-slate-900 dark:text-slate-100 sticky top-0 z-30 shadow-xs transition-colors duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/*
-          Three-column grid, not flex justify-between: the left side is
-          now just a small home-icon button (branding/link box removed
-          per explicit request), which is much narrower than the right
-          action cluster -- under justify-between that imbalance pushes
-          the center nav visibly left instead of centering it. A grid
-          with two 1fr flanks keeps the nav centered regardless of either
-          side's width.
+          Flex justify-between, not the old three-column centered grid:
+          the brand icon that used to occupy the left slot is gone (removed
+          per explicit request) and the nav tabs now sit flush against the
+          far left edge instead of being centered, with the action
+          cluster still pinned to the right.
         */}
-        <div className="grid grid-cols-[1fr_auto_1fr] items-center h-16 gap-4">
-          {/* Brand Logo */}
-          <div className="flex items-center">
-            <button
-              onClick={() => setCurrentView('pipeline')}
-              className="w-10 h-10 rounded-xl bg-slate-900 dark:bg-slate-800 flex items-center justify-center shadow-sm ring-1 ring-slate-800 dark:ring-slate-700 hover:ring-emerald-500 transition cursor-pointer"
-              title="Return to Lead Pipeline"
-              aria-label="Home"
-            >
-              <Building2 className="w-5 h-5 text-emerald-400" />
-            </button>
-          </div>
-
-          {/* Center Navigation Tabs */}
-          <nav className="hidden md:flex items-center space-x-1 bg-slate-100/80 dark:bg-slate-800/80 p-1 rounded-xl border border-slate-200 dark:border-slate-700 justify-self-center">
+        <div className="flex items-center justify-between h-16 gap-4">
+          {/* Center Navigation Tabs -- now flush left */}
+          <nav className="hidden md:flex items-center space-x-1 bg-slate-100/80 dark:bg-slate-800/80 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
             <button
               onClick={() => setCurrentView('dashboard')}
               className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
@@ -138,7 +119,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           </nav>
 
           {/* Right Action Tools */}
-          <div className="flex items-center space-x-2 sm:space-x-2.5 justify-self-end">
+          <div className="flex items-center space-x-2 sm:space-x-2.5">
             {/*
               Quick Search / Command Palette trigger removed from here --
               consolidated into the main app header's single Quick Search
@@ -181,23 +162,11 @@ export const Navbar: React.FC<NavbarProps> = ({
               <span className="hidden sm:inline">New Lead</span>
             </button>
 
-            {/* Quick Listings & Syndication Hub shortcut -- directly
-                after New Lead, per explicit request. */}
-            {onOpenQuickListings && (
-              <button
-                onClick={onOpenQuickListings}
-                className="relative flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer bg-gradient-to-r from-emerald-700 to-teal-700 hover:from-emerald-600 hover:to-teal-600 text-white shadow-xs ring-1 ring-emerald-400/60"
-                title="Quick Listings & Syndication Hub: browse inventory, toggle Show House, syndicate to Property24 / Private Property / Ptah Web"
-              >
-                <Zap className="w-3.5 h-3.5 text-amber-300 fill-amber-300" />
-                <span className="hidden sm:inline">Quick Listings</span>
-                {typeof quickListingsCount === 'number' && (
-                  <span className="ml-0.5 min-w-[1.1rem] h-[1.1rem] px-1 rounded-full bg-white text-emerald-800 text-[10px] font-black flex items-center justify-center">
-                    {quickListingsCount}
-                  </span>
-                )}
-              </button>
-            )}
+            {/* Quick Listings & Syndication Hub shortcut removed from
+                here -- redundant with the "QUICK LISTING" button already
+                on the Dashboard's New Listings card (DashboardView.tsx),
+                per explicit request. Still reachable via the command
+                palette and Dashboard. */}
 
             {/* Dark Mode Theme Toggle -- far right, per explicit request.
                 The Notification Bell that used to sit next to this has
