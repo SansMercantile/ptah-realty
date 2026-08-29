@@ -24,10 +24,12 @@ import {
   CheckCircle2,
   Users,
   Target,
-  Sparkles
+  Sparkles,
+  Map as MapIcon
 } from 'lucide-react';
 import { Lead } from '../types';
 import { formatCurrency, formatShortCurrency } from '../utils/formatters';
+import { LeadLeafletMap } from './LeadLeafletMap';
 
 interface LeadGeoHeatmapProps {
   leads: Lead[];
@@ -355,6 +357,7 @@ const PROPERTY_HUBS: PropertyHub[] = [
 ];
 
 export const LeadGeoHeatmap: React.FC<LeadGeoHeatmapProps> = ({ leads, onSelectLead }) => {
+  const [mapEngine, setMapEngine] = useState<'leaflet' | 'choropleth'>('leaflet');
   const [selectedMetric, setSelectedMetric] = useState<'volume' | 'value' | 'conversion' | 'urgent'>('value');
   const [selectedPortal, setSelectedPortal] = useState<string>('all');
   const [selectedProvince, setSelectedProvince] = useState<string>('all');
@@ -553,8 +556,36 @@ export const LeadGeoHeatmap: React.FC<LeadGeoHeatmapProps> = ({ leads, onSelectL
           </p>
         </div>
 
-        {/* Heatmap Metric Selector & Filters */}
+        {/* Heatmap Engine Selector & Metric Filters */}
         <div className="flex flex-wrap items-center gap-2">
+          {/* Map Engine Toggle */}
+          <div className="flex items-center bg-emerald-50 dark:bg-slate-800 p-1 rounded-xl border border-emerald-200 dark:border-slate-700 text-xs font-semibold shadow-2xs">
+            <button
+              onClick={() => setMapEngine('leaflet')}
+              className={`px-3 py-1.5 rounded-lg transition cursor-pointer flex items-center space-x-1.5 ${
+                mapEngine === 'leaflet'
+                  ? 'bg-emerald-600 text-white shadow-xs'
+                  : 'text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              <Layers className="w-3.5 h-3.5" />
+              <span>Cadastral / RealMap & Clusters</span>
+            </button>
+            <button
+              onClick={() => setMapEngine('choropleth')}
+              className={`px-3 py-1.5 rounded-lg transition cursor-pointer flex items-center space-x-1.5 ${
+                mapEngine === 'choropleth'
+                  ? 'bg-slate-900 dark:bg-emerald-600 text-white shadow-xs'
+                  : 'text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              <MapIcon className="w-3.5 h-3.5" />
+              <span>Macro Choropleth</span>
+            </button>
+          </div>
+
+          {mapEngine === 'choropleth' && (
+            <>
           {/* Metric mode toggle */}
           <div className="flex items-center bg-white dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-semibold shadow-2xs">
             <button
@@ -605,10 +636,16 @@ export const LeadGeoHeatmap: React.FC<LeadGeoHeatmapProps> = ({ leads, onSelectL
             <option value="Facebook / Instagram Ads">Meta Ads Only</option>
             <option value="Competitor Syndication">Competitor Syndication</option>
           </select>
+            </>
+          )}
         </div>
       </div>
 
-      {/* Main Map & Territory Split View */}
+      {mapEngine === 'leaflet' ? (
+        <div className="p-4 sm:p-6 bg-slate-950">
+          <LeadLeafletMap leads={leads} onSelectLead={onSelectLead} />
+        </div>
+      ) : (
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 divide-y lg:divide-y-0 lg:divide-x divide-slate-200 dark:divide-slate-800">
         {/* Left: Interactive Map Container */}
         <div className="lg:col-span-8 p-4 sm:p-6 relative flex flex-col items-center justify-center min-h-[460px] bg-slate-50/50 dark:bg-slate-950/40">
@@ -990,6 +1027,7 @@ export const LeadGeoHeatmap: React.FC<LeadGeoHeatmapProps> = ({ leads, onSelectL
           </div>
         </div>
       </div>
+      )}
     </div>
   );
 };
