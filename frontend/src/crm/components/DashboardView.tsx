@@ -10,7 +10,6 @@ import {
   FileSpreadsheet,
   Info,
   Calendar,
-  ChevronLeft,
   ChevronRight,
   ExternalLink,
   Search,
@@ -69,10 +68,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onQuickWhatsApp,
   onOpenCampaigns,
 }) => {
-  // Calendar state for August 2026 (matching system date 2026-08-27 / 28)
-  const [calendarView, setCalendarView] = useState<'month' | 'week' | 'day'>('month');
-  const [currentMonthDate, setCurrentMonthDate] = useState(new Date(2026, 7, 28)); // August 2026
-  
   // Show House Form State
   const [selectedClientId, setSelectedClientId] = useState('');
   const [selectedPropertyId, setSelectedPropertyId] = useState('');
@@ -234,6 +229,25 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <FileSpreadsheet className="w-3.5 h-3.5 text-purple-500" />
             <span>DEAL TRACKER</span>
           </button>
+
+          <button
+            onClick={() => setIsBirthdayModalOpen(true)}
+            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-cyan-50 hover:bg-cyan-100 dark:bg-cyan-950/40 dark:hover:bg-cyan-900/60 text-cyan-800 dark:text-cyan-300 text-xs font-semibold border border-cyan-200 dark:border-cyan-800 transition cursor-pointer"
+            title="Automated birthday greetings for VIP clients"
+          >
+            <Gift className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
+            <span>BIRTHDAY CAMPAIGN</span>
+          </button>
+
+          <button
+            onClick={handleSyncGoogleCalendar}
+            disabled={isSyncingCalendar}
+            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-cyan-50 hover:bg-cyan-100 dark:bg-cyan-950/40 dark:hover:bg-cyan-900/60 text-cyan-800 dark:text-cyan-300 text-xs font-semibold border border-cyan-200 dark:border-cyan-800 transition cursor-pointer disabled:opacity-50"
+            title="Sync scheduled events with Google Calendar"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400 ${isSyncingCalendar ? 'animate-spin' : ''}`} />
+            <span>{calendarSyncSuccess ? 'SYNCED TO GOOGLE!' : 'SYNC GOOGLE CALENDAR'}</span>
+          </button>
         </div>
       </div>
 
@@ -352,9 +366,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   <div key={item.label} className="border-l border-slate-200 dark:border-slate-800 first:border-l-0 px-1">
                     <div className="text-sm font-bold text-slate-800 dark:text-slate-200">{item.count}</div>
                     <div className="text-[10px] text-slate-400">{pct}%</div>
-                    <div className="text-[11px] font-medium text-blue-600 dark:text-blue-400 underline truncate">
+                    <button
+                      onClick={() => onNavigateView('pipeline')}
+                      className="text-[11px] font-medium text-blue-600 dark:text-blue-400 underline truncate hover:text-blue-800 dark:hover:text-blue-300 cursor-pointer"
+                      title={`View ${item.label} clients in Lead Pipeline`}
+                    >
                       {item.label}
-                    </div>
+                    </button>
                   </div>
                 );
               })}
@@ -391,9 +409,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   <span className="text-[9px] text-slate-400 block">100%</span>
                 </div>
               </div>
-              <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 underline mt-2">
+              <button
+                onClick={() => onNavigateView('pipeline')}
+                className="text-xs font-semibold text-blue-600 dark:text-blue-400 underline mt-2 hover:text-blue-800 dark:hover:text-blue-300 cursor-pointer"
+                title="View validated clients in Lead Pipeline"
+              >
                 Validated
-              </span>
+              </button>
             </div>
 
             {/* Obtained Consent Gauge */}
@@ -404,9 +426,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   <span className="text-[9px] text-slate-400 block">0%</span>
                 </div>
               </div>
-              <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 underline mt-2 text-center max-w-[80px]">
+              <button
+                onClick={() => onNavigateView('pipeline')}
+                className="text-xs font-semibold text-blue-600 dark:text-blue-400 underline mt-2 text-center max-w-[80px] hover:text-blue-800 dark:hover:text-blue-300 cursor-pointer"
+                title="View clients pending consent in Lead Pipeline"
+              >
                 Obtained Consent
-              </span>
+              </button>
             </div>
           </div>
         </div>
@@ -677,7 +703,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
                 Number of Clients
               </span>
-              <Menu className="w-3.5 h-3.5 text-slate-400 cursor-pointer" />
+              <Menu className="w-3.5 h-3.5 text-slate-400" />
             </div>
 
             {/* Visual Bar Chart */}
@@ -750,7 +776,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
                 Number of Clients
               </span>
-              <Menu className="w-3.5 h-3.5 text-slate-400 cursor-pointer" />
+              <Menu className="w-3.5 h-3.5 text-slate-400" />
             </div>
 
             {/* Visual Bar Chart */}
@@ -1054,174 +1080,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 )}
               </tbody>
             </table>
-          </div>
-        </div>
-      </div>
-
-      {/* Row 5: MY EVENTS (Screenshot 5 Calendar) */}
-      <div className="bg-white dark:bg-slate-850 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
-        {/* Header with Buttons */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
-          <div className="flex items-center space-x-1.5 text-xs font-bold uppercase tracking-wider text-cyan-600 dark:text-cyan-400">
-            <Calendar className="w-3.5 h-3.5" />
-            <span>MY EVENTS</span>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={() => setIsBirthdayModalOpen(true)}
-              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-cyan-500 hover:bg-cyan-600 text-white text-xs font-bold transition shadow-xs cursor-pointer"
-            >
-              <Gift className="w-3.5 h-3.5" />
-              <span>BIRTHDAY CAMPAIGN</span>
-            </button>
-
-            <button
-              onClick={handleSyncGoogleCalendar}
-              disabled={isSyncingCalendar}
-              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-bold transition shadow-xs cursor-pointer disabled:opacity-50"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${isSyncingCalendar ? 'animate-spin' : ''}`} />
-              <span>{calendarSyncSuccess ? 'SYNCED TO GOOGLE!' : 'SYNC EVENTS WITH GOOGLE CALENDAR'}</span>
-            </button>
-
-            <Info className="w-3.5 h-3.5 text-slate-400" />
-          </div>
-        </div>
-
-        {/* Calendar Navigation & Month Title */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={() => setCurrentMonthDate(new Date(currentMonthDate.getFullYear(), currentMonthDate.getMonth() - 1, 1))}
-              className="p-1.5 rounded border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => setCurrentMonthDate(new Date(currentMonthDate.getFullYear(), currentMonthDate.getMonth() + 1, 1))}
-              className="p-1.5 rounded border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => setCurrentMonthDate(new Date(2026, 7, 28))}
-              className="px-3 py-1 rounded text-xs font-semibold border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
-            >
-              today
-            </button>
-          </div>
-
-          <h2 className="text-xl font-light text-slate-800 dark:text-white tracking-wide">
-            August 2026
-          </h2>
-
-          <div className="flex bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg border border-slate-200 dark:border-slate-700">
-            {(['month', 'week', 'day'] as const).map((view) => (
-              <button
-                key={view}
-                onClick={() => setCalendarView(view)}
-                className={`px-3 py-1 text-xs font-semibold rounded capitalize transition ${
-                  calendarView === view
-                    ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-2xs'
-                    : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
-                }`}
-              >
-                {view}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Calendar Grid for August 2026 */}
-        <div className="border border-slate-200 dark:border-slate-750 rounded-xl overflow-hidden">
-          {/* Day Names */}
-          <div className="grid grid-cols-7 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 text-[11px] font-semibold text-slate-600 dark:text-slate-400 text-center py-2">
-            <div>SUN</div>
-            <div>MON</div>
-            <div>TUE</div>
-            <div>WED</div>
-            <div>THU</div>
-            <div>FRI</div>
-            <div>SAT</div>
-          </div>
-
-          {/* Calendar Day Cells */}
-          <div className="grid grid-cols-7 divide-x divide-y divide-slate-100 dark:divide-slate-800 text-xs">
-            {/* Week 1: Jul 26 - Aug 1 */}
-            <div className="h-20 p-1 text-slate-300 dark:text-slate-600">26</div>
-            <div className="h-20 p-1 text-slate-300 dark:text-slate-600">27</div>
-            <div className="h-20 p-1 text-slate-300 dark:text-slate-600">28</div>
-            <div className="h-20 p-1 text-slate-300 dark:text-slate-600">29</div>
-            <div className="h-20 p-1 text-slate-300 dark:text-slate-600">30</div>
-            <div className="h-20 p-1 text-slate-300 dark:text-slate-600">31</div>
-            <div className="h-20 p-1 font-semibold text-slate-700 dark:text-slate-300">1</div>
-
-            {/* Week 2: Aug 2 - 8 */}
-            <div className="h-20 p-1 font-semibold text-slate-700 dark:text-slate-300">2</div>
-            <div className="h-20 p-1 font-semibold text-slate-700 dark:text-slate-300">3</div>
-            <div className="h-20 p-1 font-semibold text-slate-700 dark:text-slate-300">4</div>
-            <div className="h-20 p-1 font-semibold text-slate-700 dark:text-slate-300">5</div>
-            <div className="h-20 p-1 font-semibold text-slate-700 dark:text-slate-300">6</div>
-            <div className="h-20 p-1 font-semibold text-slate-700 dark:text-slate-300">7</div>
-            <div className="h-20 p-1 font-semibold text-slate-700 dark:text-slate-300">8</div>
-
-            {/* Week 3: Aug 9 - 15 */}
-            <div className="h-20 p-1 font-semibold text-slate-700 dark:text-slate-300">9</div>
-            <div className="h-20 p-1 font-semibold text-slate-700 dark:text-slate-300">10</div>
-            <div className="h-20 p-1 font-semibold text-slate-700 dark:text-slate-300">11</div>
-            <div className="h-20 p-1 font-semibold text-slate-700 dark:text-slate-300">12</div>
-            <div className="h-20 p-1 font-semibold text-slate-700 dark:text-slate-300">13</div>
-            <div className="h-20 p-1 font-semibold text-slate-700 dark:text-slate-300">14</div>
-            <div className="h-20 p-1 font-semibold text-slate-700 dark:text-slate-300">15</div>
-
-            {/* Week 4: Aug 16 - 22 */}
-            <div className="h-20 p-1 font-semibold text-slate-700 dark:text-slate-300">16</div>
-            <div className="h-20 p-1 font-semibold text-slate-700 dark:text-slate-300">17</div>
-            <div className="h-20 p-1 font-semibold text-slate-700 dark:text-slate-300">18</div>
-            <div className="h-20 p-1 font-semibold text-slate-700 dark:text-slate-300">19</div>
-            <div className="h-20 p-1 font-semibold text-slate-700 dark:text-slate-300">20</div>
-            <div className="h-20 p-1 font-semibold text-slate-700 dark:text-slate-300">21</div>
-            <div className="h-20 p-1 font-semibold text-slate-700 dark:text-slate-300">
-              <span>22</span>
-              <div className="mt-1 p-1 rounded bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-300 text-[10px] truncate">
-                VIP Private Tour
-              </div>
-            </div>
-
-            {/* Week 5: Aug 23 - 29 (Current Week!) */}
-            <div className="h-20 p-1 font-semibold text-slate-700 dark:text-slate-300">
-              <span>23</span>
-              <div className="mt-1 p-1 rounded bg-cyan-50 dark:bg-cyan-950 text-cyan-700 dark:text-cyan-300 text-[10px] truncate">
-                Show House Bantry
-              </div>
-            </div>
-            <div className="h-20 p-1 font-semibold text-slate-700 dark:text-slate-300">24</div>
-            <div className="h-20 p-1 font-semibold text-slate-700 dark:text-slate-300">25</div>
-            <div className="h-20 p-1 font-semibold text-slate-700 dark:text-slate-300">26</div>
-            <div className="h-20 p-1 font-semibold text-slate-700 dark:text-slate-300">27</div>
-            {/* Today: August 28 highlighted (yellowish/gold background like in Screenshot 5) */}
-            <div className="h-20 p-1 font-bold text-slate-900 dark:text-white bg-amber-50/80 dark:bg-amber-950/40 ring-1 ring-amber-400">
-              <span className="bg-amber-400 text-slate-950 px-1.5 py-0.2 rounded-full text-[10px]">28 Today</span>
-              <div className="mt-1 p-1 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 text-[10px] font-medium truncate">
-                15:00 Clifton Inspection
-              </div>
-            </div>
-            <div className="h-20 p-1 font-semibold text-slate-700 dark:text-slate-300">29</div>
-
-            {/* Week 6: Aug 30 - Sep 5 */}
-            <div className="h-20 p-1 font-semibold text-slate-700 dark:text-slate-300">
-              <span>30</span>
-              <div className="mt-1 p-1 rounded bg-cyan-100 dark:bg-cyan-950 text-cyan-800 dark:text-cyan-300 text-[10px] font-bold truncate">
-                14:00 Show House (Clifton)
-              </div>
-            </div>
-            <div className="h-20 p-1 font-semibold text-slate-700 dark:text-slate-300">31</div>
-            <div className="h-20 p-1 text-slate-300 dark:text-slate-600">1</div>
-            <div className="h-20 p-1 text-slate-300 dark:text-slate-600">2</div>
-            <div className="h-20 p-1 text-slate-300 dark:text-slate-600">3</div>
-            <div className="h-20 p-1 text-slate-300 dark:text-slate-600">4</div>
-            <div className="h-20 p-1 text-slate-300 dark:text-slate-600">5</div>
           </div>
         </div>
       </div>
