@@ -8,6 +8,27 @@ export function formatCurrency(amount: number, currency: 'ZAR' | 'USD' = 'ZAR'):
   return `$ ${amount.toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
 }
 
+// South African ID numbers encode DOB in their first 6 digits, which is a
+// real, existing mechanism this app's owner-side KYCModal already handles
+// for property owners (deeds verification) -- see
+// docs/roadmap-lead-kyc-linkage.md for the plan to extend that to leads,
+// at which point birthday would come from a verified ID number rather than
+// this plain manual date field. ageBracket is derived here, not manually
+// entered, so it stays consistent with whatever birthday actually holds.
+export function computeAgeBracket(birthday?: string): string | undefined {
+  if (!birthday) return undefined;
+  const parts = birthday.split('-');
+  if (parts.length !== 3) return undefined;
+  const birthYear = parseInt(parts[0], 10);
+  if (!Number.isFinite(birthYear) || birthYear < 1900) return undefined;
+  const age = new Date().getFullYear() - birthYear;
+  if (age < 25) return '18-24';
+  if (age < 35) return '25-34';
+  if (age < 50) return '35-49';
+  if (age < 65) return '50-64';
+  return '65+';
+}
+
 export function formatShortCurrency(amount: number): string {
   if (amount >= 1_000_000) {
     return `R${(amount / 1_000_000).toFixed(1)}M`;

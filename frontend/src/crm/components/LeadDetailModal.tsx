@@ -33,7 +33,7 @@ import {
   Layers
 } from 'lucide-react';
 import { Lead, LeadStatus, CommunicationItem, TaskItem, UrgencyLevel, CommunicationType, ActivityLogItem } from '../types';
-import { formatCurrency, formatDate, formatRelativeTime, triggerDealWonConfetti } from '../utils/formatters';
+import { formatCurrency, formatDate, formatRelativeTime, triggerDealWonConfetti, computeAgeBracket } from '../utils/formatters';
 import { LeadQualityScoreView } from './LeadQualityScoreView';
 import { LeadActivityFeed } from './LeadActivityFeed';
 import { calculateLeadQualityScore } from '../utils/qualityScore';
@@ -1291,6 +1291,26 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
                   <div className="flex justify-between border-b border-slate-100 pb-1.5">
                     <span className="text-slate-500">Buyer Type:</span>
                     <span className="font-semibold text-slate-900">{lead.buyerType}</span>
+                  </div>
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
+                    <span className="text-slate-500">Date of Birth:</span>
+                    {/* Plain manual entry, not tied to any ID/FICA
+                        verification -- see
+                        docs/roadmap-lead-kyc-linkage.md. ageBracket is kept
+                        in sync automatically rather than edited separately. */}
+                    <input
+                      type="date"
+                      value={lead.birthday || ''}
+                      max={new Date().toISOString().split('T')[0]}
+                      onChange={(e) =>
+                        onUpdateLead({
+                          ...lead,
+                          birthday: e.target.value || undefined,
+                          ageBracket: computeAgeBracket(e.target.value),
+                        })
+                      }
+                      className="text-right text-slate-700 bg-transparent border-b border-dashed border-slate-300 hover:border-slate-500 focus:border-slate-900 focus:outline-none text-xs"
+                    />
                   </div>
                   <div className="flex justify-between border-b border-slate-100 pb-1.5">
                     <span className="text-slate-500">Budget Range:</span>

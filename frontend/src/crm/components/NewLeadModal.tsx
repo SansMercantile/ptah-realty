@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Building, Plus, User, Mail, Phone, DollarSign, Tag, Calendar, Sparkles } from 'lucide-react';
 import { Lead, LeadSource, UrgencyLevel, LeadStatus } from '../types';
 import { INITIAL_AGENTS } from '../data/mockData';
+import { computeAgeBracket } from '../utils/formatters';
 
 interface NewLeadModalProps {
   onClose: () => void;
@@ -28,6 +29,11 @@ export const NewLeadModal: React.FC<NewLeadModalProps> = ({ onClose, onAddLead }
   const [urgency, setUrgency] = useState<UrgencyLevel>('high');
   const [budget, setBudget] = useState('R15M - R18M');
   const [buyerType, setBuyerType] = useState<any>('Cash Buyer');
+  // Optional -- deliberately NOT tied to any ID/FICA verification yet (no
+  // buyer-side KYC flow exists in this CRM; only the property-owner deeds
+  // verification flow does -- see docs/roadmap-lead-kyc-linkage.md for the
+  // fuller plan). Just a plain, honest, manually-entered date for now.
+  const [birthday, setBirthday] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,6 +62,8 @@ export const NewLeadModal: React.FC<NewLeadModalProps> = ({ onClose, onAddLead }
       assignedAgent: INITIAL_AGENTS[0],
       budget: budget || `R${(numPrice / 1000000).toFixed(1)}M`,
       buyerType,
+      birthday: birthday || undefined,
+      ageBracket: computeAgeBracket(birthday),
       timeframe: 'Immediate (< 30 days)',
       notes: [`Manually captured lead from ${source}`],
       communications: [
@@ -169,6 +177,21 @@ export const NewLeadModal: React.FC<NewLeadModalProps> = ({ onClose, onAddLead }
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="client@email.com"
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-slate-900 focus:outline-none focus:border-slate-900 focus:bg-white"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-slate-600 mb-1 font-semibold">
+                Date of Birth <span className="font-normal text-slate-400">(optional)</span>
+              </label>
+              <input
+                type="date"
+                value={birthday}
+                onChange={(e) => setBirthday(e.target.value)}
+                max={new Date().toISOString().split('T')[0]}
                 className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-slate-900 focus:outline-none focus:border-slate-900 focus:bg-white"
               />
             </div>
