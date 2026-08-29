@@ -382,6 +382,31 @@ export default function App({
     );
   };
 
+  const handleBulkReassignAgent = (leadIds: string[], newAgent: any) => {
+    setLeads((prev) =>
+      prev.map((l) => (leadIds.includes(l.id) ? { ...l, assignedAgent: newAgent } : l))
+    );
+    setToastAlert({
+      title: 'Bulk Reassignment Completed',
+      message: `Reassigned ${leadIds.length} lead${leadIds.length > 1 ? 's' : ''} to ${newAgent.name}.`,
+      type: 'lead',
+    });
+  };
+
+  const handleBulkChangeStatus = (leadIds: string[], newStatus: LeadStatus) => {
+    if (newStatus === 'deal_won') {
+      triggerDealWonConfetti();
+    }
+    setLeads((prev) =>
+      prev.map((l) => (leadIds.includes(l.id) ? { ...l, status: newStatus } : l))
+    );
+    setToastAlert({
+      title: 'Bulk Status Updated',
+      message: `Moved ${leadIds.length} lead${leadIds.length > 1 ? 's' : ''} to stage: ${newStatus.replace('_', ' ')}.`,
+      type: 'task',
+    });
+  };
+
   const handleUpdateLead = (updatedLead: Lead) => {
     setLeads((prev) => prev.map((l) => (l.id === updatedLead.id ? updatedLead : l)));
     setSelectedLead(updatedLead);
@@ -664,6 +689,8 @@ export default function App({
             onSelectLead={(lead) => setSelectedLead(lead)}
             onUpdateLeadStatus={handleUpdateLeadStatus}
             onOpenQuickWhatsApp={handleQuickWhatsApp}
+            onBulkReassignAgent={handleBulkReassignAgent}
+            onBulkChangeStatus={handleBulkChangeStatus}
           />
         )}
 

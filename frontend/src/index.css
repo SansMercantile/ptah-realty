@@ -1,6 +1,22 @@
 @import "tailwindcss";
 
+/* Enables the `dark:` variant app-wide, driven by a `.dark` class on
+   <html> -- CRMApp.tsx toggles this class (see its isDarkMode state /
+   useEffect). Without this directive Tailwind v4 never generates any
+   dark: utility rules, so every dark: class across the whole app
+   (CRM included) compiles to nothing and the toggle has no visual
+   effect even though its state/class logic is correct. Previously this
+   directive only existed in frontend/src/crm/index.css, which is never
+   actually imported by the real build entry (src/main.tsx imports
+   ./index.css, not crm/index.css) -- moved here, the file Vite really
+   bundles. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @layer base {
+  html.dark {
+    color-scheme: dark;
+  }
+
   body {
     @apply antialiased text-slate-800 bg-slate-100;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11", "tnum";

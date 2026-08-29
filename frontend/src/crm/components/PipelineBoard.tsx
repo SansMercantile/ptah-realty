@@ -18,16 +18,25 @@ import {
   X, 
   Check,
   Zap,
-  Target
+  Target,
+  CheckSquare,
+  Square,
+  UserCheck,
+  Layers,
+  Download,
+  ShieldCheck
 } from 'lucide-react';
 import { Lead, LeadSource, LeadStatus } from '../types';
-import { formatCurrency, formatShortCurrency, formatRelativeTime } from '../utils/formatters';
+import { formatCurrency, formatShortCurrency, formatRelativeTime, exportLeadsToCSV } from '../utils/formatters';
+import { INITIAL_AGENTS } from '../data/mockData';
 
 interface PipelineBoardProps {
   leads: Lead[];
   onSelectLead: (lead: Lead) => void;
   onUpdateLeadStatus: (leadId: string, newStatus: LeadStatus) => void;
   onOpenQuickWhatsApp: (lead: Lead) => void;
+  onBulkReassignAgent?: (leadIds: string[], agent: typeof INITIAL_AGENTS[0]) => void;
+  onBulkChangeStatus?: (leadIds: string[], status: LeadStatus) => void;
 }
 
 export const PIPELINE_COLUMNS: { id: LeadStatus; label: string; color: string; badgeBg: string }[] = [
@@ -44,12 +53,21 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
   onSelectLead,
   onUpdateLeadStatus,
   onOpenQuickWhatsApp,
+  onBulkReassignAgent,
+  onBulkChangeStatus,
 }) => {
   const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSource, setSelectedSource] = useState<string>('all');
   const [selectedUrgency, setSelectedUrgency] = useState<string>('all');
   const [selectedAgent, setSelectedAgent] = useState<string>('all');
+
+  // Multi-Select state
+  const [selectedLeadIds, setSelectedLeadIds] = useState<string[]>([]);
+  const [showBulkReassignModal, setShowBulkReassignModal] = useState(false);
+  const [showBulkStatusModal, setShowBulkStatusModal] = useState(false);
+  const [bulkTargetAgentEmail, setBulkTargetAgentEmail] = useState(INITIAL_AGENTS[0]?.email || '');
+  const [bulkTargetStatus, setBulkTargetStatus] = useState<LeadStatus>('contacted');
 
   // Click and Drop state
   const [pickedUpLead, setPickedUpLead] = useState<Lead | null>(null);
@@ -63,6 +81,8 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
       if (e.key === 'Escape') {
         setPickedUpLead(null);
         setQuickMoveLeadId(null);
+        setShowBulkReassignModal(false);
+        setShowBulkStatusModal(false);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -95,6 +115,62 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
       return matchesSearch && matchesSource && matchesUrgency && matchesAgent;
     });
   }, [leads, searchQuery, selectedSource, selectedUrgency, selectedAgent]);
+
+  // Selected leads list and total valuation
+  const selectedLeads = useMemo(() => {
+    return leads.filter((l) => selectedLeadIds.includes(l.id));
+  }, [leads, selectedLeadIds]);
+
+  const selectedTotalValuation = useMemo(() => {
+    return selectedLeads.reduce((acc, l) => acc + (l.dealValue || l.propertyPrice || 0), 0);
+  }, [selectedLeads]);
+
+  // Multi-select actions
+  const handleToggleLeadSelect = (leadId: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setSelectedLeadIds((prev) =>
+      prev.includes(leadId) ? prev.filter((id) => id !== leadId) : [...prev, leadId]
+    );
+  };
+
+  const handleSelectAllFiltered = () => {
+    const filteredIds = filteredLeads.map((l) => l.id);
+    const allSelected = filteredIds.every((id) => selectedLeadIds.includes(id));
+    if (allSelected) {
+      // Unselect filtered
+      setSelectedLeadIds((prev) => prev.filter((id) => !filteredIds.includes(id)));
+    } else {
+      // Select all filtered
+      setSelectedLeadIds((prev) => Array.from(new Set([...prev, ...filteredIds])));
+    }
+  };
+
+  const handleClearSelection = () => {
+    setSelectedLeadIds([]);
+  };
+
+  const handleExecuteBulkReassign = () => {
+    const targetAgent = INITIAL_AGENTS.find((a) => a.email === bulkTargetAgentEmail) || INITIAL_AGENTS[0];
+    if (onBulkReassignAgent) {
+      onBulkReassignAgent(selectedLeadIds, targetAgent);
+    }
+    setShowBulkReassignModal(false);
+    setSelectedLeadIds([]);
+  };
+
+  const handleExecuteBulkStatusChange = () => {
+    if (onBulkChangeStatus) {
+      onBulkChangeStatus(selectedLeadIds, bulkTargetStatus);
+    } else {
+      selectedLeadIds.forEach((id) => onUpdateLeadStatus(id, bulkTargetStatus));
+    }
+    setShowBulkStatusModal(false);
+    setSelectedLeadIds([]);
+  };
+
+  const handleExecuteMassExport = () => {
+    exportLeadsToCSV(selectedLeads.length > 0 ? selectedLeads : filteredLeads);
+  };
 
   // High-level pipeline stats
   const totalPipelineValue = useMemo(() => {
@@ -154,8 +230,10 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
     }
   };
 
+  const isAllFilteredSelected = filteredLeads.length > 0 && filteredLeads.every((l) => selectedLeadIds.includes(l.id));
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 relative">
       {/* 1. ELEVATED LEAD METRICS STRIP */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
         {/* Metric 1: Total Pipeline Value */}
@@ -282,7 +360,78 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
         </motion.div>
       )}
 
-      {/* 3. CONTROLS & FILTER STRIP */}
+      {/* 3. FLOATING BULK OPERATIONS TOOLBAR (APPEARS WHEN LEADS ARE SELECTED) */}
+      <AnimatePresence>
+        {selectedLeadIds.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: -20, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.98 }}
+            transition={{ duration: 0.2 }}
+            className="sticky top-4 z-30 bg-slate-900/95 dark:bg-emerald-950/95 backdrop-blur-md text-white p-3.5 sm:p-4 rounded-2xl shadow-2xl border border-emerald-500/50 flex flex-col md:flex-row md:items-center justify-between gap-3"
+          >
+            <div className="flex items-center space-x-3">
+              <div className="p-2 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                <CheckSquare className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="flex items-center space-x-2">
+                  <span className="font-bold text-sm text-white">
+                    {selectedLeadIds.length} Lead{selectedLeadIds.length > 1 ? 's' : ''} Selected
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/30 text-emerald-300 border border-emerald-400/40">
+                    Valuation: {formatCurrency(selectedTotalValuation)}
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-300 dark:text-emerald-200/80 mt-0.5">
+                  Perform bulk administrative changes across all checked prospects simultaneously.
+                </p>
+              </div>
+            </div>
+
+            {/* Bulk Action Buttons */}
+            <div className="flex flex-wrap items-center gap-2">
+              {/* 1. Reassign Agent */}
+              <button
+                onClick={() => setShowBulkReassignModal(true)}
+                className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 text-xs font-semibold transition cursor-pointer flex items-center space-x-1.5 shadow-xs"
+              >
+                <UserCheck className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Reassign Agent</span>
+              </button>
+
+              {/* 2. Bulk Change Status */}
+              <button
+                onClick={() => setShowBulkStatusModal(true)}
+                className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 text-xs font-semibold transition cursor-pointer flex items-center space-x-1.5 shadow-xs"
+              >
+                <Layers className="w-3.5 h-3.5 text-blue-400" />
+                <span>Bulk Change Status</span>
+              </button>
+
+              {/* 3. Mass Export to CSV */}
+              <button
+                onClick={handleExecuteMassExport}
+                className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition cursor-pointer flex items-center space-x-1.5 shadow-xs"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Mass Export ({selectedLeadIds.length}) CSV</span>
+              </button>
+
+              {/* Clear */}
+              <button
+                onClick={handleClearSelection}
+                className="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white border border-slate-700 transition cursor-pointer"
+                title="Deselect All"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* 4. CONTROLS & FILTER STRIP */}
       <div className="bg-white/60 dark:bg-slate-900/50 backdrop-blur-xl rounded-2xl p-4 border border-white/50 dark:border-slate-700/40 shadow-lg transition-colors">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
           {/* Search bar */}
@@ -305,8 +454,25 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
             )}
           </div>
 
-          {/* Filters */}
+          {/* Filters & Bulk Select All Toggle */}
           <div className="flex flex-wrap items-center gap-2">
+            {/* Quick Multi-Select All in View Button */}
+            <button
+              onClick={handleSelectAllFiltered}
+              className={`px-3 py-2 rounded-xl text-xs font-semibold border transition cursor-pointer flex items-center space-x-1.5 ${
+                isAllFilteredSelected
+                  ? 'bg-emerald-50 dark:bg-emerald-950/70 border-emerald-400 text-emerald-700 dark:text-emerald-300 font-bold'
+                  : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100'
+              }`}
+            >
+              {isAllFilteredSelected ? (
+                <CheckSquare className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+              ) : (
+                <Square className="w-3.5 h-3.5 text-slate-400" />
+              )}
+              <span>{isAllFilteredSelected ? 'Deselect View' : `Select View (${filteredLeads.length})`}</span>
+            </button>
+
             <select
               value={selectedSource}
               onChange={(e) => setSelectedSource(e.target.value)}
@@ -360,7 +526,7 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
         </div>
       </div>
 
-      {/* 4. PIPELINE VIEW (KANBAN OR TABLE) */}
+      {/* 5. PIPELINE VIEW (KANBAN OR TABLE) */}
       {viewMode === 'kanban' ? (
         // Fixed breakpoint column counts (md:2, lg:3, xl:6) left each
         // column at whatever 1/N share of the container that produced --
@@ -469,6 +635,7 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
                         const prevStage = PIPELINE_COLUMNS[PIPELINE_COLUMNS.findIndex((c) => c.id === lead.status) - 1]?.id;
                         const isPickedUp = pickedUpLead?.id === lead.id;
                         const isDragging = draggedLeadId === lead.id;
+                        const isSelected = selectedLeadIds.includes(lead.id);
 
                         return (
                           <motion.div
@@ -502,7 +669,9 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
                             }}
                             onClick={() => onSelectLead(lead)}
                             className={`group bg-white/70 dark:bg-slate-800/60 backdrop-blur-md hover:bg-white/90 dark:hover:bg-slate-800/80 border rounded-xl p-3.5 shadow-xs hover:shadow-md transition-all cursor-pointer relative ${
-                              isPickedUp
+                              isSelected
+                                ? 'border-emerald-500 dark:border-emerald-400 ring-2 ring-emerald-500/30 bg-emerald-50/20 dark:bg-emerald-950/30'
+                                : isPickedUp
                                 ? 'border-emerald-500 ring-2 ring-emerald-400 bg-emerald-50/20 dark:bg-emerald-950/20'
                                 : isDragging
                                 ? 'opacity-40 border-dashed border-emerald-500'
@@ -519,9 +688,22 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
                               </div>
                             )}
 
-                            {/* Top row: Source badge & Score */}
+                            {/* Top row: Multi-Select Checkbox, Source badge & Score */}
                             <div className="flex items-center justify-between mb-2 pr-12">
-                              {getSourceBadge(lead.source)}
+                              <div className="flex items-center space-x-2">
+                                <div
+                                  onClick={(e) => handleToggleLeadSelect(lead.id, e)}
+                                  className="cursor-pointer p-0.5 rounded hover:bg-slate-100 dark:hover:bg-slate-700 transition"
+                                  title={isSelected ? 'Deselect Lead' : 'Select Lead for Bulk Action'}
+                                >
+                                  {isSelected ? (
+                                    <CheckSquare className="w-4 h-4 text-emerald-600 dark:text-emerald-400 fill-emerald-50 dark:fill-emerald-950/60" />
+                                  ) : (
+                                    <Square className="w-4 h-4 text-slate-400 hover:text-emerald-600 transition" />
+                                  )}
+                                </div>
+                                {getSourceBadge(lead.source)}
+                              </div>
 
                               <span
                                 className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${
@@ -641,6 +823,15 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
             <table className="w-full text-left text-xs text-slate-700 dark:text-slate-300">
               <thead className="bg-slate-50 dark:bg-slate-800/90 text-slate-600 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-800">
                 <tr>
+                  <th className="p-3.5 w-10 text-center">
+                    <input
+                      type="checkbox"
+                      checked={isAllFilteredSelected}
+                      onChange={handleSelectAllFiltered}
+                      className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 dark:border-slate-600 cursor-pointer"
+                      title="Select / Deselect all in view"
+                    />
+                  </th>
                   <th className="p-3.5">Lead & Contact</th>
                   <th className="p-3.5">Portal Source</th>
                   <th className="p-3.5">Property of Interest</th>
@@ -655,17 +846,31 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {filteredLeads.length === 0 ? (
                   <tr>
-                    <td colSpan={9} className="p-8 text-center text-slate-400 dark:text-slate-500 italic">
+                    <td colSpan={10} className="p-8 text-center text-slate-400 dark:text-slate-500 italic">
                       No leads match your filter criteria.
                     </td>
                   </tr>
                 ) : (
-                  filteredLeads.map((lead) => (
+                  filteredLeads.map((lead) => {
+                    const isSelected = selectedLeadIds.includes(lead.id);
+                    return (
                     <tr
                       key={lead.id}
                       onClick={() => onSelectLead(lead)}
-                      className="hover:bg-slate-50 dark:hover:bg-slate-800/60 transition cursor-pointer group"
+                      className={`hover:bg-slate-50 dark:hover:bg-slate-800/60 transition cursor-pointer group ${
+                        isSelected ? 'bg-emerald-50/40 dark:bg-emerald-950/30' : ''
+                      }`}
                     >
+                      {/* Checkbox column */}
+                      <td className="p-3.5 text-center" onClick={(e) => e.stopPropagation()}>
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => handleToggleLeadSelect(lead.id)}
+                          className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 dark:border-slate-600 cursor-pointer"
+                        />
+                      </td>
+
                       {/* Name & Contact */}
                       <td className="p-3.5">
                         <div className="flex items-center space-x-2">
@@ -765,11 +970,180 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
                         </div>
                       </td>
                     </tr>
-                  ))
+                    );
+                  })
                 )}
               </tbody>
             </table>
           </div>
+        </div>
+      )}
+
+      {/* 6. MODAL: BULK REASSIGN AGENT */}
+      {showBulkReassignModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white"
+          >
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
+              <div className="flex items-center space-x-2">
+                <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/70 text-emerald-600 dark:text-emerald-400">
+                  <UserCheck className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base">Bulk Reassign Agent</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Reassign {selectedLeadIds.length} selected lead{selectedLeadIds.length > 1 ? 's' : ''}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowBulkReassignModal(false)}
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="mt-4 space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                  Select Target Real Estate Agent:
+                </label>
+                <div className="space-y-2">
+                  {INITIAL_AGENTS.map((agent) => (
+                    <div
+                      key={agent.email}
+                      onClick={() => setBulkTargetAgentEmail(agent.email)}
+                      className={`p-3 rounded-xl border flex items-center justify-between cursor-pointer transition ${
+                        bulkTargetAgentEmail === agent.email
+                          ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/50 ring-2 ring-emerald-400/40'
+                          : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-3">
+                        <img
+                          src={agent.avatar}
+                          alt=""
+                          className="w-8 h-8 rounded-full object-cover ring-1 ring-slate-300 dark:ring-slate-600"
+                        />
+                        <div>
+                          <div className="font-bold text-xs text-slate-900 dark:text-white">{agent.name}</div>
+                          <div className="text-[11px] text-slate-500 dark:text-slate-400">{agent.email}</div>
+                        </div>
+                      </div>
+                      {bulkTargetAgentEmail === agent.email && (
+                        <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl text-xs text-slate-600 dark:text-slate-300 flex items-start space-x-2">
+                <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                <span>
+                  All communication logs, scheduled calendar viewings, and WhatsApp history will be preserved and reassigned seamlessly.
+                </span>
+              </div>
+            </div>
+
+            <div className="mt-6 flex items-center justify-end space-x-2">
+              <button
+                onClick={() => setShowBulkReassignModal(false)}
+                className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleExecuteBulkReassign}
+                className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition cursor-pointer flex items-center space-x-1.5 shadow-xs"
+              >
+                <Check className="w-4 h-4" />
+                <span>Confirm Reassignment</span>
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* 7. MODAL: BULK CHANGE STATUS */}
+      {showBulkStatusModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white"
+          >
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
+              <div className="flex items-center space-x-2">
+                <div className="p-2 rounded-xl bg-blue-50 dark:bg-blue-950/70 text-blue-600 dark:text-blue-400">
+                  <Layers className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base">Bulk Change Stage</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Move {selectedLeadIds.length} selected lead{selectedLeadIds.length > 1 ? 's' : ''} to a new status
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowBulkStatusModal(false)}
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="mt-4 space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                  Target Pipeline Stage:
+                </label>
+                <div className="space-y-2">
+                  {PIPELINE_COLUMNS.map((col) => (
+                    <div
+                      key={col.id}
+                      onClick={() => setBulkTargetStatus(col.id)}
+                      className={`p-3 rounded-xl border flex items-center justify-between cursor-pointer transition ${
+                        bulkTargetStatus === col.id
+                          ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/50 ring-2 ring-emerald-400/40'
+                          : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-2.5">
+                        <span className={`w-2.5 h-2.5 rounded-full ${col.id === 'deal_won' ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+                        <span className="font-semibold text-xs text-slate-900 dark:text-white">{col.label}</span>
+                      </div>
+                      {bulkTargetStatus === col.id && (
+                        <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 flex items-center justify-end space-x-2">
+              <button
+                onClick={() => setShowBulkStatusModal(false)}
+                className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleExecuteBulkStatusChange}
+                className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition cursor-pointer flex items-center space-x-1.5 shadow-xs"
+              >
+                <Check className="w-4 h-4" />
+                <span>Apply Status Transition</span>
+              </button>
+            </div>
+          </motion.div>
         </div>
       )}
     </div>
