@@ -206,6 +206,28 @@ export function App() {
     setActiveNavTab(null);
   };
 
+  // Header logo click -- returns to the plain Cadastre Map view, closing
+  // every modal that could currently be sitting on top of it (rather than
+  // reusing onSelectTab('cma'), which opens the CMA Engine modal instead
+  // of actually landing on the map).
+  const handleGoHome = () => {
+    setActiveNavTab(null);
+    setIsAccommodationModalOpen(false);
+    setIsValuationModalOpen(false);
+    setIsDocumentsModalOpen(false);
+    setIsSectionalModalOpen(false);
+    setIsCMAEngineOpen(false);
+    setIsMediaModalOpen(false);
+    setIsPDFReportOpen(false);
+    setIsPortalSyncOpen(false);
+    setIsMyListingsOpen(false);
+    setIsQuickListingOpen(false);
+    setIsUserSettingsOpen(false);
+    setIsBalanceDetailsOpen(false);
+    setIsCreditsTopUpOpen(false);
+    setIsSearchHistoryOpen(false);
+  };
+
   const handleSelectProperty = (prop: PropertyRecord) => {
     setSelectedProperty(prop);
     setIsSidebarOpen(true);
@@ -290,6 +312,8 @@ export function App() {
         selectedPropertyAddress={selectedProperty?.address}
         onOpenCRMNotifications={handleOpenCRMNotifications}
         onOpenQuickListing={() => setIsQuickListingOpen(true)}
+        onGoHome={handleGoHome}
+        currentCountryCode={countryId}
       />
       {/* Main Workspace Area (Google Maps & Cadastral Vector Canvas + Property Title Panel) */}
       <main className={`flex-1 overflow-hidden relative ${activeNavTab === 'crm' ? '' : 'flex flex-row'}`}>

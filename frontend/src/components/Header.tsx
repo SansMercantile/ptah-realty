@@ -43,6 +43,7 @@ interface HeaderProps {
   onOpenBalanceDetails?: () => void;
   onOpenCRMNotifications?: () => void;
   onOpenQuickListing?: () => void;
+  onGoHome?: () => void;
   dataCredits?: number;
   ficaCredits?: number;
   trustCredits?: number;
@@ -50,6 +51,10 @@ interface HeaderProps {
   userEmail: string;
   onLogout: () => void;
   selectedPropertyAddress?: string;
+  // Practice jurisdiction country code (e.g. 'ZA', 'US', 'GB') -- the
+  // real, live value from App.tsx's countryId, kept in sync with
+  // UserSettingsModal's country selector via onJurisdictionChange.
+  currentCountryCode?: string;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -68,13 +73,15 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenBalanceDetails,
   onOpenCRMNotifications,
   onOpenQuickListing,
+  onGoHome,
   dataCredits = 250,
   ficaCredits = 0,
   trustCredits = 15,
   prepaidBalance = 1250,
   userEmail,
   onLogout,
-  selectedPropertyAddress
+  selectedPropertyAddress,
+  currentCountryCode
 }) => {
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
@@ -163,8 +170,9 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="flex items-center justify-between px-3 py-1.5 bg-[#0b1623] border-b border-slate-800/80">
         <div className="flex items-center gap-2.5">
           <div 
-            onClick={() => onSelectTab('cma')}
+            onClick={() => (onGoHome ? onGoHome() : onSelectTab('cma'))}
             className="flex items-center gap-1.5 bg-[#006980] hover:bg-[#007d99] px-2.5 py-1 rounded text-white font-black tracking-wider text-xs shadow-inner cursor-pointer transition-colors"
+            title="Back to Cadastre Map"
           >
             <Building2 className="w-4 h-4 text-cyan-300" />
             <span>PTAH<span className="text-cyan-300 font-extrabold ml-1">REALTY</span></span>
@@ -285,6 +293,21 @@ export const Header: React.FC<HeaderProps> = ({
             Balance moved into the nav tabs above (first position), so
             it's no longer duplicated here. */}
         <div className="flex items-center gap-2.5 text-xs">
+          {/* Active practice jurisdiction -- country code only, no
+              dropdown, reflects App.tsx's real countryId (kept in sync
+              with UserSettingsModal's country selector). Click goes
+              straight to Settings > Profile, where jurisdiction lives. */}
+          {currentCountryCode && (
+            <button
+              id="header-jurisdiction-badge"
+              onClick={() => onOpenUserSettings('profile')}
+              className="px-2 py-1 rounded text-xs font-bold font-mono bg-slate-800/90 hover:bg-slate-700/90 border border-slate-700 hover:border-cyan-400/60 text-cyan-300 transition-all shadow-xs cursor-pointer"
+              title="Practice Jurisdiction -- click to change"
+            >
+              {currentCountryCode.toUpperCase()}
+            </button>
+          )}
+
           {/* Notifications Button & Popover -- on the CRM tab this opens
               CRM's own notifications & task reminders drawer instead (see
               handleBellClick above); CRM's own second bell icon that used
