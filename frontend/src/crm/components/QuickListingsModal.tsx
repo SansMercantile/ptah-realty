@@ -338,7 +338,7 @@ export const QuickListingsModal: React.FC<QuickListingsModalProps> = ({
                 {filteredListings.map((listing) => (
                   <div
                     key={listing.id}
-                    className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850 overflow-hidden shadow-xs hover:shadow-md transition flex flex-col group"
+                    className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-black overflow-hidden shadow-xs hover:shadow-md transition flex flex-col group"
                   >
                     {/* Property Image & Badges */}
                     <div className="relative h-44 w-full bg-slate-100 dark:bg-slate-800 overflow-hidden">

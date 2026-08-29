@@ -416,7 +416,7 @@ export const CampaignsHubModal: React.FC<CampaignsHubModalProps> = ({
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
               {/* Left Column: Generator Form (5 cols) */}
               <div className="lg:col-span-5 space-y-4">
-                <div className="bg-white dark:bg-slate-850 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
+                <div className="bg-white dark:bg-black p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
                   <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
                     <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200 flex items-center space-x-2">
                       <Sparkles className="w-4 h-4 text-amber-500" />
@@ -694,7 +694,7 @@ export const CampaignsHubModal: React.FC<CampaignsHubModalProps> = ({
               {/* Right Column: AI Output & Channel Previews (7 cols) */}
               <div className="lg:col-span-7 space-y-4">
                 {generatedCampaign ? (
-                  <div className="bg-white dark:bg-slate-850 p-5 sm:p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-5">
+                  <div className="bg-white dark:bg-black p-5 sm:p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-5">
                     {/* Top title & status */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-4">
                       <div>
@@ -1034,7 +1034,7 @@ export const CampaignsHubModal: React.FC<CampaignsHubModalProps> = ({
                   </div>
                 ) : (
                   /* Empty state when no campaign generated yet */
-                  <div className="bg-white dark:bg-slate-850 p-12 rounded-2xl border border-slate-200 dark:border-slate-800 text-center flex flex-col items-center justify-center min-h-[420px]">
+                  <div className="bg-white dark:bg-black p-12 rounded-2xl border border-slate-200 dark:border-slate-800 text-center flex flex-col items-center justify-center min-h-[420px]">
                     <div className="w-16 h-16 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 flex items-center justify-center text-amber-500 mb-4">
                       <Sparkles className="w-8 h-8" />
                     </div>
@@ -1072,7 +1072,7 @@ export const CampaignsHubModal: React.FC<CampaignsHubModalProps> = ({
             <div className="space-y-5">
               {/* Metric Counters */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <div className="p-4 rounded-2xl bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 shadow-2xs">
+                <div className="p-4 rounded-2xl bg-white dark:bg-black border border-slate-200 dark:border-slate-800 shadow-2xs">
                   <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
                     Total Campaigns
                   </span>
@@ -1084,7 +1084,7 @@ export const CampaignsHubModal: React.FC<CampaignsHubModalProps> = ({
                   </span>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 shadow-2xs">
+                <div className="p-4 rounded-2xl bg-white dark:bg-black border border-slate-200 dark:border-slate-800 shadow-2xs">
                   <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
                     Total Audience Reach
                   </span>
@@ -1096,7 +1096,7 @@ export const CampaignsHubModal: React.FC<CampaignsHubModalProps> = ({
                   </span>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 shadow-2xs">
+                <div className="p-4 rounded-2xl bg-white dark:bg-black border border-slate-200 dark:border-slate-800 shadow-2xs">
                   <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
                     Avg. Open Rate
                   </span>
@@ -1108,7 +1108,7 @@ export const CampaignsHubModal: React.FC<CampaignsHubModalProps> = ({
                   </span>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 shadow-2xs">
+                <div className="p-4 rounded-2xl bg-white dark:bg-black border border-slate-200 dark:border-slate-800 shadow-2xs">
                   <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
                     Inquiries Generated
                   </span>
@@ -1153,7 +1153,7 @@ export const CampaignsHubModal: React.FC<CampaignsHubModalProps> = ({
                 {filteredCampaigns.map((campaign) => (
                   <div
                     key={campaign.id}
-                    className="p-5 rounded-2xl bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 shadow-xs hover:border-amber-300 dark:hover:border-amber-700/60 transition space-y-4"
+                    className="p-5 rounded-2xl bg-white dark:bg-black border border-slate-200 dark:border-slate-800 shadow-xs hover:border-amber-300 dark:hover:border-amber-700/60 transition space-y-4"
                   >
                     <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                       <div className="flex items-start space-x-3.5">
@@ -1327,7 +1327,7 @@ export const CampaignsHubModal: React.FC<CampaignsHubModalProps> = ({
               {/* 4 Cards Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Canva Card */}
-                <div className="p-5 rounded-2xl bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
+                <div className="p-5 rounded-2xl bg-white dark:bg-black border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center space-x-3">
                       <div className="w-11 h-11 rounded-xl bg-pink-50 dark:bg-pink-950/40 border border-pink-200 dark:border-pink-800 flex items-center justify-center text-pink-500">
@@ -1380,7 +1380,7 @@ export const CampaignsHubModal: React.FC<CampaignsHubModalProps> = ({
                 </div>
 
                 {/* Mailchimp Card */}
-                <div className="p-5 rounded-2xl bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
+                <div className="p-5 rounded-2xl bg-white dark:bg-black border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center space-x-3">
                       <div className="w-11 h-11 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 flex items-center justify-center text-amber-500">
@@ -1433,7 +1433,7 @@ export const CampaignsHubModal: React.FC<CampaignsHubModalProps> = ({
                 </div>
 
                 {/* Zapier Card */}
-                <div className="p-5 rounded-2xl bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
+                <div className="p-5 rounded-2xl bg-white dark:bg-black border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center space-x-3">
                       <div className="w-11 h-11 rounded-xl bg-orange-50 dark:bg-orange-950/40 border border-orange-200 dark:border-orange-800 flex items-center justify-center text-orange-500">
@@ -1486,7 +1486,7 @@ export const CampaignsHubModal: React.FC<CampaignsHubModalProps> = ({
                 </div>
 
                 {/* Meta Ads Card */}
-                <div className="p-5 rounded-2xl bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
+                <div className="p-5 rounded-2xl bg-white dark:bg-black border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center space-x-3">
                       <div className="w-11 h-11 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 flex items-center justify-center text-blue-500">

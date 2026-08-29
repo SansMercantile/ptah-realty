@@ -134,7 +134,7 @@ const AgeGroupLeadsModal: React.FC<AgeGroupLeadsModalProps> = ({ bracket, leads,
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={onClose}>
       <div
-        className="bg-white dark:bg-slate-850 rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col overflow-hidden"
+        className="bg-white dark:bg-black rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-800">
@@ -458,7 +458,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
 
         {/* CLIENT TYPE Widget (Screenshot 3 & 4) */}
-        <div className="lg:col-span-5 bg-white dark:bg-slate-850 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between">
+        <div className="lg:col-span-5 bg-white dark:bg-black rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
               <div className="flex items-center space-x-1.5 text-xs font-bold uppercase tracking-wider text-cyan-600 dark:text-cyan-400">
@@ -539,7 +539,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               onNavigateView('automations');
             }
           }}
-          className="group relative lg:col-span-2 bg-white dark:bg-slate-850 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 hover:border-amber-400 dark:hover:border-amber-500 shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col justify-between"
+          className="group relative lg:col-span-2 bg-white dark:bg-black rounded-2xl p-5 border border-slate-200 dark:border-slate-800 hover:border-amber-400 dark:hover:border-amber-500 shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col justify-between"
           title="Launch the Omnichannel Marketing Hub"
         >
           <div>
@@ -575,7 +575,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
 
         {/* CLIENT SOURCE (Circular Gauges) */}
-        <div className="lg:col-span-2 bg-white dark:bg-slate-850 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between">
+        <div className="lg:col-span-2 bg-white dark:bg-black rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
             <div className="flex items-center space-x-1.5 text-xs font-bold uppercase tracking-wider text-cyan-600 dark:text-cyan-400">
               <UploadCloud className="w-3.5 h-3.5" />
@@ -633,7 +633,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             design, see chat) */}
         <div
           id="mtd-ytd-sales-card"
-          className="bg-white dark:bg-slate-850 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between"
+          className="bg-white dark:bg-black rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between"
         >
           <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2 mb-2">
             <div className="flex items-center space-x-1.5 text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
@@ -690,7 +690,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
 
         {/* Clients Awaiting Verification */}
-        <div className="bg-white dark:bg-slate-850 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-xs flex items-center justify-between">
+        <div className="bg-white dark:bg-black rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-xs flex items-center justify-between">
           <div>
             <div className="flex items-center space-x-2">
               <span className="text-xl font-extrabold text-cyan-600 dark:text-cyan-400">0</span>
@@ -713,7 +713,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
 
         {/* Scheduled Today & Calendar */}
-        <div className="bg-white dark:bg-slate-850 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-xs flex items-center justify-between">
+        <div className="bg-white dark:bg-black rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-xs flex items-center justify-between">
           <div>
             <div className="flex items-center space-x-2">
               <span className="text-xl font-extrabold text-cyan-600 dark:text-cyan-400">0</span>
@@ -741,7 +741,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {/* CLIENT AGE BRACKETS - Luxury Demographic Personas (ported over
             from the AI Studio demo design, see chat) */}
-        <div className="lg:col-span-4 bg-white dark:bg-slate-850 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between">
+        <div className="lg:col-span-4 bg-white dark:bg-black rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5 mb-4">
               <div className="flex items-center space-x-2 text-xs font-bold uppercase tracking-wider text-cyan-600 dark:text-cyan-400">
@@ -828,7 +828,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
 
         {/* LSM AND SUBURB ATTRACTIVENESS Bar Chart (Screenshot 3 & 4) */}
-        <div className="lg:col-span-4 bg-white dark:bg-slate-850 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between">
+        <div className="lg:col-span-4 bg-white dark:bg-black rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
               <div className="flex items-center space-x-1.5 text-xs font-bold uppercase tracking-wider text-cyan-600 dark:text-cyan-400">
@@ -942,7 +942,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
 
         {/* CLIENT LIKELIHOOD TO BUY AND SELL Bar Chart (Screenshot 3 & 4) */}
-        <div className="lg:col-span-4 bg-white dark:bg-slate-850 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between">
+        <div className="lg:col-span-4 bg-white dark:bg-black rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
               <div className="flex items-center space-x-1.5 text-xs font-bold uppercase tracking-wider text-cyan-600 dark:text-cyan-400">
@@ -1077,7 +1077,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       {/* Row 4: SHOW HOUSE SELECT & CURRENT SHOW HOUSES (Matching Screenshot 2) */}
       <div id="show-house-section" className="space-y-4 pt-2">
         {/* SHOW HOUSE SELECT Card */}
-        <div className="bg-white dark:bg-slate-850 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-xs">
+        <div className="bg-white dark:bg-black rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-xs">
           <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
             <div className="flex items-center space-x-1.5 text-xs font-bold uppercase tracking-wider text-cyan-600 dark:text-cyan-400">
               <MapPin className="w-3.5 h-3.5" />
@@ -1144,7 +1144,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
 
         {/* CURRENT SHOW HOUSES Card (Opened) */}
-        <div className="bg-white dark:bg-slate-850 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-xs">
+        <div className="bg-white dark:bg-black rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-xs">
           <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2 mb-3">
             <div className="flex items-center space-x-1.5 text-xs font-bold uppercase tracking-wider text-cyan-600 dark:text-cyan-400">
               <FileSpreadsheet className="w-3.5 h-3.5" />
@@ -1230,7 +1230,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
 
         {/* CURRENT CLOSED SHOW HOUSES Card */}
-        <div className="bg-white dark:bg-slate-850 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-xs">
+        <div className="bg-white dark:bg-black rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-xs">
           <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2 mb-3">
             <div className="flex items-center space-x-1.5 text-xs font-bold uppercase tracking-wider text-cyan-600 dark:text-cyan-400">
               <FileSpreadsheet className="w-3.5 h-3.5" />

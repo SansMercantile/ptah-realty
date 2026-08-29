@@ -424,7 +424,7 @@ export const TopStatsOverview: React.FC<TopStatsOverviewProps> = ({
         <div
           id="stat-card-total-active-leads"
           onClick={() => handleOpenMetricModal('active_leads')}
-          className="group relative bg-white dark:bg-slate-850 rounded-2xl p-4.5 border border-slate-200 dark:border-slate-800 hover:border-cyan-400 dark:hover:border-cyan-500 shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col justify-between"
+          className="group relative bg-white dark:bg-black rounded-2xl p-4.5 border border-slate-200 dark:border-slate-800 hover:border-cyan-400 dark:hover:border-cyan-500 shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col justify-between"
           title="Click to view all active leads subset"
         >
           {/* Top row: Title + Trend Badge */}
@@ -481,7 +481,7 @@ export const TopStatsOverview: React.FC<TopStatsOverviewProps> = ({
         <div
           id="stat-card-conversion-rate"
           onClick={() => handleOpenMetricModal('conversion_rate')}
-          className="group relative bg-white dark:bg-slate-850 rounded-2xl p-4.5 border border-slate-200 dark:border-slate-800 hover:border-emerald-400 dark:hover:border-emerald-500 shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col justify-between"
+          className="group relative bg-white dark:bg-black rounded-2xl p-4.5 border border-slate-200 dark:border-slate-800 hover:border-emerald-400 dark:hover:border-emerald-500 shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col justify-between"
           title="Click to view converted clients and closing analytics"
         >
           {/* Top row: Title + Trend Badge */}
@@ -538,7 +538,7 @@ export const TopStatsOverview: React.FC<TopStatsOverviewProps> = ({
         <div
           id="stat-card-monthly-revenue-pipeline"
           onClick={() => handleOpenMetricModal('revenue_pipeline')}
-          className="group relative bg-white dark:bg-slate-850 rounded-2xl p-4.5 border border-slate-200 dark:border-slate-800 hover:border-amber-400 dark:hover:border-amber-500 shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col justify-between"
+          className="group relative bg-white dark:bg-black rounded-2xl p-4.5 border border-slate-200 dark:border-slate-800 hover:border-amber-400 dark:hover:border-amber-500 shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col justify-between"
           title="Click to view high-value pipeline opportunities"
         >
           {/* Top row: Title + Trend Badge */}
@@ -595,7 +595,7 @@ export const TopStatsOverview: React.FC<TopStatsOverviewProps> = ({
         <div
           id="stat-card-quality-velocity"
           onClick={() => handleOpenMetricModal('quality_score')}
-          className="group relative bg-white dark:bg-slate-850 rounded-2xl p-4.5 border border-slate-200 dark:border-slate-800 hover:border-indigo-400 dark:hover:border-indigo-500 shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col justify-between"
+          className="group relative bg-white dark:bg-black rounded-2xl p-4.5 border border-slate-200 dark:border-slate-800 hover:border-indigo-400 dark:hover:border-indigo-500 shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col justify-between"
           title="Click to view VIP high-intent scored leads"
         >
           {/* Top row: Title + Trend Badge */}
@@ -661,7 +661,7 @@ export const TopStatsOverview: React.FC<TopStatsOverviewProps> = ({
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="p-5 sm:p-6 border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-850/70 flex items-start justify-between">
+            <div className="p-5 sm:p-6 border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-black/70 flex items-start justify-between">
               <div className="space-y-1">
                 <div className="flex items-center space-x-2">
                   {activeDrilldown === 'active_leads' && (
@@ -785,7 +785,7 @@ export const TopStatsOverview: React.FC<TopStatsOverviewProps> = ({
                   return (
                     <div
                       key={lead.id}
-                      className="p-4 rounded-2xl bg-slate-50/80 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 hover:border-cyan-400 dark:hover:border-cyan-600 transition flex flex-col sm:flex-row sm:items-center justify-between gap-4 group"
+                      className="p-4 rounded-2xl bg-slate-50/80 dark:bg-black border border-slate-200 dark:border-slate-800 hover:border-cyan-400 dark:hover:border-cyan-600 transition flex flex-col sm:flex-row sm:items-center justify-between gap-4 group"
                     >
                       <div className="space-y-1.5 flex-1 min-w-0">
                         {/* Lead header tags */}
@@ -906,7 +906,7 @@ export const TopStatsOverview: React.FC<TopStatsOverviewProps> = ({
             </div>
 
             {/* Modal Footer */}
-            <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-850/70 flex items-center justify-between text-xs">
+            <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-black/70 flex items-center justify-between text-xs">
               <span className="text-slate-500 font-medium">
                 Tip: Click any lead to open full client dossier, stage pipeline, and notes.
               </span>

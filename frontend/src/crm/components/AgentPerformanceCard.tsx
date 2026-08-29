@@ -291,7 +291,7 @@ export const AgentPerformanceCard: React.FC<AgentPerformanceCardProps> = ({ lead
 
       {/* Summary KPI Ribbon for Team Benchmarks */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
-        <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 space-y-1">
+        <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 space-y-1">
           <div className="flex items-center space-x-1 text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
             <Users className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
             <span>Team Leads Managed</span>
@@ -301,7 +301,7 @@ export const AgentPerformanceCard: React.FC<AgentPerformanceCardProps> = ({ lead
           </div>
         </div>
 
-        <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 space-y-1">
+        <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 space-y-1">
           <div className="flex items-center space-x-1 text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
             <Clock className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
             <span>Avg Speed-to-Lead</span>
@@ -311,7 +311,7 @@ export const AgentPerformanceCard: React.FC<AgentPerformanceCardProps> = ({ lead
           </div>
         </div>
 
-        <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 space-y-1">
+        <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 space-y-1">
           <div className="flex items-center space-x-1 text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
             <DollarSign className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
             <span>Total Managed Volume</span>
@@ -321,7 +321,7 @@ export const AgentPerformanceCard: React.FC<AgentPerformanceCardProps> = ({ lead
           </div>
         </div>
 
-        <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 space-y-1">
+        <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 space-y-1">
           <div className="flex items-center space-x-1 text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
             <Award className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
             <span>Closed Sales Volume</span>
@@ -356,7 +356,7 @@ export const AgentPerformanceCard: React.FC<AgentPerformanceCardProps> = ({ lead
                   className={`p-4.5 rounded-2xl border transition-all duration-200 cursor-pointer flex flex-col justify-between space-y-3 ${
                     isSelected
                       ? 'bg-cyan-50/70 dark:bg-cyan-950/40 border-cyan-500 dark:border-cyan-400 shadow-md ring-2 ring-cyan-500/20'
-                      : 'bg-slate-50/80 dark:bg-slate-850/80 border-slate-200 dark:border-slate-800 hover:border-cyan-400 dark:hover:border-cyan-600 hover:shadow-xs'
+                      : 'bg-slate-50/80 dark:bg-black/80 border-slate-200 dark:border-slate-800 hover:border-cyan-400 dark:hover:border-cyan-600 hover:shadow-xs'
                   }`}
                 >
                   {/* Top: Rank badge + Agent Info + Leads count */}
@@ -464,7 +464,7 @@ export const AgentPerformanceCard: React.FC<AgentPerformanceCardProps> = ({ lead
                   className={`p-4.5 rounded-2xl border transition-all duration-200 cursor-pointer flex flex-col justify-between space-y-3 ${
                     isSelected
                       ? 'bg-emerald-50/70 dark:bg-emerald-950/40 border-emerald-500 dark:border-emerald-400 shadow-md ring-2 ring-emerald-500/20'
-                      : 'bg-slate-50/80 dark:bg-slate-850/80 border-slate-200 dark:border-slate-800 hover:border-emerald-400 dark:hover:border-emerald-600 hover:shadow-xs'
+                      : 'bg-slate-50/80 dark:bg-black/80 border-slate-200 dark:border-slate-800 hover:border-emerald-400 dark:hover:border-emerald-600 hover:shadow-xs'
                   }`}
                 >
                   <div className="flex items-start justify-between">
@@ -566,7 +566,7 @@ export const AgentPerformanceCard: React.FC<AgentPerformanceCardProps> = ({ lead
                   className={`p-4.5 rounded-2xl border transition-all duration-200 cursor-pointer flex flex-col justify-between space-y-3 ${
                     isSelected
                       ? 'bg-amber-50/70 dark:bg-amber-950/40 border-amber-500 dark:border-amber-400 shadow-md ring-2 ring-amber-500/20'
-                      : 'bg-slate-50/80 dark:bg-slate-850/80 border-slate-200 dark:border-slate-800 hover:border-amber-400 dark:hover:border-amber-600 hover:shadow-xs'
+                      : 'bg-slate-50/80 dark:bg-black/80 border-slate-200 dark:border-slate-800 hover:border-amber-400 dark:hover:border-amber-600 hover:shadow-xs'
                   }`}
                 >
                   <div className="flex items-start justify-between">
@@ -652,7 +652,7 @@ export const AgentPerformanceCard: React.FC<AgentPerformanceCardProps> = ({ lead
       {activeMetric === 'all_overview' && (
         <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800 animate-fade-in">
           <table className="w-full text-left text-xs text-slate-700 dark:text-slate-300">
-            <thead className="bg-slate-50 dark:bg-slate-850 text-slate-600 dark:text-slate-400 font-bold border-b border-slate-200 dark:border-slate-800">
+            <thead className="bg-slate-50 dark:bg-black text-slate-600 dark:text-slate-400 font-bold border-b border-slate-200 dark:border-slate-800">
               <tr>
                 <th className="p-3.5">Assigned Agent</th>
                 <th className="p-3.5 text-center">Leads Managed</th>
@@ -736,7 +736,7 @@ export const AgentPerformanceCard: React.FC<AgentPerformanceCardProps> = ({ lead
       {selectedAgent && (
         <div
           id="agent-detailed-portfolio-card"
-          className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-850/90 border border-cyan-300 dark:border-cyan-700/60 shadow-md space-y-4 animate-fade-in"
+          className="p-5 rounded-2xl bg-slate-50 dark:bg-black/90 border border-cyan-300 dark:border-cyan-700/60 shadow-md space-y-4 animate-fade-in"
         >
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
             <div className="flex items-center space-x-3.5">

@@ -465,7 +465,7 @@ export const SlaResponseEfficiencyWidget: React.FC<SlaResponseEfficiencyWidgetPr
               return (
                 <div
                   key={agent.name}
-                  className={`p-4.5 rounded-xl border bg-white dark:bg-slate-850 transition hover:shadow-xs space-y-3.5 ${
+                  className={`p-4.5 rounded-xl border bg-white dark:bg-black transition hover:shadow-xs space-y-3.5 ${
                     isTopPerformer
                       ? 'border-emerald-200 dark:border-emerald-800/80 bg-emerald-50/10 dark:bg-emerald-950/10'
                       : isBreachedAvg
@@ -719,13 +719,13 @@ export const SlaResponseEfficiencyWidget: React.FC<SlaResponseEfficiencyWidgetPr
           <span>SLA Response Optimization & Inbound Conversion Protocol</span>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs text-emerald-950 dark:text-emerald-100">
-          <div className="bg-white/80 dark:bg-slate-850/80 p-3 rounded-lg border border-emerald-100 dark:border-emerald-900/60 space-y-1">
+          <div className="bg-white/80 dark:bg-black/80 p-3 rounded-lg border border-emerald-100 dark:border-emerald-900/60 space-y-1">
             <span className="font-bold text-emerald-900 dark:text-emerald-300 block">1. 15-Minute Direct Touch Rule</span>
             <p className="text-slate-600 dark:text-slate-300 text-[11px]">
               Portals like Property 24 and Private Property dispatch high-intent buyer inquiries concurrently. Reaching the buyer within 15 minutes prevents competitive agent capture on identical developments.
             </p>
           </div>
-          <div className="bg-white/80 dark:bg-slate-850/80 p-3 rounded-lg border border-emerald-100 dark:border-emerald-900/60 space-y-1">
+          <div className="bg-white/80 dark:bg-black/80 p-3 rounded-lg border border-emerald-100 dark:border-emerald-900/60 space-y-1">
             <span className="font-bold text-emerald-900 dark:text-emerald-300 block">2. Multi-Channel WhatsApp Spec Dispatch</span>
             <p className="text-slate-600 dark:text-slate-300 text-[11px]">
               Initial contact initiated via WhatsApp with instant property brochure attachments generates a 78% open rate within 8 minutes, paving the way for immediate private viewing bookings.
@@ -739,7 +739,7 @@ export const SlaResponseEfficiencyWidget: React.FC<SlaResponseEfficiencyWidgetPr
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm">
           <div className="bg-white dark:bg-black w-full max-w-4xl max-h-[85vh] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in-95">
             {/* Modal Header */}
-            <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-850">
+            <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-black">
               <div className="flex items-center space-x-3">
                 <img
                   src={showLogModalAgent.avatar}
