@@ -724,7 +724,7 @@ export default function App({
 
         {currentView === 'calendar' && (
           <div className="space-y-6">
-            <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4 transition-colors">
+            <div className="bg-white dark:bg-black p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4 transition-colors">
               <div>
                 <div className="flex items-center space-x-2 text-emerald-700 dark:text-emerald-400 text-xs font-bold uppercase tracking-wider mb-1">
                   <CalendarIcon className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
@@ -927,7 +927,7 @@ export default function App({
 
       {/* Toast Inbound Lead Alert */}
       {toastAlert && (
-        <div className="fixed bottom-6 right-6 z-50 max-w-md bg-white dark:bg-slate-900 border border-emerald-500 text-slate-900 dark:text-slate-100 p-4 rounded-2xl shadow-xl flex items-start space-x-3">
+        <div className="fixed bottom-6 right-6 z-50 max-w-md bg-white dark:bg-black border border-emerald-500 text-slate-900 dark:text-slate-100 p-4 rounded-2xl shadow-xl flex items-start space-x-3">
           <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/70 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-200 dark:border-emerald-800">
             <Radio className="w-4 h-4 animate-ping" />
           </div>

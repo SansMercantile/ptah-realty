@@ -203,7 +203,7 @@ export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({
     <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
       <div 
         id="notification-reminders-drawer"
-        className="w-full max-w-lg bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 h-full flex flex-col shadow-2xl transition-colors duration-200"
+        className="w-full max-w-lg bg-white dark:bg-black border-l border-slate-200 dark:border-slate-800 h-full flex flex-col shadow-2xl transition-colors duration-200"
       >
         {/* Header */}
         <div className="p-4 bg-slate-50 dark:bg-slate-900/90 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
@@ -585,8 +585,8 @@ export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({
                         isCompleted
                           ? 'bg-slate-100/60 dark:bg-slate-900/60 border-slate-200 dark:border-slate-800 opacity-60'
                           : isOverdue
-                          ? 'bg-white dark:bg-slate-900 border-rose-300 dark:border-rose-800/80 hover:border-rose-400'
-                          : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
+                          ? 'bg-white dark:bg-black border-rose-300 dark:border-rose-800/80 hover:border-rose-400'
+                          : 'bg-white dark:bg-black border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
                       }`}
                     >
                       <div className="flex items-start space-x-3">
@@ -719,8 +719,8 @@ export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({
                       key={task.id}
                       className={`p-3 rounded-xl border transition ${
                         isOverdue
-                          ? 'bg-white dark:bg-slate-900 border-rose-300 dark:border-rose-800'
-                          : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800'
+                          ? 'bg-white dark:bg-black border-rose-300 dark:border-rose-800'
+                          : 'bg-white dark:bg-black border-slate-200 dark:border-slate-800'
                       }`}
                     >
                       <div className="flex items-start space-x-2.5">
@@ -772,7 +772,7 @@ export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({
                 {notifications.slice(0, 4).map((n) => (
                   <div
                     key={n.id}
-                    className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1"
+                    className="bg-white dark:bg-black p-3 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1"
                   >
                     <div className="flex items-center justify-between">
                       <span
@@ -811,7 +811,7 @@ export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({
                 notifications.map((n) => (
                   <div
                     key={n.id}
-                    className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition space-y-2 shadow-2xs"
+                    className="bg-white dark:bg-black p-4 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition space-y-2 shadow-2xs"
                   >
                     <div className="flex items-center justify-between">
                       <span

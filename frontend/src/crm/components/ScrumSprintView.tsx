@@ -179,7 +179,7 @@ export const ScrumSprintView: React.FC<ScrumSprintViewProps> = ({
   return (
     <div className="space-y-6">
       {/* 1. SPRINT HERO BANNER & METRICS */}
-      <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-xs relative overflow-hidden transition-colors">
+      <div className="bg-white dark:bg-black rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-xs relative overflow-hidden transition-colors">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 pb-6 border-b border-slate-100 dark:border-slate-800">
           <div>
             <div className="flex items-center space-x-2 mb-2">
@@ -262,7 +262,7 @@ export const ScrumSprintView: React.FC<ScrumSprintViewProps> = ({
       </div>
 
       {/* 2. DAILY STANDUP BLOCKERS BOARD */}
-      <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-xs transition-colors">
+      <div className="bg-white dark:bg-black rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-xs transition-colors">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-2">
             <div className="p-2 rounded-xl bg-red-100 dark:bg-red-950/80 text-red-600 dark:text-red-400">
@@ -605,7 +605,7 @@ export const ScrumSprintView: React.FC<ScrumSprintViewProps> = ({
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-2xl max-w-lg w-full"
+            className="bg-white dark:bg-black rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-2xl max-w-lg w-full"
           >
             <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
               <div className="flex items-center space-x-2">

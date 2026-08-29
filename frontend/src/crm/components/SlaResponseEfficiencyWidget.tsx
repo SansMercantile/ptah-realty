@@ -315,7 +315,7 @@ export const SlaResponseEfficiencyWidget: React.FC<SlaResponseEfficiencyWidgetPr
   }, [agentSlaMetrics]);
 
   return (
-    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-xs space-y-6 transition-colors">
+    <div className="bg-white dark:bg-black border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-xs space-y-6 transition-colors">
       {/* Header & Controls */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-5">
         <div>
@@ -737,7 +737,7 @@ export const SlaResponseEfficiencyWidget: React.FC<SlaResponseEfficiencyWidgetPr
       {/* Drilldown Modal: Agent Lead Response Log */}
       {showLogModalAgent && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm">
-          <div className="bg-white dark:bg-slate-900 w-full max-w-4xl max-h-[85vh] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in-95">
+          <div className="bg-white dark:bg-black w-full max-w-4xl max-h-[85vh] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in-95">
             {/* Modal Header */}
             <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-850">
               <div className="flex items-center space-x-3">

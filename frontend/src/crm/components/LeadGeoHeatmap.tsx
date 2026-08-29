@@ -537,7 +537,7 @@ export const LeadGeoHeatmap: React.FC<LeadGeoHeatmapProps> = ({ leads, onSelectL
   };
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden transition-colors">
+    <div className="bg-white dark:bg-black rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden transition-colors">
       {/* Heatmap Header & Controls Strip */}
       <div className="p-4 sm:p-6 border-b border-slate-200 dark:border-slate-800 flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-slate-50/70 dark:bg-slate-900/90">
         <div>
@@ -881,7 +881,7 @@ export const LeadGeoHeatmap: React.FC<LeadGeoHeatmapProps> = ({ leads, onSelectL
         </div>
 
         {/* Right: Territory Intelligence & Suburb Breakdown */}
-        <div className="lg:col-span-4 p-4 sm:p-6 flex flex-col justify-between space-y-4 bg-white dark:bg-slate-900">
+        <div className="lg:col-span-4 p-4 sm:p-6 flex flex-col justify-between space-y-4 bg-white dark:bg-black">
           <div>
             <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
               <div>

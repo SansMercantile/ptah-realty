@@ -156,7 +156,7 @@ export const QuickListingsModal: React.FC<QuickListingsModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-sm overflow-y-auto">
-      <div className="relative w-full max-w-5xl bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden my-6">
+      <div className="relative w-full max-w-5xl bg-white dark:bg-black rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden my-6">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/60">
           <div className="flex items-center space-x-3">

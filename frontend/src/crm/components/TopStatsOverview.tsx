@@ -657,7 +657,7 @@ export const TopStatsOverview: React.FC<TopStatsOverviewProps> = ({
           onClick={() => setActiveDrilldown(null)}
         >
           <div
-            className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-4xl max-h-[90vh] border border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col overflow-hidden"
+            className="bg-white dark:bg-black rounded-3xl w-full max-w-4xl max-h-[90vh] border border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
@@ -732,7 +732,7 @@ export const TopStatsOverview: React.FC<TopStatsOverviewProps> = ({
             </div>
 
             {/* Filter & Search Bar */}
-            <div className="p-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="p-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-black flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               {/* Search input */}
               <div className="relative flex-1">
                 <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />

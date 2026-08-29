@@ -721,7 +721,7 @@ export const ReportingAnalyticsView: React.FC<ReportingAnalyticsViewProps> = ({ 
       {/* Visual Charts: Lead Sources + Funnel */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Chart 1: Lead Sources Volume & Conversion */}
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
+        <div className="bg-white dark:bg-black p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="font-bold text-sm text-slate-900 dark:text-white">Lead Volume & Deals Won by Portal Source</h3>
@@ -746,7 +746,7 @@ export const ReportingAnalyticsView: React.FC<ReportingAnalyticsViewProps> = ({ 
         </div>
 
         {/* Chart 2: Full Sales Pipeline Funnel */}
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
+        <div className="bg-white dark:bg-black p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
           <div>
             <h3 className="font-bold text-sm text-slate-900 dark:text-white">Real Estate Conversion Funnel</h3>
             <p className="text-xs text-slate-500 dark:text-slate-400">Drop-off stages from raw lead to deed registration</p>

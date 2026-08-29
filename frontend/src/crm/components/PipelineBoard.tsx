@@ -256,7 +256,7 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
         {/* Metric 2: HOT / High-Intent Leads Card (HOT TAG AT TOP RIGHT CORNER) */}
         <div 
           onClick={() => setSelectedUrgency(selectedUrgency === 'urgent' ? 'all' : 'urgent')}
-          className={`bg-white dark:bg-slate-900 rounded-2xl p-4 border shadow-xs relative overflow-hidden transition cursor-pointer hover:shadow-md ${
+          className={`bg-white dark:bg-black rounded-2xl p-4 border shadow-xs relative overflow-hidden transition cursor-pointer hover:shadow-md ${
             selectedUrgency === 'urgent' 
               ? 'border-red-500 dark:border-red-500 ring-2 ring-red-500/20 bg-red-50/20 dark:bg-red-950/20' 
               : 'border-slate-200 dark:border-slate-800 hover:border-red-300 dark:hover:border-red-800'
@@ -818,7 +818,7 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
         </div>
       ) : (
         /* Table List View */
-        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs transition-colors">
+        <div className="bg-white dark:bg-black rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs transition-colors">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs text-slate-700 dark:text-slate-300">
               <thead className="bg-slate-50 dark:bg-slate-800/90 text-slate-600 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-800">
@@ -986,7 +986,7 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white"
+            className="bg-white dark:bg-black rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white"
           >
             <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
               <div className="flex items-center space-x-2">
@@ -1077,7 +1077,7 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white"
+            className="bg-white dark:bg-black rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white"
           >
             <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
               <div className="flex items-center space-x-2">

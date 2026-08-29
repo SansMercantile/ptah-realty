@@ -287,7 +287,7 @@ export const CampaignsHubModal: React.FC<CampaignsHubModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 animate-in fade-in duration-200">
-      <div className="bg-white dark:bg-slate-900 w-full max-w-6xl rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col max-h-[94vh] overflow-hidden">
+      <div className="bg-white dark:bg-black w-full max-w-6xl rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col max-h-[94vh] overflow-hidden">
         {/* Top Header */}
         <div className="p-5 sm:p-6 border-b border-slate-200 dark:border-slate-800 bg-slate-950 text-white flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
@@ -353,7 +353,7 @@ export const CampaignsHubModal: React.FC<CampaignsHubModalProps> = ({
         </div>
 
         {/* Modal Navigation Tabs */}
-        <div className="px-6 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between">
+        <div className="px-6 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-black flex items-center justify-between">
           <div className="flex space-x-6 text-xs font-bold">
             <button
               onClick={() => setActiveTab('studio')}
@@ -753,7 +753,7 @@ export const CampaignsHubModal: React.FC<CampaignsHubModalProps> = ({
                     )}
 
                     {/* Channel Preview Subtabs */}
-                    <div className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden bg-white dark:bg-slate-900">
+                    <div className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden bg-white dark:bg-black">
                       <div className="flex items-center border-b border-slate-200 dark:border-slate-800 bg-slate-100/70 dark:bg-slate-800/50 px-3 text-xs font-bold">
                         <button
                           onClick={() => setStudioChannelTab('email')}

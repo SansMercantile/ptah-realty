@@ -520,7 +520,7 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.96, y: -12 }}
           transition={{ duration: 0.18, ease: 'easeOut' }}
-          className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[82vh] transition-colors"
+          className="relative w-full max-w-2xl bg-white dark:bg-black rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[82vh] transition-colors"
         >
           {/* Top Search Input Bar */}
           <div className="p-3.5 sm:p-4 border-b border-slate-200 dark:border-slate-800 flex items-center gap-3 bg-slate-50/70 dark:bg-slate-900/90">
@@ -557,7 +557,7 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
           </div>
 
           {/* Scope Filter Tabs */}
-          <div className="px-3.5 py-2 border-b border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-slate-900 flex items-center space-x-1.5 overflow-x-auto text-xs">
+          <div className="px-3.5 py-2 border-b border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-black flex items-center space-x-1.5 overflow-x-auto text-xs">
             <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500 mr-1 hidden sm:inline">
               Scope:
             </span>

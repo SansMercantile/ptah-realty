@@ -1229,7 +1229,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       {/* Birthday Campaign Modal */}
       {isBirthdayModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 max-w-md w-full border border-slate-200 dark:border-slate-800 shadow-2xl space-y-4">
+          <div className="bg-white dark:bg-black rounded-2xl p-6 max-w-md w-full border border-slate-200 dark:border-slate-800 shadow-2xl space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <Gift className="w-5 h-5 text-rose-500" />
@@ -1261,7 +1261,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       {/* File Import Modal */}
       {isImportModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 max-w-md w-full border border-slate-200 dark:border-slate-800 shadow-2xl space-y-4">
+          <div className="bg-white dark:bg-black rounded-2xl p-6 max-w-md w-full border border-slate-200 dark:border-slate-800 shadow-2xl space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <UploadCloud className="w-5 h-5 text-cyan-600" />
@@ -1293,7 +1293,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       {/* Portfolio Sharing Modal */}
       {isPortfolioShareOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 max-w-md w-full border border-slate-200 dark:border-slate-800 shadow-2xl space-y-4">
+          <div className="bg-white dark:bg-black rounded-2xl p-6 max-w-md w-full border border-slate-200 dark:border-slate-800 shadow-2xl space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <Share2 className="w-5 h-5 text-blue-600" />

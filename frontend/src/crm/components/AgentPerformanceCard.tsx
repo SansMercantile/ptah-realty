@@ -216,7 +216,7 @@ export const AgentPerformanceCard: React.FC<AgentPerformanceCardProps> = ({ lead
   return (
     <div
       id="agent-performance-card"
-      className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm space-y-6"
+      className="bg-white dark:bg-black rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm space-y-6"
     >
       {/* Top Header & Navigation Tabs */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-5">
@@ -796,7 +796,7 @@ export const AgentPerformanceCard: React.FC<AgentPerformanceCardProps> = ({ lead
                 <div
                   key={lead.id}
                   onClick={() => onSelectLead && onSelectLead(lead)}
-                  className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-cyan-500 dark:hover:border-cyan-500 transition cursor-pointer shadow-2xs space-y-2 group"
+                  className="p-3.5 rounded-xl bg-white dark:bg-black border border-slate-200 dark:border-slate-800 hover:border-cyan-500 dark:hover:border-cyan-500 transition cursor-pointer shadow-2xs space-y-2 group"
                 >
                   <div className="flex items-center justify-between">
                     <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
