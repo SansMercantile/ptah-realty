@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 import { Lead, PropertyListing, ShowHouseRecord } from '../types';
 import { formatCurrency } from '../utils/formatters';
+import { TopStatsOverview } from './TopStatsOverview';
 
 interface DashboardViewProps {
   leads: Lead[];
@@ -224,6 +225,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Top-Level Executive Statistics Section with Sparklines & Interactive
+          Drilldown -- brought over from the AI Studio demo (see chat). */}
+      <TopStatsOverview
+        leads={leads}
+        onNavigateView={onNavigateView}
+        onSelectLead={onSelectLead}
+        onQuickWhatsApp={onQuickWhatsApp}
+      />
 
       {/* Row 1: Quick Listings Card + Client Type + Client Status + Client Source */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-5">
