@@ -102,7 +102,7 @@ export const AiAdvisorDrawer: React.FC<AiAdvisorDrawerProps> = ({
   ];
 
   return (
-    <div className="w-full max-w-sm lg:max-w-md shrink-0 h-full flex flex-col bg-white/80 dark:bg-slate-900/70 backdrop-blur-xl border-l border-white/40 dark:border-slate-700/40 shadow-2xl">
+    <div className="w-full max-w-xs lg:max-w-sm shrink-0 h-full flex flex-col bg-white/80 dark:bg-slate-900/70 backdrop-blur-xl border-l border-white/40 dark:border-slate-700/40 shadow-2xl">
       {/* Top Header */}
       <div className="p-4 bg-slate-50/70 dark:bg-slate-800/50 border-b border-white/40 dark:border-slate-700/40 flex items-center justify-between">
         <div className="flex items-center space-x-2.5">

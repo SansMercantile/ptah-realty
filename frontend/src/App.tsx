@@ -40,8 +40,6 @@ export function App() {
   const [countryId, setCountryId] = useState('ZA');
   const [provinceId, setProvinceId] = useState('WC');
   const [cityId, setCityId] = useState('CPT');
-  const activeJurisdiction = getJurisdictionByCode(countryId, provinceId, cityId);
-  const { country: activeCountry, city: activeCity } = activeJurisdiction;
 
   const [properties, setProperties] = useState<PropertyRecord[]>(PROPERTIES_DATA);
   const [selectedProperty, setSelectedProperty] = useState<PropertyRecord | null>(PROPERTIES_DATA[0]); // Default 5 Richmond Road
@@ -291,13 +289,9 @@ export function App() {
         onLogout={() => { logout(); setUser(null); }}
         selectedPropertyAddress={selectedProperty?.address}
         onOpenCRMNotifications={handleOpenCRMNotifications}
-        currentCountryFlag={activeCountry.flag}
-        currentCountryName={activeCountry.name}
-        currentCityName={activeCity.name}
-        currentCurrencySymbol={activeCountry.currency.symbol}
       />
       {/* Main Workspace Area (Google Maps & Cadastral Vector Canvas + Property Title Panel) */}
-      <main className={`flex-1 overflow-hidden relative ${activeNavTab === 'crm' ? 'overflow-y-auto' : 'flex flex-row'}`}>
+      <main className={`flex-1 overflow-hidden relative ${activeNavTab === 'crm' ? '' : 'flex flex-row'}`}>
         {activeNavTab === 'crm' ? (
           <CRMApp
             openConnectorsSignal={crmOpenConnectorsSignal}
