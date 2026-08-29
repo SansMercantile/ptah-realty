@@ -44,8 +44,26 @@ import {
   ArrowUpRight,
   Printer,
   AlertCircle,
-  Clock
+  AlertTriangle,
+  UserCheck,
+  Clock,
+  ShieldAlert,
+  KeyRound,
+  Send,
+  RefreshCw,
+  Hash,
+  CheckSquare,
+  ChevronRight,
+  ChevronDown
 } from 'lucide-react';
+
+import { 
+  GLOBAL_COUNTRIES_DATA, 
+  CountryOption, 
+  ProvinceStateOption, 
+  CityTownOption, 
+  getJurisdictionByCode 
+} from '../../services/jurisdictionsData';
 
 export interface UserProfileData {
   title: string;
@@ -121,19 +139,31 @@ const SUBURB_OPTIONS = [
   'Constantia'
 ];
 
-const LANGUAGES_DATA = [
+export interface LanguageOption {
+  code: string;
+  name: string;
+  native: string;
+  flag: string;
+  default?: boolean;
+}
+
+export const LANGUAGES_DATA: LanguageOption[] = [
   { code: 'en-ZA', name: 'English (South Africa)', native: 'English', flag: '🇿🇦', default: true },
   { code: 'af-ZA', name: 'Afrikaans', native: 'Afrikaans', flag: '🇿🇦', default: false },
   { code: 'xh-ZA', name: 'isiXhosa', native: 'isiXhosa', flag: '🇿🇦', default: false },
   { code: 'zu-ZA', name: 'isiZulu', native: 'isiZulu', flag: '🇿🇦', default: false },
   { code: 'st-ZA', name: 'Sesotho', native: 'Sesotho', flag: '🇿🇦', default: false },
   { code: 'en-GB', name: 'English (United Kingdom)', native: 'English (UK)', flag: '🇬🇧', default: false },
-  { code: 'de-DE', name: 'German', native: 'Deutsch', flag: '🇩🇪', default: false }
+  { code: 'en-US', name: 'English (United States)', native: 'English (US)', flag: '🇺🇸', default: false },
+  { code: 'en-AU', name: 'English (Australia)', native: 'English (AU)', flag: '🇦🇺', default: false },
+  { code: 'ar-AE', name: 'Arabic (United Arab Emirates)', native: 'العربية', flag: '🇦🇪', default: false },
+  { code: 'de-DE', name: 'German', native: 'Deutsch', flag: '🇩🇪', default: false },
+  { code: 'fr-FR', name: 'French', native: 'Français', flag: '🇫🇷', default: false }
 ];
 
-export type SettingsTabType = 'profile' | 'password' | 'billing' | 'language' | 'apps' | 'preferences';
+export type SettingsTabType = 'profile' | 'password' | 'billing' | 'apps' | 'preferences';
 
-interface UserSettingsModalProps {
+export interface UserSettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialTab?: SettingsTabType;
@@ -142,6 +172,10 @@ interface UserSettingsModalProps {
   trustCredits?: number;
   prepaidBalance?: number;
   onTopUpSuccess?: (dataCredits: number, ficaCredits: number, trustCredits: number, prepaidBalance?: number) => void;
+  currentCountryId?: string;
+  currentProvinceId?: string;
+  currentCityId?: string;
+  onJurisdictionChange?: (countryId: string, provinceId: string, cityId: string) => void;
 }
 
 interface InvoiceRecord {
@@ -224,7 +258,11 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
   ficaCredits = 0,
   trustCredits = 15,
   prepaidBalance = 1250,
-  onTopUpSuccess
+  onTopUpSuccess,
+  currentCountryId = 'ZA',
+  currentProvinceId = 'WC',
+  currentCityId = 'CPT',
+  onJurisdictionChange
 }) => {
   const [activeTab, setActiveTab] = useState<SettingsTabType>(initialTab);
 
@@ -234,6 +272,68 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
     }
   }, [isOpen, initialTab]);
 
+  // Jurisdiction cascading dropdown state
+  const [selectedCountryId, setSelectedCountryId] = useState<string>(currentCountryId);
+  const [selectedProvinceId, setSelectedProvinceId] = useState<string>(currentProvinceId);
+  const [selectedCityId, setSelectedCityId] = useState<string>(currentCityId);
+  const [jurisdictionAppliedToast, setJurisdictionAppliedToast] = useState(false);
+
+  React.useEffect(() => {
+    if (currentCountryId) setSelectedCountryId(currentCountryId);
+    if (currentProvinceId) setSelectedProvinceId(currentProvinceId);
+    if (currentCityId) setSelectedCityId(currentCityId);
+  }, [currentCountryId, currentProvinceId, currentCityId]);
+
+  const activeCountry = GLOBAL_COUNTRIES_DATA.find(c => c.id === selectedCountryId) || GLOBAL_COUNTRIES_DATA[0];
+  const availableProvinces = activeCountry.provinces;
+  const activeProvince = availableProvinces.find(p => p.id === selectedProvinceId) || availableProvinces[0];
+  const availableCities = activeProvince.cities;
+  const activeCity = availableCities.find(c => c.id === selectedCityId) || availableCities[0];
+
+  const handleCountryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newCId = e.target.value;
+    const targetC = GLOBAL_COUNTRIES_DATA.find(c => c.id === newCId) || GLOBAL_COUNTRIES_DATA[0];
+    const defP = targetC.provinces[0];
+    const defCity = defP.cities[0];
+    setSelectedCountryId(targetC.id);
+    setSelectedProvinceId(defP.id);
+    setSelectedCityId(defCity.id);
+    setDateFormat(targetC.defaultDateFormat);
+    setMeasurementUnit(targetC.defaultUnit);
+    setDefaultCadastreSuburb(defCity.suburbs[0] || '');
+    setJurisdictionAppliedToast(false);
+  };
+
+  const handleProvinceChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newPId = e.target.value;
+    const targetP = availableProvinces.find(p => p.id === newPId) || availableProvinces[0];
+    const defCity = targetP.cities[0];
+    setSelectedProvinceId(targetP.id);
+    setSelectedCityId(defCity.id);
+    setDefaultCadastreSuburb(defCity.suburbs[0] || '');
+    setJurisdictionAppliedToast(false);
+  };
+
+  const handleCityChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newCityId = e.target.value;
+    setSelectedCityId(newCityId);
+    const targetCity = availableCities.find(c => c.id === newCityId);
+    if (targetCity && targetCity.suburbs.length > 0) {
+      setDefaultCadastreSuburb(targetCity.suburbs[0]);
+    }
+    setJurisdictionAppliedToast(false);
+  };
+
+  const handleApplyJurisdiction = () => {
+    if (onJurisdictionChange) {
+      onJurisdictionChange(selectedCountryId, selectedProvinceId, selectedCityId);
+    }
+    setJurisdictionAppliedToast(true);
+    setTimeout(() => {
+      setJurisdictionAppliedToast(false);
+    }, 4500);
+  };
+
   const [profile, setProfile] = useState<UserProfileData>(INITIAL_PROFILE);
   const [isAiGenerating, setIsAiGenerating] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
@@ -242,6 +342,38 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
   const [newSocialPlatform, setNewSocialPlatform] = useState('LinkedIn');
   const [newSocialUrl, setNewSocialUrl] = useState('');
   const [showAddSocial, setShowAddSocial] = useState(false);
+
+  // Residency & Mobile OTP Verification state
+  const [isPhoneOtpVerified, setIsPhoneOtpVerified] = useState(true);
+  const [showOtpModal, setShowOtpModal] = useState(false);
+  const [otpCode, setOtpCode] = useState('');
+  const [isOtpSending, setIsOtpSending] = useState(false);
+  const [otpCountdown, setOtpCountdown] = useState(60);
+  const [otpError, setOtpError] = useState<string | null>(null);
+  const [otpSuccessToast, setOtpSuccessToast] = useState<string | null>(null);
+
+  const handleSendOtp = () => {
+    setIsOtpSending(true);
+    setOtpError(null);
+    setTimeout(() => {
+      setIsOtpSending(false);
+      setShowOtpModal(true);
+      setOtpCountdown(60);
+      setOtpCode('');
+    }, 600);
+  };
+
+  const handleVerifyOtp = () => {
+    if (!otpCode || otpCode.length < 4) {
+      setOtpError('Please enter a valid verification code.');
+      return;
+    }
+    setIsPhoneOtpVerified(true);
+    setShowOtpModal(false);
+    setOtpError(null);
+    setOtpSuccessToast(`Mobile number verified for ${activeCountry.name} residency.`);
+    setTimeout(() => setOtpSuccessToast(null), 4000);
+  };
 
   // Password state
   const [currentPassword, setCurrentPassword] = useState('');
@@ -282,11 +414,20 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
   const [taxAddress, setTaxAddress] = useState('Suite 402, The Equinox, 154 Main Road, Sea Point, Cape Town, 8005');
   const [taxSaved, setTaxSaved] = useState(false);
 
-  // Language state
+  // Language state (under Profile)
   const [selectedLanguage, setSelectedLanguage] = useState('en-ZA');
-  const [dateFormat, setDateFormat] = useState('YYYY/MM/DD');
-  const [currencyUnit, setCurrencyUnit] = useState('ZAR (R)');
+  const [isProfileLanguageOpen, setIsProfileLanguageOpen] = useState(false);
   const [languageSaved, setLanguageSaved] = useState(false);
+
+  // Preferences state (Informed by Country & Area)
+  const [dateFormat, setDateFormat] = useState(activeCountry.defaultDateFormat || 'YYYY/MM/DD');
+  const [measurementUnit, setMeasurementUnit] = useState(activeCountry.defaultUnit || 'Metric (m² & Hectares)');
+  const [defaultCadastreSuburb, setDefaultCadastreSuburb] = useState('Three Anchor Bay');
+  const [complianceAlertsEnabled, setComplianceAlertsEnabled] = useState(true);
+  const [satelliteByDefault, setSatelliteByDefault] = useState(true);
+  const [autoValuationArchiving, setAutoValuationArchiving] = useState(true);
+  const [livePortalWebhooks, setLivePortalWebhooks] = useState(true);
+  const [preferencesSavedToast, setPreferencesSavedToast] = useState<string | null>(null);
 
   // Apps & Extensions state
   const [installedApps, setInstalledApps] = useState<string[]>(['chrome-ext', 'deeds-api', 'whatsapp-crm']);
@@ -299,13 +440,14 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
   // Calculate profile completeness
   const calculateCompleteness = () => {
     let score = 0;
-    const totalFields = 15;
+    const totalFields = 16;
     if (profile.title) score++;
     if (profile.name) score++;
     if (profile.surname) score++;
     if (profile.email) score++;
     if (profile.idNumber) score++;
     if (profile.cellPhone) score++;
+    if (isPhoneOtpVerified) score++;
     if (profile.ffcNumber) score++;
     if (profile.companyName) score++;
     if (profile.yearsExperience) score++;
@@ -319,6 +461,38 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
   };
 
   const completeness = calculateCompleteness();
+
+  const handleOpenOtpModal = () => {
+    setOtpCode('');
+    setOtpError(null);
+    setOtpCountdown(60);
+    setShowOtpModal(true);
+  };
+
+  const handleConfirmOtp = () => {
+    if (!otpCode || otpCode.trim().length < 4) {
+      setOtpError('Please enter a valid 6-digit SMS verification OTP code.');
+      return;
+    }
+    setIsPhoneOtpVerified(true);
+    setShowOtpModal(false);
+    setOtpSuccessToast(`Mobile verification successful (+${activeCountry.phoneDialCode} ${profile.cellPhone}). Verified in ${activeCountry.name}!`);
+    setTimeout(() => setOtpSuccessToast(null), 4000);
+  };
+
+  const handleAutoPopulateCitySuburbs = () => {
+    if (activeCity && activeCity.suburbs.length > 0) {
+      setProfile(prev => ({
+        ...prev,
+        farmingAreas: Array.from(new Set([...prev.farmingAreas, ...activeCity.suburbs]))
+      }));
+    }
+  };
+
+  const handleSavePreferences = () => {
+    setPreferencesSavedToast('System & regional formatting preferences saved successfully!');
+    setTimeout(() => setPreferencesSavedToast(null), 3000);
+  };
 
   const handleGenerateAiBio = () => {
     setIsAiGenerating(true);
@@ -573,7 +747,7 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
           </div>
         </div>
 
-        {/* Navigation Tabs Header (Profile, Password, Billing, Language, Apps & Extensions, Preferences) */}
+        {/* Navigation Tabs Header: 5 Core Tabs */}
         <div className="bg-slate-100 border-b border-slate-200 px-4 flex items-center justify-between text-xs overflow-x-auto">
           <div className="flex items-center gap-1 shrink-0">
             <button
@@ -587,6 +761,7 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
             >
               <User className="w-4 h-4 text-[#00bcd4]" />
               <span>PROFILE</span>
+              <span className="text-xs">{activeCountry.flag}</span>
             </button>
 
             <button
@@ -616,19 +791,6 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
               <span className="bg-amber-100 text-amber-900 text-[9px] font-bold px-1.5 py-0.2 rounded font-mono">
                 {totalCredits}
               </span>
-            </button>
-
-            <button
-              id="tab-settings-language"
-              onClick={() => setActiveTab('language')}
-              className={`px-3.5 py-2.5 font-bold flex items-center gap-1.5 border-b-2 transition-colors ${
-                activeTab === 'language'
-                  ? 'border-[#00bcd4] text-[#006980] bg-white shadow-2xs'
-                  : 'border-transparent text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <Globe className="w-4 h-4 text-indigo-600" />
-              <span>LANGUAGE</span>
             </button>
 
             <button
@@ -675,7 +837,7 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
               <button
                 id="btn-generate-brochure"
                 onClick={() => setShowBrochureModal(true)}
-                className="bg-[#00bcd4] hover:bg-[#00acc1] text-white font-bold text-xs px-3 py-1.5 rounded flex items-center gap-1.5 shadow-xs transition-colors uppercase tracking-wider"
+                className="bg-[#00bcd4] hover:bg-[#00acc1] text-white font-bold text-xs px-3 py-1.5 rounded flex items-center gap-1.5 shadow-xs transition-colors uppercase tracking-wider cursor-pointer"
               >
                 <FileText className="w-3.5 h-3.5" />
                 <span>Agent Card</span>
@@ -688,10 +850,37 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-50 space-y-4">
           
           {/* ============================================================ */}
-          {/* 1. PROFILE TAB */}
+          {/* 1. PROFILE TAB (Includes Country & Area, Language, Identity & Farming) */}
           {/* ============================================================ */}
           {activeTab === 'profile' && (
             <div className="space-y-6">
+              {/* Toast Notifications */}
+              {jurisdictionAppliedToast && (
+                <div className="bg-emerald-50 border-2 border-emerald-500 p-4 rounded-lg flex items-center justify-between gap-3 text-emerald-900 animate-in fade-in slide-in-from-top-2">
+                  <div className="flex items-center gap-2.5">
+                    <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                    <div>
+                      <span className="font-bold text-xs block">
+                        Jurisdiction synchronized to {activeCity.name}, {activeProvince.name} ({activeCountry.name} {activeCountry.flag})!
+                      </span>
+                      <span className="text-[11px] text-emerald-700">
+                        Map cadastre basemap, deeds registry ({activeCountry.landRegistryAuthority}), property listings, and legal title formats ({activeCountry.legalIdentifierName}) are now active.
+                      </span>
+                    </div>
+                  </div>
+                  <span className="text-xs font-mono font-bold bg-emerald-200/60 px-2 py-1 rounded text-emerald-900 shrink-0">
+                    GPS: {activeCity.coordinates.lat.toFixed(4)}, {activeCity.coordinates.lng.toFixed(4)}
+                  </span>
+                </div>
+              )}
+
+              {otpSuccessToast && (
+                <div className="bg-emerald-50 border-2 border-emerald-500 p-3.5 rounded-lg flex items-center gap-2.5 text-emerald-900 text-xs font-bold animate-in fade-in slide-in-from-top-2">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                  <span>{otpSuccessToast}</span>
+                </div>
+              )}
+
               {/* Agent Photos & Branding Banner */}
               <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
@@ -710,9 +899,25 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
                   </div>
 
                   <div>
-                    <h3 className="font-extrabold text-slate-900 text-sm">{profile.title} {profile.name} {profile.surname}</h3>
+                    <h3 className="font-extrabold text-slate-900 text-sm flex items-center gap-2">
+                      <span>{profile.title} {profile.name} {profile.surname}</span>
+                      <span className="text-base">{activeCountry.flag}</span>
+                      {isPhoneOtpVerified ? (
+                        <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded border border-emerald-300 flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                          <span>Verified Resident</span>
+                        </span>
+                      ) : (
+                        <span className="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded border border-amber-300 flex items-center gap-1">
+                          <AlertTriangle className="w-3 h-3 text-amber-600" />
+                          <span>Unverified Mobile</span>
+                        </span>
+                      )}
+                    </h3>
                     <p className="text-xs text-cyan-700 font-semibold">{profile.agentType}</p>
-                    <span className="text-[11px] text-slate-500 font-mono">FFC Reg: {profile.ffcNumber} • {profile.companyName}</span>
+                    <span className="text-[11px] text-slate-500 font-mono">
+                      {activeCountry.ffcLicenseName}: {profile.ffcNumber} • {profile.companyName}
+                    </span>
                   </div>
                 </div>
 
@@ -729,20 +934,29 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
                 </div>
               </div>
 
-              {/* Form Grid 1: Personal & Contact */}
+              {/* ============================================================ */}
+              {/* SECTION 1: IDENTITY & RESIDENCY (Right above Country & Area / Bio) */}
+              {/* ============================================================ */}
               <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-xs space-y-4">
-                <h4 className="font-bold text-xs uppercase tracking-wider text-slate-700 border-b border-slate-100 pb-2 flex items-center gap-1.5">
-                  <User className="w-4 h-4 text-cyan-600" />
-                  <span>Personal & Contact Credentials</span>
-                </h4>
+                <div className="border-b border-slate-100 pb-2 flex items-center justify-between">
+                  <h4 className="font-bold text-xs uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                    <UserCheck className="w-4 h-4 text-emerald-600" />
+                    <span>Identity, Residency & Regulatory Credentials</span>
+                  </h4>
+                  <span className="text-[11px] text-slate-500 font-medium flex items-center gap-1">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Compliant with {activeCountry.regulatoryBody}</span>
+                  </span>
+                </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 text-xs">
+                  {/* Title */}
                   <div>
                     <label className="block text-slate-600 font-semibold mb-1">Title</label>
                     <select 
                       value={profile.title} 
                       onChange={(e) => setProfile({ ...profile, title: e.target.value })}
-                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-slate-800 font-semibold"
+                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-slate-800 font-semibold shadow-2xs"
                     >
                       <option>Mr</option>
                       <option>Mrs</option>
@@ -752,100 +966,145 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
                     </select>
                   </div>
 
+                  {/* First Name */}
                   <div>
                     <label className="block text-slate-600 font-semibold mb-1">First Name</label>
                     <input 
                       type="text" 
                       value={profile.name} 
                       onChange={(e) => setProfile({ ...profile, name: e.target.value })}
-                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-slate-800 font-semibold"
+                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-slate-800 font-semibold shadow-2xs"
                     />
                   </div>
 
+                  {/* Surname */}
                   <div>
                     <label className="block text-slate-600 font-semibold mb-1">Surname</label>
                     <input 
                       type="text" 
                       value={profile.surname} 
                       onChange={(e) => setProfile({ ...profile, surname: e.target.value })}
-                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-slate-800 font-semibold"
+                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-slate-800 font-semibold shadow-2xs"
                     />
                   </div>
 
+                  {/* Email */}
                   <div>
                     <label className="block text-slate-600 font-semibold mb-1">Email Address</label>
                     <input 
                       type="email" 
                       value={profile.email} 
                       onChange={(e) => setProfile({ ...profile, email: e.target.value })}
-                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-slate-800 font-semibold"
+                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-slate-800 font-semibold shadow-2xs"
                     />
                   </div>
 
+                  {/* Mobile Cellphone with Country Dialing Code & OTP Verification */}
                   <div>
-                    <label className="block text-slate-600 font-semibold mb-1">SA ID / Passport Number</label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-slate-600 font-semibold flex items-center gap-1">
+                        <span>Mobile Phone</span>
+                        <span className="text-[10px] text-slate-400 font-normal">({activeCountry.name})</span>
+                      </label>
+                      {isPhoneOtpVerified ? (
+                        <span className="text-emerald-700 font-bold text-[10px] flex items-center gap-0.5">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Verified
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={handleOpenOtpModal}
+                          className="text-amber-700 hover:text-amber-800 font-bold text-[10px] underline flex items-center gap-0.5 cursor-pointer"
+                        >
+                          <Smartphone className="w-3 h-3" /> Verify via OTP
+                        </button>
+                      )}
+                    </div>
+                    
+                    <div className="flex rounded shadow-2xs">
+                      <span className="inline-flex items-center px-2.5 rounded-l border border-r-0 border-slate-300 bg-slate-100 text-slate-700 font-mono font-bold text-xs">
+                        +{activeCountry.phoneDialCode}
+                      </span>
+                      <input 
+                        type="text" 
+                        value={profile.cellPhone} 
+                        onChange={(e) => {
+                          setProfile({ ...profile, cellPhone: e.target.value });
+                        }}
+                        placeholder={activeCountry.phonePlaceholder}
+                        className="w-full px-3 py-2 bg-white border border-slate-300 rounded-r text-slate-800 font-mono font-semibold"
+                      />
+                    </div>
+                  </div>
+
+                  {/* ID / Passport Number */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-slate-600 font-semibold">ID / Passport Number</label>
+                      <span className="text-[10px] text-slate-400">{activeCountry.idFormatHint}</span>
+                    </div>
                     <input 
                       type="text" 
                       value={profile.idNumber} 
                       onChange={(e) => setProfile({ ...profile, idNumber: e.target.value })}
-                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-slate-800 font-mono font-semibold"
+                      placeholder={activeCountry.idNumberPlaceholder}
+                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-slate-800 font-mono font-semibold shadow-2xs"
                     />
                   </div>
 
+                  {/* Regulatory FFC / License Number */}
                   <div>
-                    <label className="block text-slate-600 font-semibold mb-1">Mobile Cellphone</label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-slate-600 font-semibold truncate">{activeCountry.ffcLicenseName}</label>
+                      <span className="text-[10px] text-slate-400 font-mono">{activeCountry.code}</span>
+                    </div>
                     <input 
                       type="text" 
-                      value={profile.cellPhone} 
-                      onChange={(e) => setProfile({ ...profile, cellPhone: e.target.value })}
-                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-slate-800 font-semibold"
+                      value={profile.ffcNumber} 
+                      onChange={(e) => setProfile({ ...profile, ffcNumber: e.target.value })}
+                      placeholder={activeCountry.ffcLicensePlaceholder}
+                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-slate-800 font-mono font-semibold shadow-2xs"
                     />
                   </div>
 
+                  {/* Office Phone */}
                   <div>
                     <label className="block text-slate-600 font-semibold mb-1">Office Switchboard</label>
                     <input 
                       type="text" 
                       value={profile.officePhone} 
                       onChange={(e) => setProfile({ ...profile, officePhone: e.target.value })}
-                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-slate-800 font-semibold"
+                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-slate-800 font-semibold shadow-2xs"
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-slate-600 font-semibold mb-1">EAAB / PPRA FFC Number</label>
-                    <input 
-                      type="text" 
-                      value={profile.ffcNumber} 
-                      onChange={(e) => setProfile({ ...profile, ffcNumber: e.target.value })}
-                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-slate-800 font-mono font-semibold"
-                    />
-                  </div>
-
+                  {/* Company / Agency Name */}
                   <div>
                     <label className="block text-slate-600 font-semibold mb-1">Company / Agency Name</label>
                     <input 
                       type="text" 
                       value={profile.companyName} 
                       onChange={(e) => setProfile({ ...profile, companyName: e.target.value })}
-                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-slate-800 font-semibold"
+                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-slate-800 font-semibold shadow-2xs"
                     />
                   </div>
                 </div>
               </div>
 
-              {/* Form Grid 2: Bio & AI Generation */}
+              {/* ============================================================ */}
+              {/* SECTION 2: AGENT BIO & SPECIALTY (Followed by Bio) */}
+              {/* ============================================================ */}
               <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-xs space-y-3">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                   <h4 className="font-bold text-xs uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
                     <FileText className="w-4 h-4 text-cyan-600" />
-                    <span>Agent Bio & Market Specialty</span>
+                    <span>Agent Bio & Market Specialty ({activeCity.name}, {activeCountry.name})</span>
                   </h4>
 
                   <button
                     onClick={handleGenerateAiBio}
                     disabled={isAiGenerating}
-                    className="bg-cyan-50 hover:bg-cyan-100 text-cyan-800 border border-cyan-300 px-3 py-1 rounded text-xs font-bold flex items-center gap-1 transition-colors"
+                    className="bg-cyan-50 hover:bg-cyan-100 text-cyan-800 border border-cyan-300 px-3 py-1 rounded text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer"
                   >
                     <Sparkles className="w-3.5 h-3.5 text-cyan-600" />
                     <span>{isAiGenerating ? 'Generating Bio...' : 'Generate with AI'}</span>
@@ -853,46 +1112,204 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
                 </div>
 
                 <textarea
-                  rows={4}
+                  rows={3}
                   value={profile.aboutMe}
                   onChange={(e) => setProfile({ ...profile, aboutMe: e.target.value })}
-                  placeholder="Write a concise overview of your local experience, track record, and representation methodology..."
-                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-slate-800 text-xs leading-relaxed focus:ring-1 focus:ring-cyan-500"
+                  placeholder={`Write a concise overview of your local experience in ${activeCity.name} and ${activeCountry.name}...`}
+                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-slate-800 text-xs leading-relaxed focus:ring-1 focus:ring-cyan-500 shadow-2xs"
                 />
               </div>
 
-              {/* Form Grid 3: Farming Areas Tag Manager */}
-              <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-xs space-y-3">
-                <h4 className="font-bold text-xs uppercase tracking-wider text-slate-700 border-b border-slate-100 pb-2 flex items-center gap-1.5">
-                  <MapPin className="w-4 h-4 text-emerald-600" />
-                  <span>Assigned Farming Suburbs & Territories</span>
-                </h4>
+              {/* ============================================================ */}
+              {/* SECTION 3: COUNTRY & AREA JURISDICTION (The Agent Country & Jurisdiction) */}
+              {/* ============================================================ */}
+              <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-xs space-y-4">
+                <div className="border-b border-slate-100 pb-2.5 flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded bg-cyan-100 flex items-center justify-center text-cyan-800">
+                      <Globe className="w-4 h-4 text-cyan-700" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-xs uppercase tracking-wider text-slate-800 flex items-center gap-2">
+                        <span>Country & Area Jurisdiction</span>
+                        <span className="bg-cyan-50 text-cyan-800 text-[10px] font-bold px-2 py-0.5 rounded border border-cyan-200">
+                          {activeCountry.code} • {activeCity.name}
+                        </span>
+                      </h4>
+                      <p className="text-[11px] text-slate-500">
+                        Operational country, province/state, and primary municipality informing mapping, title deeds, regulatory compliance & local territory.
+                      </p>
+                    </div>
+                  </div>
 
+                  <button
+                    id="btn-apply-jurisdiction-profile"
+                    onClick={handleApplyJurisdiction}
+                    className="bg-[#00bcd4] hover:bg-[#00acc1] text-white font-bold text-xs px-3.5 py-1.5 rounded flex items-center gap-1.5 shadow-xs transition-colors shrink-0 uppercase tracking-wider cursor-pointer"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-cyan-100" />
+                    <span>Sync Map Basemap & Deeds</span>
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                  {/* Dropdown 1: Country */}
+                  <div className="space-y-1.5 bg-slate-50 p-3 rounded-lg border border-slate-200">
+                    <div className="flex items-center justify-between">
+                      <label htmlFor="dropdown-country-select" className="font-bold text-slate-700 flex items-center gap-1.5">
+                        <span className="w-5 h-5 rounded-full bg-cyan-600 text-white flex items-center justify-center text-[10px] font-mono">1</span>
+                        <span>Country / Sovereign Jurisdiction</span>
+                      </label>
+                      <span className="text-[10px] text-cyan-800 font-mono font-bold bg-cyan-100/70 px-1.5 py-0.5 rounded">
+                        {GLOBAL_COUNTRIES_DATA.length} Countries
+                      </span>
+                    </div>
+                    <select
+                      id="dropdown-country-select"
+                      value={selectedCountryId}
+                      onChange={handleCountryChange}
+                      className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded font-bold text-slate-900 text-xs shadow-2xs focus:ring-2 focus:ring-cyan-500 cursor-pointer"
+                    >
+                      {GLOBAL_COUNTRIES_DATA.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.flag} {c.name} ({c.currency.code} - {c.currency.symbol})
+                        </option>
+                      ))}
+                    </select>
+                    <div className="text-[10px] text-slate-500 flex items-center justify-between pt-1">
+                      <span>Regulatory Body:</span>
+                      <span className="font-semibold text-slate-700 truncate max-w-[170px]">{activeCountry.regulatoryBody}</span>
+                    </div>
+                  </div>
+
+                  {/* Dropdown 2: Province / State */}
+                  <div className="space-y-1.5 bg-slate-50 p-3 rounded-lg border border-slate-200">
+                    <label className="block font-bold text-slate-700 flex items-center gap-1.5">
+                      <span className="w-5 h-5 rounded-full bg-cyan-600 text-white flex items-center justify-center text-[10px] font-mono">2</span>
+                      <span>Province / State / Nation</span>
+                    </label>
+                    <select
+                      id="dropdown-province-select"
+                      value={selectedProvinceId}
+                      onChange={handleProvinceChange}
+                      className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded font-bold text-slate-900 text-xs shadow-2xs focus:ring-2 focus:ring-cyan-500 cursor-pointer"
+                    >
+                      {availableProvinces.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name} ({p.cities.length} Municipal Cities)
+                        </option>
+                      ))}
+                    </select>
+                    <div className="text-[10px] text-slate-500 flex items-center justify-between pt-1">
+                      <span>Deeds Office Branch:</span>
+                      <span className="font-semibold text-slate-700 truncate max-w-[170px]">{activeCity.deedsOffice}</span>
+                    </div>
+                  </div>
+
+                  {/* Dropdown 3: City / Town */}
+                  <div className="space-y-1.5 bg-slate-50 p-3 rounded-lg border border-slate-200">
+                    <label className="block font-bold text-slate-700 flex items-center gap-1.5">
+                      <span className="w-5 h-5 rounded-full bg-cyan-600 text-white flex items-center justify-center text-[10px] font-mono">3</span>
+                      <span>City / Town / Metro Area</span>
+                    </label>
+                    <select
+                      id="dropdown-city-select"
+                      value={selectedCityId}
+                      onChange={handleCityChange}
+                      className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded font-bold text-slate-900 text-xs shadow-2xs focus:ring-2 focus:ring-cyan-500 cursor-pointer"
+                    >
+                      {availableCities.map((ct) => (
+                        <option key={ct.id} value={ct.id}>
+                          {ct.name} ({ct.properties.length} Verified Properties)
+                        </option>
+                      ))}
+                    </select>
+                    <div className="text-[10px] text-slate-500 flex items-center justify-between pt-1">
+                      <span>Available Suburbs:</span>
+                      <span className="font-semibold text-slate-700">{activeCity.suburbs.length} Districts</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Country Specifications Badges */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-slate-100 text-[11px]">
+                  <div className="p-2 bg-slate-50 rounded border border-slate-200">
+                    <span className="text-[10px] text-slate-400 block font-bold uppercase">Land Authority</span>
+                    <span className="font-semibold text-slate-800 truncate block">{activeCountry.landRegistryAuthority}</span>
+                  </div>
+                  <div className="p-2 bg-slate-50 rounded border border-slate-200">
+                    <span className="text-[10px] text-slate-400 block font-bold uppercase">Title Standard</span>
+                    <span className="font-semibold text-slate-800 truncate block">{activeCountry.legalIdentifierName}</span>
+                  </div>
+                  <div className="p-2 bg-slate-50 rounded border border-slate-200">
+                    <span className="text-[10px] text-slate-400 block font-bold uppercase">Currency Standard</span>
+                    <span className="font-semibold text-slate-800 block">{activeCountry.currency.name} ({activeCountry.currency.symbol})</span>
+                  </div>
+                  <div className="p-2 bg-slate-50 rounded border border-slate-200">
+                    <span className="text-[10px] text-slate-400 block font-bold uppercase">Portals</span>
+                    <span className="font-semibold text-slate-800 truncate block">{activeCountry.majorPortals.map(p => p.name).join(', ')}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* ============================================================ */}
+              {/* SECTION 4: ASSIGNED FARMING SUBURBS & TERRITORIES (Matches Country & Area) */}
+              {/* ============================================================ */}
+              <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-xs space-y-3">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-2 flex-wrap gap-2">
+                  <div className="flex items-center gap-1.5">
+                    <MapPin className="w-4 h-4 text-emerald-600" />
+                    <h4 className="font-bold text-xs uppercase tracking-wider text-slate-700">
+                      <span>Assigned Farming Suburbs & Territories</span>
+                    </h4>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] text-slate-500">
+                      Territory: <strong>{activeCity.name} ({activeProvince.name}, {activeCountry.name})</strong>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleAutoPopulateCitySuburbs}
+                      className="bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 px-2.5 py-1 rounded text-[11px] font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                    >
+                      <Plus className="w-3 h-3" />
+                      <span>Auto-Add All {activeCity.name} Suburbs</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Suburb Badges */}
                 <div className="flex flex-wrap gap-2">
                   {profile.farmingAreas.map((area, idx) => (
                     <span 
                       key={idx}
-                      className="bg-cyan-50 text-cyan-900 border border-cyan-200 px-2.5 py-1 rounded-full text-xs font-semibold flex items-center gap-1.5"
+                      className="bg-cyan-50 text-cyan-900 border border-cyan-200 px-2.5 py-1 rounded-full text-xs font-semibold flex items-center gap-1.5 shadow-2xs"
                     >
+                      <MapPin className="w-3 h-3 text-cyan-600" />
                       <span>{area}</span>
                       <button 
                         onClick={() => handleRemoveFarmingArea(area)}
-                        className="text-cyan-700 hover:text-rose-600"
+                        className="text-cyan-700 hover:text-rose-600 cursor-pointer"
                       >
                         <X className="w-3 h-3" />
                       </button>
                     </span>
                   ))}
+                  {profile.farmingAreas.length === 0 && (
+                    <span className="text-xs text-slate-400 italic">No suburbs assigned yet. Add from the list below.</span>
+                  )}
                 </div>
 
-                <div className="flex items-center gap-2 pt-2">
+                {/* Add Suburb Row (Matches the selected Country & Area) */}
+                <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100">
                   <select
                     value={newFarmingArea}
                     onChange={(e) => setNewFarmingArea(e.target.value)}
-                    className="bg-white border border-slate-300 rounded px-3 py-1.5 text-xs text-slate-800 font-medium"
+                    className="bg-white border border-slate-300 rounded px-3 py-1.5 text-xs text-slate-800 font-medium shadow-2xs"
                   >
-                    <option value="">Select Suburb to Add...</option>
-                    {SUBURB_OPTIONS.filter(s => !profile.farmingAreas.includes(s)).map((suburb) => (
+                    <option value="">Select Suburb in {activeCity.name} to Add...</option>
+                    {activeCity.suburbs.filter(s => !profile.farmingAreas.includes(s)).map((suburb) => (
                       <option key={suburb} value={suburb}>{suburb}</option>
                     ))}
                   </select>
@@ -905,10 +1322,135 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
                         setNewFarmingArea('');
                       }
                     }}
-                    className="bg-slate-800 hover:bg-slate-700 text-white font-bold px-3 py-1.5 rounded text-xs flex items-center gap-1"
+                    disabled={!newFarmingArea}
+                    className="bg-slate-800 hover:bg-slate-700 disabled:opacity-50 text-white font-bold px-3 py-1.5 rounded text-xs flex items-center gap-1 cursor-pointer"
                   >
                     <Plus className="w-3.5 h-3.5" /> Add Suburb
                   </button>
+
+                  <span className="text-[11px] text-slate-400 pl-2">
+                    Quick suggestions from {activeCity.name}:
+                  </span>
+                  <div className="flex flex-wrap gap-1">
+                    {activeCity.suburbs.slice(0, 4).map((sub, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => handleAddFarmingArea(sub)}
+                        disabled={profile.farmingAreas.includes(sub)}
+                        className={`text-[10px] px-2 py-0.5 rounded border transition-colors ${
+                          profile.farmingAreas.includes(sub)
+                            ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'
+                            : 'bg-white hover:bg-cyan-50 text-cyan-800 border-cyan-200 cursor-pointer font-medium'
+                        }`}
+                      >
+                        + {sub}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* ============================================================ */}
+              {/* SECTION 5: APPLICATION & REPORT LANGUAGE (Single Dropdown) */}
+              {/* ============================================================ */}
+              <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-xs space-y-3">
+                <div className="border-b border-slate-100 pb-2 flex items-center justify-between">
+                  <h4 className="font-bold text-xs uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                    <Globe className="w-4 h-4 text-indigo-600" />
+                    <span>Application & Report Language</span>
+                  </h4>
+                  {languageSaved && (
+                    <span className="text-emerald-700 text-xs font-bold flex items-center gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Language preference updated
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 text-xs">
+                  <div className="max-w-md pt-1">
+                    <span className="font-semibold text-slate-800 block">Default Interface & PDF Export Language</span>
+                    <p className="text-[11px] text-slate-500 mt-0.5">
+                      Applied across Valuation Certificates, CMA presentation booklets, client SMS notifications, and system dialogs.
+                    </p>
+                  </div>
+
+                  {/* Compact Pop-up Language Dropdown showing Selected Language & > */}
+                  <div className="min-w-[300px] w-full sm:w-auto relative">
+                    {(() => {
+                      const activeLang = LANGUAGES_DATA.find(l => l.code === selectedLanguage) || LANGUAGES_DATA[0];
+                      return (
+                        <div className="space-y-1.5">
+                          <button
+                            id="btn-toggle-profile-language-dropdown"
+                            type="button"
+                            onClick={() => setIsProfileLanguageOpen(!isProfileLanguageOpen)}
+                            className={`w-full px-3.5 py-2.5 bg-white border rounded text-xs flex items-center justify-between gap-2 shadow-2xs transition-all cursor-pointer ${
+                              isProfileLanguageOpen 
+                                ? 'border-cyan-500 ring-2 ring-cyan-100' 
+                                : 'border-slate-300 hover:border-slate-400 hover:bg-slate-50/70'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <span className="text-base shrink-0">{activeLang.flag}</span>
+                              <div className="text-left min-w-0">
+                                <div className="font-bold text-slate-900 truncate">{activeLang.name}</div>
+                                <div className="text-[10px] text-slate-500 font-normal truncate">{activeLang.native}</div>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-1 shrink-0">
+                              <span className="font-mono text-[9px] uppercase px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 font-bold">
+                                {activeLang.code}
+                              </span>
+                              <ChevronRight 
+                                className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${
+                                  isProfileLanguageOpen ? 'rotate-90 text-cyan-600' : 'text-slate-400'
+                                }`} 
+                              />
+                            </div>
+                          </button>
+
+                          {/* Pop-up Dropdown List */}
+                          {isProfileLanguageOpen && (
+                            <div className="bg-white border border-slate-200 rounded-lg p-2 max-h-60 overflow-y-auto space-y-1 shadow-lg animate-in fade-in slide-in-from-top-1 duration-150 z-20">
+                              <div className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between border-b border-slate-100 pb-1 mb-1">
+                                <span>Choose Application Language</span>
+                                <span className="font-mono text-cyan-700 text-[9px]">{LANGUAGES_DATA.length} Available</span>
+                              </div>
+                              {LANGUAGES_DATA.map((lang) => {
+                                const isCurrent = selectedLanguage === lang.code;
+                                return (
+                                  <button
+                                    key={lang.code}
+                                    type="button"
+                                    onClick={() => {
+                                      handleSelectLanguage(lang.code);
+                                      setIsProfileLanguageOpen(false);
+                                    }}
+                                    className={`w-full text-left px-2.5 py-2 rounded text-xs flex items-center justify-between gap-2 transition-all cursor-pointer ${
+                                      isCurrent
+                                        ? 'bg-cyan-50 text-cyan-950 font-bold border border-cyan-300 shadow-2xs'
+                                        : 'hover:bg-slate-50 text-slate-700 hover:text-slate-900 border border-transparent'
+                                    }`}
+                                  >
+                                    <div className="flex items-center gap-2.5 min-w-0">
+                                      <span className="text-lg shrink-0">{lang.flag}</span>
+                                      <div className="truncate">
+                                        <div className="truncate text-xs font-semibold">{lang.name}</div>
+                                        <div className="text-[10px] text-slate-400 font-normal truncate">{lang.native}</div>
+                                      </div>
+                                    </div>
+                                    {isCurrent && <Check className="w-4 h-4 text-cyan-700 shrink-0 font-bold" />}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+                  </div>
                 </div>
               </div>
             </div>
@@ -1769,97 +2311,7 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
           )}
 
           {/* ============================================================ */}
-          {/* 4. LANGUAGE TAB */}
-          {/* ============================================================ */}
-          {activeTab === 'language' && (
-            <div className="max-w-2xl mx-auto space-y-5">
-              <div className="bg-white p-6 rounded-lg border border-slate-200 shadow-xs space-y-4">
-                <div className="border-b border-slate-100 pb-3">
-                  <h3 className="font-bold text-sm text-slate-900 flex items-center gap-2">
-                    <Globe className="w-4 h-4 text-indigo-600" />
-                    <span>Application & Report Language</span>
-                  </h3>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    Select your preferred language for dashboard tools, Valuation PDF reports, and automated client correspondence.
-                  </p>
-                </div>
-
-                {languageSaved && (
-                  <div className="bg-emerald-100 text-emerald-800 px-4 py-2 rounded text-xs font-bold flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                    <span>Language preference updated!</span>
-                  </div>
-                )}
-
-                <div className="space-y-2">
-                  {LANGUAGES_DATA.map((lang) => {
-                    const isCurrent = selectedLanguage === lang.code;
-                    return (
-                      <button
-                        key={lang.code}
-                        type="button"
-                        onClick={() => handleSelectLanguage(lang.code)}
-                        className={`w-full flex items-center justify-between p-3 rounded border text-left transition-all ${
-                          isCurrent
-                            ? 'border-cyan-500 bg-cyan-50/80 text-cyan-900 font-bold shadow-xs'
-                            : 'border-slate-200 hover:bg-slate-50 text-slate-700'
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <span className="text-2xl">{lang.flag}</span>
-                          <div>
-                            <div className="text-xs font-bold">{lang.name}</div>
-                            <div className="text-[10px] text-slate-500 font-normal">{lang.native}</div>
-                          </div>
-                        </div>
-
-                        {isCurrent && <Check className="w-4 h-4 text-cyan-600" />}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Regional Number & Date Formatting */}
-              <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-xs space-y-4">
-                <h4 className="font-bold text-xs uppercase tracking-wider text-slate-700">
-                  Regional Formats & Currency Standard
-                </h4>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                  <div>
-                    <label className="block text-slate-600 font-semibold mb-1">Date Format</label>
-                    <select
-                      value={dateFormat}
-                      onChange={(e) => setDateFormat(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-300 rounded px-3 py-2 text-slate-800 font-mono font-semibold"
-                    >
-                      <option value="YYYY/MM/DD">YYYY/MM/DD (2026/08/28 - Deeds Standard)</option>
-                      <option value="DD/MM/YYYY">DD/MM/YYYY (28/08/2026)</option>
-                      <option value="MM/DD/YYYY">MM/DD/YYYY (08/28/2026)</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-slate-600 font-semibold mb-1">Currency Code & Metric</label>
-                    <select
-                      value={currencyUnit}
-                      onChange={(e) => setCurrencyUnit(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-300 rounded px-3 py-2 text-slate-800 font-mono font-semibold"
-                    >
-                      <option value="ZAR (R)">South African Rand (ZAR - R)</option>
-                      <option value="USD ($)">United States Dollar (USD - $)</option>
-                      <option value="EUR (€)">Euro (EUR - €)</option>
-                      <option value="GBP (£)">British Pound (GBP - £)</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ============================================================ */}
-          {/* 5. APPS & EXTENSIONS TAB */}
+          {/* 4. APPS & EXTENSIONS TAB */}
           {/* ============================================================ */}
           {activeTab === 'apps' && (
             <div className="space-y-4">
@@ -1916,7 +2368,7 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
                           <button
                             type="button"
                             onClick={() => handleToggleApp(app.id, app.title)}
-                            className={`px-3 py-1 rounded text-xs font-bold flex items-center gap-1.5 transition-colors ${
+                            className={`px-3 py-1 rounded text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer ${
                               isInstalled
                                 ? 'bg-emerald-100 hover:bg-rose-100 text-emerald-800 hover:text-rose-800 border border-emerald-300 hover:border-rose-300'
                                 : 'bg-[#00bcd4] hover:bg-[#00acc1] text-white shadow-xs'
@@ -1956,7 +2408,7 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
                 <button
                   type="button"
                   onClick={() => alert('API credentials token generated: ptah_live_9984_afbc19024')}
-                  className="bg-[#00bcd4] hover:bg-cyan-500 text-white font-bold text-xs px-4 py-2 rounded uppercase tracking-wider shadow-xs"
+                  className="bg-[#00bcd4] hover:bg-cyan-500 text-white font-bold text-xs px-4 py-2 rounded uppercase tracking-wider shadow-xs cursor-pointer"
                 >
                   Generate API Key
                 </button>
@@ -1965,50 +2417,156 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
           )}
 
           {/* ============================================================ */}
-          {/* 6. PREFERENCES TAB */}
+          {/* 5. PREFERENCES TAB (Context-Aware Informed by Country & Area) */}
           {/* ============================================================ */}
           {activeTab === 'preferences' && (
-            <div className="max-w-2xl mx-auto bg-white p-6 rounded-lg border border-slate-200 shadow-xs space-y-5 text-xs">
-              <h2 className="font-bold text-sm text-slate-800 border-b border-slate-100 pb-2">
-                Application & Regional Preferences
-              </h2>
-
-              <div className="space-y-4">
-                <div className="flex items-center justify-between py-2 border-b border-slate-100">
-                  <div>
-                    <span className="font-semibold text-slate-700 block">Default Cadastre Suburb</span>
-                    <span className="text-[11px] text-slate-500">Auto-load this cadastre when starting new valuation sessions</span>
+            <div className="max-w-3xl mx-auto space-y-5 text-xs">
+              {/* Context Summary Banner */}
+              <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-cyan-50 border border-cyan-200 flex items-center justify-center text-xl shrink-0">
+                    {activeCountry.flag}
                   </div>
-                  <select className="bg-slate-50 border border-slate-300 rounded px-2.5 py-1 text-slate-800">
-                    <option>THREE ANCHOR BAY, CITY OF CAPE TOWN</option>
-                    <option>GREEN POINT, CITY OF CAPE TOWN</option>
-                    <option>SEA POINT EAST, CITY OF CAPE TOWN</option>
-                    <option>CAMPS BAY, CITY OF CAPE TOWN</option>
-                  </select>
+                  <div>
+                    <h3 className="font-bold text-xs text-slate-900 flex items-center gap-2">
+                      <span>Regional Context Applied:</span>
+                      <span className="bg-cyan-100 text-cyan-800 font-bold px-2 py-0.5 rounded text-[10px]">
+                        {activeCountry.name} • {activeCity.name}
+                      </span>
+                    </h3>
+                    <p className="text-[11px] text-slate-500">
+                      Preferences are automatically informed by the selected Country & Area jurisdiction in your Profile.
+                    </p>
+                  </div>
                 </div>
 
-                <div className="flex items-center justify-between py-2 border-b border-slate-100">
-                  <div>
-                    <span className="font-semibold text-slate-700 block">FICA Automated Risk Notifications</span>
-                    <span className="text-[11px] text-slate-500">Receive alert when high PEP or sanction risk matches occur</span>
-                  </div>
-                  <input type="checkbox" defaultChecked className="w-4 h-4 text-cyan-600 rounded" />
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('profile')}
+                  className="text-xs text-cyan-700 hover:text-cyan-900 font-bold underline shrink-0 cursor-pointer"
+                >
+                  Edit Jurisdiction →
+                </button>
+              </div>
+
+              {/* Preferences Configuration Card */}
+              <div className="bg-white p-6 rounded-lg border border-slate-200 shadow-xs space-y-5">
+                <div className="border-b border-slate-100 pb-2.5 flex items-center justify-between">
+                  <h2 className="font-bold text-sm text-slate-800 flex items-center gap-2">
+                    <Sliders className="w-4 h-4 text-cyan-700" />
+                    <span>Application & Formatting Preferences</span>
+                  </h2>
+                  <span className="text-[10px] text-slate-400 font-mono">Territory: {activeCountry.code}</span>
                 </div>
 
-                <div className="flex items-center justify-between py-2 border-b border-slate-100">
-                  <div>
-                    <span className="font-semibold text-slate-700 block">Cadastre Satellite Layer by Default</span>
-                    <span className="text-[11px] text-slate-500">Render high-res aerial satellite photography on launch</span>
+                <div className="space-y-4 divide-y divide-slate-100">
+                  {/* Date Format (Informed by Country Metadata) */}
+                  <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                      <span className="font-semibold text-slate-800 block text-xs">Date Format</span>
+                      <span className="text-[11px] text-slate-500">
+                        Controls date display on Deeds documents, valuation certificates, and CMA history.
+                      </span>
+                    </div>
+                    <select 
+                      value={dateFormat}
+                      onChange={(e) => setDateFormat(e.target.value)}
+                      className="bg-white border border-slate-300 rounded px-3 py-1.5 text-slate-800 font-mono font-semibold text-xs min-w-[240px] shadow-2xs cursor-pointer"
+                    >
+                      <option value="YYYY/MM/DD">YYYY/MM/DD ({activeCountry.code === 'ZAR' ? 'Deeds Office Standard' : 'ISO Standard'})</option>
+                      <option value="DD/MM/YYYY">DD/MM/YYYY (Commonwealth / UK Standard)</option>
+                      <option value="MM/DD/YYYY">MM/DD/YYYY (US / Regional Standard)</option>
+                      <option value="YYYY-MM-DD">YYYY-MM-DD (Universal Standard)</option>
+                    </select>
                   </div>
-                  <input type="checkbox" defaultChecked className="w-4 h-4 text-cyan-600 rounded" />
+
+                  {/* Measurement Unit Standard (Informed by Country Metadata) */}
+                  <div className="pt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                      <span className="font-semibold text-slate-800 block text-xs">Measurement Standard & Area Units</span>
+                      <span className="text-[11px] text-slate-500">
+                        Default area unit for property parcels, ERF extents, and spatial geometry.
+                      </span>
+                    </div>
+                    <select 
+                      value={measurementUnit}
+                      onChange={(e) => setMeasurementUnit(e.target.value)}
+                      className="bg-white border border-slate-300 rounded px-3 py-1.5 text-slate-800 font-semibold text-xs min-w-[240px] shadow-2xs cursor-pointer"
+                    >
+                      <option value="Metric (m² & Hectares)">Metric (m² & Hectares)</option>
+                      <option value="Imperial (sq ft & Acres)">Imperial (sq ft & Acres)</option>
+                    </select>
+                  </div>
+
+                  {/* Default Cadastre Suburb (Informed by Selected City Suburbs) */}
+                  <div className="pt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                      <span className="font-semibold text-slate-800 block text-xs">Default Cadastre Suburb</span>
+                      <span className="text-[11px] text-slate-500">
+                        Auto-focus this suburb when opening new valuation sessions in {activeCity.name}.
+                      </span>
+                    </div>
+                    <select 
+                      value={defaultCadastreSuburb}
+                      onChange={(e) => setDefaultCadastreSuburb(e.target.value)}
+                      className="bg-white border border-slate-300 rounded px-3 py-1.5 text-slate-800 font-semibold text-xs min-w-[240px] shadow-2xs cursor-pointer"
+                    >
+                      {activeCity.suburbs.map((suburb) => (
+                        <option key={suburb} value={suburb}>
+                          {suburb}, {activeCity.name.toUpperCase()}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Regulatory Compliance & PEP/Sanctions Alerts */}
+                  <div className="pt-4 flex items-center justify-between gap-4">
+                    <div>
+                      <span className="font-semibold text-slate-800 block text-xs">
+                        {activeCountry.complianceAuthorityName} Automated Risk Notifications
+                      </span>
+                      <span className="text-[11px] text-slate-500">
+                        Receive real-time alerts for high PEP or sanction watchlist matches under {activeCountry.regulatoryBody} guidelines.
+                      </span>
+                    </div>
+                    <input type="checkbox" defaultChecked className="w-4 h-4 text-cyan-600 rounded cursor-pointer shrink-0" />
+                  </div>
+
+                  {/* Cadastre Satellite Layer Default */}
+                  <div className="pt-4 flex items-center justify-between gap-4">
+                    <div>
+                      <span className="font-semibold text-slate-800 block text-xs">Cadastre Satellite Aerial Layer by Default</span>
+                      <span className="text-[11px] text-slate-500">
+                        Render high-resolution aerial satellite orthophotography automatically on map initialization.
+                      </span>
+                    </div>
+                    <input type="checkbox" defaultChecked className="w-4 h-4 text-cyan-600 rounded cursor-pointer shrink-0" />
+                  </div>
+
+                  {/* Valuation Archiving Statutory Compliance */}
+                  <div className="pt-4 flex items-center justify-between gap-4">
+                    <div>
+                      <span className="font-semibold text-slate-800 block text-xs">Automatic Valuation Report Archiving</span>
+                      <span className="text-[11px] text-slate-500">
+                        Store generated 12-page PDF valuations in cloud repository for 7 years for statutory compliance.
+                      </span>
+                    </div>
+                    <input type="checkbox" defaultChecked className="w-4 h-4 text-cyan-600 rounded cursor-pointer shrink-0" />
+                  </div>
                 </div>
 
-                <div className="flex items-center justify-between py-2 border-b border-slate-100">
-                  <div>
-                    <span className="font-semibold text-slate-700 block">Automatic Valuation Report Archiving</span>
-                    <span className="text-[11px] text-slate-500">Store generated 12-page PDF valuations in local history for 7 years (POPIA)</span>
-                  </div>
-                  <input type="checkbox" defaultChecked className="w-4 h-4 text-cyan-600 rounded" />
+                <div className="pt-4 border-t border-slate-100 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsSaved(true);
+                      setTimeout(() => setIsSaved(false), 3000);
+                    }}
+                    className="bg-[#00bcd4] hover:bg-[#00acc1] text-white font-bold text-xs px-5 py-2 rounded shadow-xs uppercase tracking-wider transition-colors cursor-pointer flex items-center gap-1.5"
+                  >
+                    <Check className="w-4 h-4" />
+                    <span>Save Regional Preferences</span>
+                  </button>
                 </div>
               </div>
             </div>
@@ -2350,9 +2908,114 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
             <div className="mt-4 flex justify-end gap-2">
               <button
                 onClick={() => window.print()}
-                className="bg-[#00bcd4] hover:bg-cyan-600 text-white font-bold px-4 py-1.5 rounded text-xs flex items-center gap-1.5"
+                className="bg-[#00bcd4] hover:bg-cyan-600 text-white font-bold px-4 py-1.5 rounded text-xs flex items-center gap-1.5 cursor-pointer"
               >
                 <FileText className="w-4 h-4" /> Print / Save PDF
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 5. Mobile Phone SMS OTP Verification Modal */}
+      {showOtpModal && (
+        <div className="fixed inset-0 z-70 flex items-center justify-center bg-black/75 backdrop-blur-xs p-4">
+          <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl border border-slate-300 relative text-xs space-y-4 animate-in fade-in zoom-in-95">
+            <button 
+              onClick={() => setShowOtpModal(false)} 
+              className="absolute top-4 right-4 p-1 text-slate-400 hover:text-slate-800 rounded-full hover:bg-slate-100 cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {/* Header */}
+            <div className="flex items-center gap-3 border-b border-slate-100 pb-3">
+              <div className="w-10 h-10 rounded-full bg-cyan-100 text-cyan-700 flex items-center justify-center shrink-0">
+                <Smartphone className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-extrabold text-sm text-slate-900 flex items-center gap-1.5">
+                  <span>Verify Mobile Phone Number</span>
+                  <span>{activeCountry.flag}</span>
+                </h3>
+                <p className="text-[11px] text-slate-500">
+                  Proof of legitimate local residency in {activeCountry.name}
+                </p>
+              </div>
+            </div>
+
+            {/* Explanatory Banner */}
+            <div className="bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-1">
+              <div className="text-[11px] text-slate-600">
+                A 6-digit authentication token has been dispatched via SMS to:
+              </div>
+              <div className="font-mono font-bold text-slate-900 text-xs flex items-center gap-1.5">
+                <Phone className="w-3.5 h-3.5 text-cyan-600" />
+                <span>+{activeCountry.phoneDialCode} {profile.cellPhone || activeCountry.phonePlaceholder}</span>
+              </div>
+            </div>
+
+            {/* 6-Digit OTP Code Input */}
+            <div className="space-y-2">
+              <label className="block font-bold text-slate-700 text-xs">
+                Enter 6-Digit SMS Verification Code
+              </label>
+              <input 
+                type="text"
+                maxLength={6}
+                value={otpCode}
+                onChange={(e) => {
+                  setOtpError(null);
+                  setOtpCode(e.target.value.replace(/[^0-9]/g, ''));
+                }}
+                placeholder="123456"
+                className="w-full text-center tracking-[0.4em] font-mono text-xl font-extrabold py-2.5 bg-slate-50 border-2 border-cyan-400 focus:border-cyan-600 rounded-lg text-slate-900 shadow-inner"
+              />
+              <div className="text-[10px] text-slate-400 text-center">
+                Demo helper: enter <strong>123456</strong> or any 6-digit code.
+              </div>
+            </div>
+
+            {otpError && (
+              <div className="bg-rose-50 border border-rose-200 text-rose-700 px-3 py-2 rounded text-[11px] font-semibold flex items-center gap-1.5">
+                <AlertTriangle className="w-4 h-4 text-rose-500 shrink-0" />
+                <span>{otpError}</span>
+              </div>
+            )}
+
+            {/* Countdown / Resend */}
+            <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1">
+              <span>Didn't receive SMS?</span>
+              {otpCountdown > 0 ? (
+                <span className="font-mono font-medium text-slate-400">Resend code in {otpCountdown}s</span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleSendOtp}
+                  disabled={isOtpSending}
+                  className="font-bold text-cyan-700 hover:text-cyan-900 underline cursor-pointer"
+                >
+                  {isOtpSending ? 'Sending...' : 'Resend SMS Code'}
+                </button>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setShowOtpModal(false)}
+                className="px-4 py-2 rounded text-xs font-semibold text-slate-600 hover:bg-slate-100 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleVerifyOtp}
+                className="bg-[#00bcd4] hover:bg-[#00acc1] text-white font-bold text-xs px-5 py-2 rounded shadow-xs uppercase tracking-wider transition-colors flex items-center gap-1.5 cursor-pointer"
+              >
+                <Check className="w-4 h-4" />
+                <span>Verify & Confirm Resident</span>
               </button>
             </div>
           </div>
