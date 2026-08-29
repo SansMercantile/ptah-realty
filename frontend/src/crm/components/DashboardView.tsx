@@ -403,24 +403,27 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         {/* Quick Listing Card - Luxury Editorial Design (matching AI
             Studio demo -- see chat) */}
         <div className="lg:col-span-3">
-          <div className="relative rounded-2xl p-4 bg-slate-900 text-white border border-slate-800 dark:border-slate-750 flex flex-col justify-between overflow-hidden group shadow-lg min-h-[220px]">
+          <div className="relative rounded-2xl p-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 border border-slate-800 dark:border-slate-200 flex flex-col justify-between overflow-hidden group shadow-lg min-h-[220px]">
             {/* Background luxury subtle glow */}
             <div className="absolute -top-12 -right-12 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl pointer-events-none" />
 
             {/* Top Row: Tag & Live Active Count */}
             <div className="flex items-center justify-between z-10 mb-2.5">
-              <div className="flex items-center space-x-1.5 px-2 py-0.5 rounded-full bg-slate-800/90 border border-slate-700/80 text-[10px] font-semibold text-amber-300 tracking-wider uppercase">
-                <Crown className="w-3 h-3 text-amber-400" />
+              <div className="flex items-center space-x-1.5 px-2 py-0.5 rounded-full bg-slate-800/90 dark:bg-amber-50 border border-slate-700/80 dark:border-amber-200 text-[10px] font-semibold text-amber-300 dark:text-amber-700 tracking-wider uppercase">
+                <Crown className="w-3 h-3 text-amber-400 dark:text-amber-600" />
                 <span>PRIME PORTFOLIO</span>
               </div>
-              <div className="flex items-center space-x-1 px-2 py-0.5 rounded-full bg-rose-500/20 border border-rose-500/40 text-rose-300 text-[10px] font-bold">
+              <div className="flex items-center space-x-1 px-2 py-0.5 rounded-full bg-rose-500/20 dark:bg-rose-50 border border-rose-500/40 dark:border-rose-300 text-rose-300 dark:text-rose-600 text-[10px] font-bold">
                 <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse" />
                 <span>{listings.filter((l) => l.status === 'show_house' || l.status === 'active').length} Active</span>
               </div>
             </div>
 
-            {/* Luxury Architectural Imagery Window */}
-            <div className="relative w-full h-28 rounded-xl overflow-hidden border border-slate-800/80 my-1 group-hover:border-amber-500/30 transition duration-500">
+            {/* Luxury Architectural Imagery Window -- this photo (and its
+                caption/price overlay) keeps its own dark gradient in both
+                themes, since it's an overlay on the image itself for
+                legibility, not the card's own background surface. */}
+            <div className="relative w-full h-28 rounded-xl overflow-hidden border border-slate-800/80 dark:border-slate-200 my-1 group-hover:border-amber-500/30 transition duration-500">
               <img
                 src={luxuryVillaImg}
                 alt="Luxury Architectural Estate"
@@ -641,7 +644,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <span>CLOSED SALES METRICS</span>
             </div>
             {/* MTD | YTD Badge */}
-            <div className="px-2 py-0.5 rounded-md bg-slate-900 dark:bg-slate-750 text-white text-[10px] font-mono font-extrabold tracking-wider">
+            <div className="px-2 py-0.5 rounded-md bg-slate-900 dark:bg-black text-white text-[10px] font-mono font-extrabold tracking-wider">
               MTD <span className="text-cyan-400 font-bold">|</span> YTD
             </div>
           </div>
@@ -787,7 +790,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 <button
                   key={item.bracket}
                   onClick={() => setSelectedAgeBracket({ key: item.bracket, label: item.label, persona: item.persona })}
-                  className="group relative flex flex-col items-center p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-750/80 hover:border-cyan-400 dark:hover:border-cyan-500 transition duration-200 shadow-2xs hover:shadow-xs text-left cursor-pointer"
+                  className="group relative flex flex-col items-center p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 hover:border-cyan-400 dark:hover:border-cyan-500 transition duration-200 shadow-2xs hover:shadow-xs text-left cursor-pointer"
                   title={`View ${ageBracketCounts[item.bracket]} client(s) in the ${item.bracket} age bracket`}
                 >
                   {/* Luxury Portrait Frame */}

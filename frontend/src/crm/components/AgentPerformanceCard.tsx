@@ -667,7 +667,7 @@ export const AgentPerformanceCard: React.FC<AgentPerformanceCardProps> = ({ lead
               {agentStats.map((agent) => (
                 <tr
                   key={agent.name}
-                  className="hover:bg-slate-50 dark:hover:bg-slate-850/60 transition cursor-pointer"
+                  className="hover:bg-slate-50 dark:hover:bg-white/5 transition cursor-pointer"
                   onClick={() => setSelectedAgentName(selectedAgentName === agent.name ? null : agent.name)}
                 >
                   <td className="p-3.5">

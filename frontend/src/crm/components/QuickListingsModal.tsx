@@ -233,7 +233,7 @@ export const QuickListingsModal: React.FC<QuickListingsModalProps> = ({
               {/* Top Banner with Quick Listing card (Screenshot 1 visual motif) */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 {/* Visual card matching Screenshot 1 */}
-                <div className="relative rounded-2xl p-5 bg-gradient-to-br from-cyan-50 to-sky-100 dark:from-slate-800 dark:to-slate-850 border border-sky-200 dark:border-slate-700 flex flex-col items-center text-center overflow-hidden">
+                <div className="relative rounded-2xl p-5 bg-gradient-to-br from-cyan-50 to-sky-100 dark:from-slate-800 dark:to-black border border-sky-200 dark:border-slate-700 flex flex-col items-center text-center overflow-hidden">
                   <div className="absolute top-3 right-3 bg-red-600 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center shadow-xs">
                     {listings.filter((l) => l.status === 'active' || l.status === 'show_house').length}
                   </div>
