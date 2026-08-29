@@ -8,7 +8,6 @@ import {
   BarChart3, 
   Plus, 
   Radio, 
-  Sparkles, 
   Sun,
   Moon,
   Home,
@@ -16,13 +15,12 @@ import {
 } from 'lucide-react';
 
 interface NavbarProps {
-  currentView: 'dashboard' | 'pipeline' | 'tasks' | 'calendar' | 'automations' | 'reporting' | 'scrum';
-  setCurrentView: (view: 'dashboard' | 'pipeline' | 'tasks' | 'calendar' | 'automations' | 'reporting' | 'scrum') => void;
+  currentView: 'dashboard' | 'pipeline' | 'calendar' | 'automations' | 'reporting' | 'scrum';
+  setCurrentView: (view: 'dashboard' | 'pipeline' | 'calendar' | 'automations' | 'reporting' | 'scrum') => void;
   onOpenNewLead: () => void;
   onOpenQuickListings?: () => void;
   quickListingsCount?: number;
   onOpenSimulator: () => void;
-  onToggleAiAdvisor: () => void;
   darkMode: boolean;
   onToggleDarkMode: () => void;
   onOpenCommandPalette: () => void;
@@ -35,7 +33,6 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenQuickListings,
   quickListingsCount,
   onOpenSimulator,
-  onToggleAiAdvisor,
   darkMode,
   onToggleDarkMode,
   onOpenCommandPalette,
@@ -89,18 +86,6 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               <Kanban className="w-4 h-4" />
               <span>Lead Pipeline</span>
-            </button>
-
-            <button
-              onClick={() => setCurrentView('tasks')}
-              className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
-                currentView === 'tasks'
-                  ? 'bg-slate-900 dark:bg-emerald-600 text-white shadow-xs'
-                  : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-700/60'
-              }`}
-            >
-              <Sparkles className="w-4 h-4 text-amber-500 dark:text-amber-400" />
-              <span>Task Reminders</span>
             </button>
 
             <button
@@ -174,15 +159,12 @@ export const Navbar: React.FC<NavbarProps> = ({
               <span className="sm:hidden">Simulate</span>
             </button>
 
-            {/* AI Advisor Button */}
-            <button
-              onClick={onToggleAiAdvisor}
-              className="flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-950/60 hover:bg-amber-100 dark:hover:bg-amber-900/60 text-amber-900 dark:text-amber-300 border border-amber-200 dark:border-amber-800 text-xs font-medium transition cursor-pointer"
-              title="AI CRM Strategy & Lead Advisor"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-              <span className="hidden sm:inline">AI Copilot</span>
-            </button>
+            {/*
+              AI Advisor button removed from here -- AI Copilot is now
+              a persistent docked side panel, open by default, with its
+              own close control (see AiAdvisorDrawer.tsx / CRMApp.tsx),
+              not something toggled from the top taskbar.
+            */}
 
             {/*
               Settings & Connectors button removed from here -- reachable
@@ -267,16 +249,6 @@ export const Navbar: React.FC<NavbarProps> = ({
             }`}
           >
             Pipeline
-          </button>
-          <button
-            onClick={() => setCurrentView('tasks')}
-            className={`px-3 py-1 rounded-md text-xs font-medium whitespace-nowrap cursor-pointer ${
-              currentView === 'tasks'
-                ? 'bg-slate-900 dark:bg-emerald-600 text-white'
-                : 'text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800'
-            }`}
-          >
-            Tasks
           </button>
           <button
             onClick={() => setCurrentView('calendar')}

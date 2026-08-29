@@ -420,8 +420,30 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
-      <div className="bg-white border border-slate-200 w-full max-w-5xl rounded-2xl shadow-xl overflow-hidden my-auto max-h-[92vh] flex flex-col">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-900/60 backdrop-blur-sm overflow-y-auto"
+      onClick={(e) => {
+        // Close when the dark backdrop itself is clicked -- but not when
+        // the click originated inside the modal card (that click still
+        // bubbles up to this handler, so it's the target/currentTarget
+        // check that matters, not stopping propagation on every child).
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="relative bg-white border border-slate-200 w-full max-w-5xl rounded-2xl shadow-xl overflow-hidden my-auto max-h-[92vh] flex flex-col">
+        {/* Always-visible close button, floating in the card's own
+            top-right corner -- separate from the Stage/action-pill row's
+            X (further down, easy to miss among WhatsApp/Call/Zoom Tour/
+            etc.), so there's an unambiguous way to close this regardless
+            of how that row wraps or scrolls. */}
+        <button
+          onClick={onClose}
+          className="absolute top-3 right-3 z-10 p-1.5 rounded-full bg-white/90 hover:bg-slate-100 text-slate-500 hover:text-slate-900 border border-slate-200 shadow-xs transition cursor-pointer"
+          title="Close"
+          aria-label="Close lead details"
+        >
+          <X className="w-4 h-4" />
+        </button>
         {/* Modal Top Header */}
         <div className="bg-slate-50 p-4 sm:p-6 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
@@ -560,7 +582,7 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
         <div className="bg-white px-6 border-b border-slate-200 flex space-x-6 overflow-x-auto text-xs font-semibold text-slate-500">
           <button
             onClick={() => setActiveTab('activity')}
-            className={`py-3 flex items-center space-x-2 border-b-2 transition whitespace-nowrap ${
+            className={`py-3 flex items-center space-x-2 border-b-2 transition whitespace-nowrap shrink-0 ${
               activeTab === 'activity'
                 ? 'border-emerald-600 text-emerald-900 font-bold'
                 : 'border-transparent hover:text-slate-800'
@@ -572,7 +594,7 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
 
           <button
             onClick={() => setActiveTab('score')}
-            className={`py-3 flex items-center space-x-2 border-b-2 transition whitespace-nowrap ${
+            className={`py-3 flex items-center space-x-2 border-b-2 transition whitespace-nowrap shrink-0 ${
               activeTab === 'score'
                 ? 'border-purple-600 text-purple-900 font-bold'
                 : 'border-transparent hover:text-slate-800'
@@ -584,7 +606,7 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
 
           <button
             onClick={() => setActiveTab('comms')}
-            className={`py-3 flex items-center space-x-2 border-b-2 transition whitespace-nowrap ${
+            className={`py-3 flex items-center space-x-2 border-b-2 transition whitespace-nowrap shrink-0 ${
               activeTab === 'comms'
                 ? 'border-slate-900 text-slate-900 font-bold'
                 : 'border-transparent hover:text-slate-800'
@@ -596,7 +618,7 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
 
           <button
             onClick={() => setActiveTab('ai')}
-            className={`py-3 flex items-center space-x-2 border-b-2 transition whitespace-nowrap ${
+            className={`py-3 flex items-center space-x-2 border-b-2 transition whitespace-nowrap shrink-0 ${
               activeTab === 'ai'
                 ? 'border-slate-900 text-slate-900 font-bold'
                 : 'border-transparent hover:text-slate-800'
@@ -608,7 +630,7 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
 
           <button
             onClick={() => setActiveTab('tasks')}
-            className={`py-3 flex items-center space-x-2 border-b-2 transition whitespace-nowrap ${
+            className={`py-3 flex items-center space-x-2 border-b-2 transition whitespace-nowrap shrink-0 ${
               activeTab === 'tasks'
                 ? 'border-slate-900 text-slate-900 font-bold'
                 : 'border-transparent hover:text-slate-800'
@@ -620,7 +642,7 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
 
           <button
             onClick={() => setActiveTab('emails')}
-            className={`py-3 flex items-center space-x-2 border-b-2 transition whitespace-nowrap ${
+            className={`py-3 flex items-center space-x-2 border-b-2 transition whitespace-nowrap shrink-0 ${
               activeTab === 'emails'
                 ? 'border-slate-900 text-slate-900 font-bold'
                 : 'border-transparent hover:text-slate-800'
@@ -632,7 +654,7 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
 
           <button
             onClick={() => setActiveTab('details')}
-            className={`py-3 flex items-center space-x-2 border-b-2 transition whitespace-nowrap ${
+            className={`py-3 flex items-center space-x-2 border-b-2 transition whitespace-nowrap shrink-0 ${
               activeTab === 'details'
                 ? 'border-slate-900 text-slate-900 font-bold'
                 : 'border-transparent hover:text-slate-800'

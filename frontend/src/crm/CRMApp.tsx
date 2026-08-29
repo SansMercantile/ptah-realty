@@ -2,7 +2,6 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Navbar } from './components/Navbar';
 import { PipelineBoard } from './components/PipelineBoard';
 import { LeadDetailModal } from './components/LeadDetailModal';
-import { TaskRemindersView } from './components/TaskRemindersView';
 import { AgentScheduleCalendar } from './components/AgentScheduleCalendar';
 import { EmailAutomationsView } from './components/EmailAutomationsView';
 import { ReportingAnalyticsView } from './components/ReportingAnalyticsView';
@@ -268,14 +267,14 @@ export default function App({
   }, [leads, automationRules, connectors, connectorSyncEvents, sprint, listings, showHouses, campaigns, crmSyncStatus]);
 
   // Views & Modal States
-  const [currentView, setCurrentView] = useState<'dashboard' | 'pipeline' | 'tasks' | 'calendar' | 'automations' | 'reporting' | 'scrum'>('dashboard');
+  const [currentView, setCurrentView] = useState<'dashboard' | 'pipeline' | 'calendar' | 'automations' | 'reporting' | 'scrum'>('dashboard');
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [isNewLeadOpen, setIsNewLeadOpen] = useState(false);
   const [isQuickListingsOpen, setIsQuickListingsOpen] = useState(false);
   const [isCampaignsModalOpen, setIsCampaignsModalOpen] = useState(false);
   const [settingsInitialTab, setSettingsInitialTab] = useState<ConnectorCategory>('portals');
   const [isSimulatorOpen, setIsSimulatorOpen] = useState(false);
-  const [isAiAdvisorOpen, setIsAiAdvisorOpen] = useState(false);
+  const [isAiAdvisorOpen, setIsAiAdvisorOpen] = useState(true); // side panel, open by default per explicit request
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
@@ -657,17 +656,21 @@ export default function App({
         onOpenQuickListings={() => setIsQuickListingsOpen(true)}
         quickListingsCount={listings.length}
         onOpenSimulator={() => setIsSimulatorOpen(true)}
-        onToggleAiAdvisor={() => setIsAiAdvisorOpen(!isAiAdvisorOpen)}
         darkMode={isDarkMode}
         onToggleDarkMode={() => setIsDarkMode((prev) => !prev)}
         onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
       />
 
+      {/* AI Copilot is now a persistent docked side panel (see
+          AiAdvisorDrawer.tsx), not a full-screen modal overlay -- this
+          row splits into <main> + the panel as flex siblings instead of
+          the panel being position:fixed on top of everything. */}
+      <div className="flex flex-1 min-h-0">
       {/* Main View Area -- widened from max-w-7xl (1280px), which was
           crushing the 6-column Kanban board on any real monitor, to
           max-w-[1920px] so it fills wide screens while still centering
           with breathing room on ultra-wide ones. */}
-      <main className="flex-1 max-w-[1920px] w-full mx-auto px-4 sm:px-6 lg:px-10 py-6">
+      <main className="flex-1 min-w-0 overflow-y-auto max-w-[1920px] w-full mx-auto px-4 sm:px-6 lg:px-10 py-6">
         {currentView === 'dashboard' && (
           <DashboardView
             leads={leads}
@@ -694,16 +697,10 @@ export default function App({
           />
         )}
 
-        {currentView === 'tasks' && (
-          <TaskRemindersView
-            leads={leads}
-            onSelectLead={(lead) => setSelectedLead(lead)}
-            onToggleTask={handleToggleTask}
-            onQuickWhatsApp={handleQuickWhatsApp}
-            onAddTask={handleAddTask}
-            onRescheduleTask={handleRescheduleTask}
-          />
-        )}
+        {/* Task Reminders no longer has its own top-level view/nav tab --
+            consolidated into Schedule Calendar (the "Task Reminders &
+            SLAs" button below opens the same NotificationDrawer Task
+            Reminders tab this view used to render standalone). */}
 
         {currentView === 'calendar' && (
           <div className="space-y-6">
@@ -772,6 +769,14 @@ export default function App({
         )}
       </main>
 
+        <AiAdvisorDrawer
+          isOpen={isAiAdvisorOpen}
+          onOpen={() => setIsAiAdvisorOpen(true)}
+          onClose={() => setIsAiAdvisorOpen(false)}
+          leads={leads}
+        />
+      </div>
+
       {/* Interactive Modals & Drawers */}
       {selectedLead && (
         <LeadDetailModal
@@ -796,12 +801,6 @@ export default function App({
         />
       )}
 
-      <AiAdvisorDrawer
-        isOpen={isAiAdvisorOpen}
-        onClose={() => setIsAiAdvisorOpen(false)}
-        leads={leads}
-      />
-
       <NotificationDrawer
         isOpen={isNotificationsOpen}
         onClose={() => setIsNotificationsOpen(false)}
@@ -816,7 +815,7 @@ export default function App({
         onAddTask={handleAddTask}
         onOpenFullTasksView={() => {
           setIsNotificationsOpen(false);
-          setCurrentView('tasks');
+          setCurrentView('calendar');
         }}
       />
 

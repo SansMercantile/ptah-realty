@@ -33,7 +33,7 @@ interface HeaderProps {
   onOpenPDFReport: () => void;
   onOpenPortalSync: () => void;
   onOpenDocuments: () => void;
-  onOpenUserSettings: (tab?: 'profile' | 'password' | 'billing' | 'language' | 'apps' | 'preferences') => void;
+  onOpenUserSettings: (tab?: 'profile' | 'password' | 'billing' | 'apps' | 'preferences') => void;
   onOpenSearchHistoryModal: () => void;
   onOpenCreditsModal: () => void;
   onOpenBalanceDetails?: () => void;

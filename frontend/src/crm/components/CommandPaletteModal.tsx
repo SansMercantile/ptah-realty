@@ -45,7 +45,7 @@ interface CommandPaletteModalProps {
   onToggleAiAdvisor: () => void;
   onToggleDarkMode: () => void;
   darkMode: boolean;
-  onNavigateView: (view: 'pipeline' | 'tasks' | 'calendar' | 'automations' | 'reporting') => void;
+  onNavigateView: (view: 'pipeline' | 'calendar' | 'automations' | 'reporting') => void;
   onOpenQuickListings?: () => void;
   onOpenNotifications?: () => void;
   onOpenCampaigns?: () => void;
@@ -190,20 +190,10 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
           }
         },
       },
-      {
-        id: 'action-tasks',
-        category: 'actions',
-        title: 'Go to Tasks & SLA Cadence View',
-        subtitle: 'Manage 15-min Property24 follow-up SLAs and viewing checklists',
-        tag: 'Navigation',
-        badge: 'View',
-        badgeColor: 'bg-blue-50 dark:bg-blue-950/70 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800',
-        icon: <CheckSquare className="w-4 h-4 text-blue-600 dark:text-blue-400" />,
-        action: () => {
-          onNavigateView('tasks');
-          onClose();
-        },
-      },
+      // "Go to Tasks & SLA Cadence View" removed -- Task Reminders no
+      // longer has its own top-level view (consolidated into Schedule
+      // Calendar); "Open Notifications & Task Reminders" above and
+      // "Go to Agent Viewing Schedule & Calendar" below cover this.
       {
         id: 'action-calendar',
         category: 'actions',
