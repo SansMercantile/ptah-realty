@@ -22,7 +22,6 @@ import {
   BarChart2,
   Menu,
   Eye,
-  RefreshCw,
   Clock,
   Home,
   Check,
@@ -75,8 +74,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
   // Dialog states for dashboard actions
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-  const [isSyncingCalendar, setIsSyncingCalendar] = useState(false);
-  const [calendarSyncSuccess, setCalendarSyncSuccess] = useState(false);
   const [isPortfolioShareOpen, setIsPortfolioShareOpen] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
 
@@ -125,14 +122,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     setSelectedClientId('');
   };
 
-  const handleSyncGoogleCalendar = () => {
-    setIsSyncingCalendar(true);
-    setTimeout(() => {
-      setIsSyncingCalendar(false);
-      setCalendarSyncSuccess(true);
-      setTimeout(() => setCalendarSyncSuccess(false), 3500);
-    }, 1200);
-  };
+  // handleSyncGoogleCalendar moved to CRMApp.tsx -- the button now lives
+  // in the Schedule Calendar tab's header, stacked under "Task Reminders
+  // & SLAs", not on the Dashboard.
 
   return (
     <div className="space-y-6 pb-16">
@@ -216,15 +208,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               Greeting"), reached via the CAMPAIGNS AI card below,
               instead of being a separate standalone pill+modal. */}
 
-          <button
-            onClick={handleSyncGoogleCalendar}
-            disabled={isSyncingCalendar}
-            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-cyan-50 hover:bg-cyan-100 dark:bg-cyan-950/40 dark:hover:bg-cyan-900/60 text-cyan-800 dark:text-cyan-300 text-xs font-semibold border border-cyan-200 dark:border-cyan-800 transition cursor-pointer disabled:opacity-50"
-            title="Sync scheduled events with Google Calendar"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400 ${isSyncingCalendar ? 'animate-spin' : ''}`} />
-            <span>{calendarSyncSuccess ? 'SYNCED TO GOOGLE!' : 'SYNC GOOGLE CALENDAR'}</span>
-          </button>
+          {/* Sync Google Calendar button moved to CRMApp.tsx's Schedule
+              Calendar tab header, stacked under "Task Reminders & SLAs" --
+              per explicit request, calendar sync belongs with the
+              calendar, not the Dashboard. */}
         </div>
       </div>
 

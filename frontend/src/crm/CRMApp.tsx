@@ -41,7 +41,7 @@ import {
 } from './types';
 import { formatCurrency, triggerDealWonConfetti } from './utils/formatters';
 import { getCrmState, saveCrmState } from '../services/api';
-import { Bell, CheckCircle2, Flame, Radio, X, Calendar as CalendarIcon, Sliders } from 'lucide-react';
+import { Bell, CheckCircle2, Flame, Radio, X, Calendar as CalendarIcon, Sliders, RefreshCw } from 'lucide-react';
 
 export default function App({
   openConnectorsSignal,
@@ -293,6 +293,20 @@ export default function App({
   const [isSimulatorOpen, setIsSimulatorOpen] = useState(false);
   const [isAiAdvisorOpen, setIsAiAdvisorOpen] = useState(true); // side panel, open by default per explicit request
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+
+  // Google Calendar sync -- moved here from DashboardView.tsx, since the
+  // button now lives in the Schedule Calendar tab's header instead of
+  // the Dashboard.
+  const [isSyncingCalendar, setIsSyncingCalendar] = useState(false);
+  const [calendarSyncSuccess, setCalendarSyncSuccess] = useState(false);
+  const handleSyncGoogleCalendar = () => {
+    setIsSyncingCalendar(true);
+    setTimeout(() => {
+      setIsSyncingCalendar(false);
+      setCalendarSyncSuccess(true);
+      setTimeout(() => setCalendarSyncSuccess(false), 3500);
+    }, 1200);
+  };
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
 
@@ -736,7 +750,7 @@ export default function App({
                 </p>
               </div>
 
-              <div className="flex items-center space-x-2">
+              <div className="flex flex-col items-stretch sm:items-end gap-2">
                 <button
                   onClick={() => setIsNotificationsOpen(true)}
                   className="px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold transition cursor-pointer flex items-center space-x-1.5"
@@ -744,6 +758,18 @@ export default function App({
                 >
                   <Bell className="w-3.5 h-3.5 text-amber-500" />
                   <span>Task Reminders & SLAs ({pendingTasksCount})</span>
+                </button>
+
+                {/* Moved here from the Dashboard's action-pills row --
+                    calendar sync belongs with the calendar. */}
+                <button
+                  onClick={handleSyncGoogleCalendar}
+                  disabled={isSyncingCalendar}
+                  className="px-3.5 py-2 rounded-xl bg-cyan-50 hover:bg-cyan-100 dark:bg-cyan-950/40 dark:hover:bg-cyan-900/60 text-cyan-800 dark:text-cyan-300 text-xs font-semibold border border-cyan-200 dark:border-cyan-800 transition cursor-pointer disabled:opacity-50 flex items-center space-x-1.5"
+                  title="Sync scheduled events with Google Calendar"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400 ${isSyncingCalendar ? 'animate-spin' : ''}`} />
+                  <span>{calendarSyncSuccess ? 'Synced to Google!' : 'Sync Google Calendar'}</span>
                 </button>
               </div>
             </div>
