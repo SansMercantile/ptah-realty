@@ -77,6 +77,16 @@ export const SettingsConnectorsModal: React.FC<SettingsConnectorsModalProps> = (
       setActiveTab(initialTab);
     }
   }, [initialTab, isOpen]);
+
+  React.useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   const [selectedConnector, setSelectedConnector] = useState<ConnectorItem | null>(null);
   const [editingConfig, setEditingConfig] = useState<Record<string, any>>({});
   const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});

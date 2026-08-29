@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Building, Plus, User, Mail, Phone, DollarSign, Tag, Calendar, Sparkles } from 'lucide-react';
 import { Lead, LeadSource, UrgencyLevel, LeadStatus } from '../types';
 import { INITIAL_AGENTS } from '../data/mockData';
@@ -9,6 +9,14 @@ interface NewLeadModalProps {
 }
 
 export const NewLeadModal: React.FC<NewLeadModalProps> = ({ onClose, onAddLead }) => {
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -93,7 +101,10 @@ export const NewLeadModal: React.FC<NewLeadModalProps> = ({ onClose, onAddLead }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
       <div className="bg-white border border-slate-200 w-full max-w-xl rounded-2xl shadow-xl overflow-hidden my-auto">
         <div className="bg-slate-50 p-5 border-b border-slate-200 flex justify-between items-center">
           <div className="flex items-center space-x-2">

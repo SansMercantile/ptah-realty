@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { authHeaders } from '../../services/api';
 import { 
   X, 
@@ -52,6 +52,23 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
   onUpdateLead,
 }) => {
   const [activeTab, setActiveTab] = useState<'score' | 'activity' | 'comms' | 'ai' | 'tasks' | 'emails' | 'details'>('activity');
+  const tabNavRef = useRef<HTMLDivElement>(null);
+
+  // Reset tab scroll to start whenever the modal opens or the lead changes
+  useEffect(() => {
+    if (tabNavRef.current) {
+      tabNavRef.current.scrollLeft = 0;
+    }
+  }, [lead.id]);
+
+  // Close modal on Escape key press
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
 
   // New communication log state
   const [showLogCommForm, setShowLogCommForm] = useState(false);
@@ -445,7 +462,7 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
           <X className="w-4 h-4" />
         </button>
         {/* Modal Top Header */}
-        <div className="bg-slate-50 p-4 sm:p-6 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="bg-slate-50 p-4 sm:p-6 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 shrink-0">
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <span className="font-mono text-xs text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 font-semibold">
@@ -579,7 +596,7 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
         </div>
 
         {/* Tab Navigation */}
-        <div className="bg-white px-6 border-b border-slate-200 flex space-x-6 overflow-x-auto text-xs font-semibold text-slate-500">
+        <div ref={tabNavRef} className="bg-white px-6 border-b border-slate-200 flex space-x-6 overflow-x-auto no-scrollbar text-xs font-semibold text-slate-500 shrink-0">
           <button
             onClick={() => setActiveTab('activity')}
             className={`py-3 flex items-center space-x-2 border-b-2 transition whitespace-nowrap shrink-0 ${
@@ -666,7 +683,7 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
         </div>
 
         {/* Tab Contents */}
-        <div className="p-4 sm:p-6 flex-1 overflow-y-auto space-y-6">
+        <div className="p-4 sm:p-6 flex-1 overflow-y-auto min-h-0 space-y-6">
           {/* TAB: ACTIVITY FEED */}
           {activeTab === 'activity' && (
             <LeadActivityFeed

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { authHeaders } from '../../services/api';
 import {
   X,
@@ -62,6 +62,15 @@ export const CampaignsHubModal: React.FC<CampaignsHubModalProps> = ({
   onOpenConnectorsMarketingTab,
   onAddSyncEvent,
 }) => {
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   const [activeTab, setActiveTab] = useState<'studio' | 'registry' | 'apps'>('studio');
 
   // Generator form state
@@ -286,7 +295,10 @@ export const CampaignsHubModal: React.FC<CampaignsHubModalProps> = ({
   });
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 animate-in fade-in duration-200">
+    <div
+      className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 animate-in fade-in duration-200"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
       <div className="bg-white dark:bg-black w-full max-w-6xl rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col max-h-[94vh] overflow-hidden">
         {/* Top Header */}
         <div className="p-5 sm:p-6 border-b border-slate-200 dark:border-slate-800 bg-slate-950 text-white flex flex-col md:flex-row md:items-center justify-between gap-4">

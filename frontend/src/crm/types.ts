@@ -185,6 +185,8 @@ export interface Lead {
   commissionEstimate?: number;
   lastContactedAt?: string;
   portalListingUrl?: string;
+  birthday?: string; // e.g. "1988-08-28"
+  ageBracket?: string; // e.g. "35-49"
   qualityScoreData?: LeadQualityScoreData;
   storyPoints?: number; // 1, 2, 3, 5, 8 story points based on transaction complexity
   sprintId?: string;
