@@ -29,11 +29,12 @@ import {
 import { Lead, LeadSource } from '../types';
 import { formatCurrency, formatShortCurrency } from '../utils/formatters';
 
-// Optional CARTO API key, same pattern as RealCadastreMap.tsx -- CARTO's
-// basemap tiles work anonymously on the free tier, so this stays optional;
-// unset just means CARTO_TILE_KEY_PARAM is an empty string appended to the
-// URL, which is a no-op.
-const CARTO_MAPS_API_KEY = import.meta.env.VITE_CARTO_BASEMAPS_API_KEY as string | undefined;
+// CARTO's basemaps.cartocdn.com raster tiles now require an API key (else
+// tiles render with a repeated "API key required" watermark -- see
+// https://carto.com/basemaps/apikey). Same fix already applied to
+// RealCadastreMap.tsx: append as a `key` query param per CARTO's own
+// integration docs, using the Ptah-Realty-scoped key from env.
+const CARTO_MAPS_API_KEY = import.meta.env.VITE_CARTO_MAPS_API_KEY as string | undefined;
 const CARTO_TILE_KEY_PARAM = CARTO_MAPS_API_KEY ? `?key=${CARTO_MAPS_API_KEY}` : '';
 
 interface LeadLeafletMapProps {
@@ -414,10 +415,14 @@ export const LeadLeafletMap: React.FC<LeadLeafletMapProps> = ({
     });
 
     const sortedNodes = Object.entries(nodes).sort((a, b) => b[1].count - a[1].count || b[1].value - a[1].value);
-    const allNodes = sortedNodes.map(([key, data]) => ({ id: key, ...data }));
-    const topNode = allNodes[0];
+    // Adds `id` here too (from the same entry's key) -- the demo's original
+    // topNode pulled the raw pre-mapped value (sortedNodes[0]?.[1]), which
+    // never had `id` at all; only allNodes' own .map() step below added it.
+    // That real mismatch (not just the fallback below) is what the repo's
+    // stricter tsconfig caught at the node.id comparison further down.
+    const topNode = sortedNodes[0] ? { id: sortedNodes[0][0], ...sortedNodes[0][1] } : undefined;
     return {
-      allNodes,
+      allNodes: sortedNodes.map(([key, data]) => ({ id: key, ...data })),
       topNode: topNode || { id: 'national-overview', name: 'National Overview', count: filteredLeads.length, value: totalMapPipelineValue, urgent: urgentCount, center: [-29.0, 24.5] as [number, number] }
     };
   }, [filteredLeads, totalMapPipelineValue, urgentCount]);
