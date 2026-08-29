@@ -40,6 +40,7 @@ import { Lead, LeadSource } from '../types';
 import { formatCurrency, formatShortCurrency, exportLeadsToCSV } from '../utils/formatters';
 import { LeadGeoHeatmap } from './LeadGeoHeatmap';
 import { AgentPerformanceCard } from './AgentPerformanceCard';
+import { SlaResponseEfficiencyWidget } from './SlaResponseEfficiencyWidget';
 
 interface ReportingAnalyticsViewProps {
   leads: Lead[];
@@ -705,6 +706,14 @@ export const ReportingAnalyticsView: React.FC<ReportingAnalyticsViewProps> = ({ 
       {/* Agent Performance Leaderboard Card -- brought over from the AI
           Studio demo (see chat). */}
       <AgentPerformanceCard leads={leads} onSelectLead={onSelectLead} />
+
+      {/* SLA / Speed-to-Lead Response Efficiency -- also from the demo, but
+          wasn't actually wired into anything there either (built, exported,
+          never imported). Placed here alongside the other agent-facing
+          performance widget since that's the closest existing precedent for
+          where it belongs; this placement is my call, not something the
+          demo specified. */}
+      <SlaResponseEfficiencyWidget leads={leads} onSelectLead={onSelectLead} />
 
       {/* Geographic Lead Heatmap Visualizer */}
       <LeadGeoHeatmap leads={leads} onSelectLead={onSelectLead} />
