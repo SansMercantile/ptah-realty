@@ -27,11 +27,22 @@ import {
   RefreshCw,
   Clock,
   Home,
-  Check
+  Check,
+  Award,
+  ArrowUpRight,
+  ShieldCheck,
+  Crown
 } from 'lucide-react';
 import { Lead, PropertyListing, ShowHouseRecord } from '../types';
 import { formatCurrency } from '../utils/formatters';
 import { TopStatsOverview } from './TopStatsOverview';
+
+// High-End Luxury Editorial Assets -- ported over from the AI Studio demo
+// design (see chat) to match its exact Dashboard visual treatment.
+import luxuryVillaImg from '../assets/images/luxury_estate_hero_1787979917947.jpg';
+import youngBuyerImg from '../assets/images/age_bracket_young_1787979933078.jpg';
+import midBuyerImg from '../assets/images/age_bracket_mid_1787979946226.jpg';
+import seniorPatronImg from '../assets/images/age_bracket_senior_1787979958991.jpg';
 
 interface DashboardViewProps {
   leads: Lead[];
@@ -237,55 +248,58 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
       {/* Row 1: Quick Listings Card + Client Type + Client Status + Client Source */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-5">
-        {/* Quick Listing Card (Matching Screenshot 1) */}
+        {/* Quick Listing Card - Luxury Editorial Design (matching AI
+            Studio demo -- see chat) */}
         <div className="lg:col-span-3">
-          <div className="relative rounded-2xl p-5 bg-gradient-to-b from-[#b8dbe5] to-[#a3cdd9] dark:from-slate-800 dark:to-slate-850 border border-[#96c3d0] dark:border-slate-700 flex flex-col items-center justify-between text-center min-h-[220px] shadow-xs">
-            {/* Red notification badge (as shown in Screenshot 1: red circle with "0") */}
-            <div className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-bold w-7 h-7 rounded-full flex items-center justify-center shadow-md border-2 border-white dark:border-slate-900">
-              {listings.filter((l) => l.status === 'show_house' || l.status === 'active').length}
+          <div className="relative rounded-2xl p-4 bg-slate-900 text-white border border-slate-800 dark:border-slate-750 flex flex-col justify-between overflow-hidden group shadow-lg min-h-[220px]">
+            {/* Background luxury subtle glow */}
+            <div className="absolute -top-12 -right-12 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl pointer-events-none" />
+
+            {/* Top Row: Tag & Live Active Count */}
+            <div className="flex items-center justify-between z-10 mb-2.5">
+              <div className="flex items-center space-x-1.5 px-2 py-0.5 rounded-full bg-slate-800/90 border border-slate-700/80 text-[10px] font-semibold text-amber-300 tracking-wider uppercase">
+                <Crown className="w-3 h-3 text-amber-400" />
+                <span>PRIME PORTFOLIO</span>
+              </div>
+              <div className="flex items-center space-x-1 px-2 py-0.5 rounded-full bg-rose-500/20 border border-rose-500/40 text-rose-300 text-[10px] font-bold">
+                <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse" />
+                <span>{listings.filter((l) => l.status === 'show_house' || l.status === 'active').length} Active</span>
+              </div>
             </div>
 
-            {/* Illustration of agent putting up 'FOR SALE' sign in front of house */}
-            <div className="w-28 h-28 my-auto flex items-center justify-center">
-              <svg viewBox="0 0 120 100" className="w-full h-full drop-shadow-sm">
-                {/* Sky cloud */}
-                <ellipse cx="60" cy="18" rx="14" ry="4" fill="#ffffff" opacity="0.9" />
-                {/* House */}
-                <polygon points="40,42 66,22 92,42" fill="#334155" />
-                <rect x="44" y="42" width="44" height="42" rx="2" fill="#475569" />
-                <rect x="61" y="60" width="12" height="24" rx="6" fill="#ffffff" />
-                <rect x="50" y="48" width="7" height="7" rx="1" fill="#fef08a" />
-                <rect x="74" y="48" width="7" height="7" rx="1" fill="#fef08a" />
-                {/* Chimney */}
-                <rect x="77" y="24" width="6" height="12" fill="#1e293b" />
-                {/* Trees */}
-                <ellipse cx="25" cy="50" rx="9" ry="16" fill="#10b981" />
-                <rect x="23" y="58" width="4" height="26" fill="#78350f" />
-                <ellipse cx="102" cy="52" rx="8" ry="15" fill="#10b981" />
-                <rect x="100" y="60" width="4" height="24" fill="#78350f" />
-                {/* Agent figure */}
-                <circle cx="34" cy="46" r="3.5" fill="#fbcfe8" />
-                <rect x="31" y="49" width="6" height="12" rx="2" fill="#1e40af" />
-                <line x1="33" y1="61" x2="31" y2="76" stroke="#1e293b" strokeWidth="2.5" />
-                <line x1="35" y1="61" x2="37" y2="76" stroke="#1e293b" strokeWidth="2.5" />
-                {/* For Sale Sign */}
-                <rect x="16" y="50" width="16" height="9" rx="1" fill="#ffffff" stroke="#ef4444" strokeWidth="1" />
-                <text x="24" y="56.5" fontSize="3" fontWeight="bold" fill="#dc2626" textAnchor="middle">
-                  FOR SALE
-                </text>
-                <line x1="24" y1="59" x2="24" y2="76" stroke="#334155" strokeWidth="1.5" />
-              </svg>
+            {/* Luxury Architectural Imagery Window */}
+            <div className="relative w-full h-28 rounded-xl overflow-hidden border border-slate-800/80 my-1 group-hover:border-amber-500/30 transition duration-500">
+              <img
+                src={luxuryVillaImg}
+                alt="Luxury Architectural Estate"
+                referrerPolicy="no-referrer"
+                className="w-full h-full object-cover object-center transform group-hover:scale-105 transition duration-700 ease-out"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/20 to-transparent" />
+              <div className="absolute bottom-2 left-2.5 right-2.5 flex items-end justify-between">
+                <div>
+                  <span className="text-[10px] font-medium text-amber-200/90 uppercase tracking-wider block">
+                    Exclusive Mandates
+                  </span>
+                  <span className="text-xs font-serif font-bold text-white tracking-wide truncate block max-w-[140px]">
+                    Clifton & Bishopscourt
+                  </span>
+                </div>
+                <span className="text-[10px] font-mono text-slate-300 bg-slate-950/70 px-1.5 py-0.5 rounded border border-slate-800">
+                  R42.5M+
+                </span>
+              </div>
             </div>
 
-            <div className="w-full">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">
-                NEW LISTINGS
-              </span>
+            {/* Quick Listing Action CTA */}
+            <div className="w-full mt-2.5 z-10">
               <button
                 onClick={onOpenQuickListings}
-                className="mt-2 w-full py-2 px-4 rounded-full bg-slate-200/90 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-rose-600 dark:text-rose-400 font-bold text-xs transition cursor-pointer shadow-2xs flex items-center justify-center space-x-1"
+                className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs tracking-wide transition duration-200 cursor-pointer shadow-md hover:shadow-amber-500/20 flex items-center justify-center space-x-1.5 active:scale-[0.98]"
               >
+                <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
                 <span>QUICK LISTING</span>
+                <ArrowUpRight className="w-3.5 h-3.5 opacity-80" />
               </button>
             </div>
           </div>
@@ -449,36 +463,64 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
       {/* Row 2: Demographics Mini-Cards (Gender + Awaiting Verification + Events Scheduled) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Gender Breakdown Card */}
-        <div className="bg-white dark:bg-slate-850 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-xs flex items-center justify-between">
-          <div className="flex items-center space-x-6">
-            <div>
-              <span className="text-xl font-extrabold text-slate-800 dark:text-white">3</span>
-              <span className="text-xs font-bold text-slate-400 block uppercase">MALE</span>
-              <span className="text-xs font-bold text-slate-600 dark:text-slate-300">38%</span>
+        {/* MTD | YTD Closed Sales Performance Card (replaces the old
+            Male/Female breakdown -- ported over from the AI Studio demo
+            design, see chat) */}
+        <div
+          id="mtd-ytd-sales-card"
+          className="bg-white dark:bg-slate-850 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between"
+        >
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2 mb-2">
+            <div className="flex items-center space-x-1.5 text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+              <Award className="w-3.5 h-3.5" />
+              <span>CLOSED SALES METRICS</span>
+            </div>
+            {/* MTD | YTD Badge */}
+            <div className="px-2 py-0.5 rounded-md bg-slate-900 dark:bg-slate-750 text-white text-[10px] font-mono font-extrabold tracking-wider">
+              MTD <span className="text-cyan-400 font-bold">|</span> YTD
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 my-auto py-1">
+            {/* MTD Closed Sales */}
+            <div className="space-y-0.5">
+              <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">
+                MTD Closed Sales
+              </span>
+              <div className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                R42.5M
+              </div>
+              <div className="flex items-center space-x-1 text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">
+                <ArrowUpRight className="w-3 h-3" />
+                <span>3 Deals • Aug '26</span>
+              </div>
             </div>
 
-            {/* Male & Female Stylized Icons */}
-            <div className="flex items-center space-x-1">
-              <div className="w-7 h-10 flex items-center justify-center text-cyan-500">
-                <svg viewBox="0 0 24 36" className="w-6 h-9 fill-current">
-                  <circle cx="12" cy="6" r="4" />
-                  <path d="M7 12 h10 a2 2 0 0 1 2 2 v10 h-3 v12 h-3 v-12 h-2 v12 h-3 v-12 h-3 v-10 a2 2 0 0 1 2 -2 z" />
-                </svg>
+            {/* YTD Sales */}
+            <div className="space-y-0.5 border-l border-slate-200 dark:border-slate-800 pl-3">
+              <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">
+                YTD Sales Volume
+              </span>
+              <div className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                R186.5M
               </div>
-              <div className="w-7 h-10 flex items-center justify-center text-rose-500">
-                <svg viewBox="0 0 24 36" className="w-6 h-9 fill-current">
-                  <circle cx="12" cy="6" r="4" />
-                  <path d="M8 12 h8 a2 2 0 0 1 2 2 l2 12 h-4 v10 h-3 v-10 h-2 v10 h-3 v-10 h-4 l2 -12 a2 2 0 0 1 2 -2 z" />
-                </svg>
+              <div className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
+                14 Deals • R13.9M Comm.
               </div>
             </div>
+          </div>
 
-            <div>
-              <span className="text-xl font-extrabold text-slate-800 dark:text-white">5</span>
-              <span className="text-xs font-bold text-slate-400 block uppercase">FEMALE</span>
-              <span className="text-xs font-bold text-slate-600 dark:text-slate-300">63%</span>
-            </div>
+          <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-[11px]">
+            <span className="text-slate-400 font-medium truncate">
+              Target: R220M YTD
+            </span>
+            <button
+              onClick={() => onNavigateView('reporting')}
+              className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center space-x-0.5"
+            >
+              <span>View Audit</span>
+              <ChevronRight className="w-3 h-3" />
+            </button>
           </div>
         </div>
 
@@ -532,66 +574,91 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
       {/* Row 3: Client Age Brackets + LSM & Attractiveness + Likelihood to Buy/Sell */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        {/* CLIENT AGE BRACKETS (Screenshot 3 & 4) */}
-        <div className="lg:col-span-4 bg-white dark:bg-slate-850 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-xs">
-          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2 mb-4">
-            <div className="flex items-center space-x-1.5 text-xs font-bold uppercase tracking-wider text-cyan-600 dark:text-cyan-400">
-              <Users className="w-3.5 h-3.5" />
-              <span>CLIENT AGE BRACKETS</span>
+        {/* CLIENT AGE BRACKETS - Luxury Demographic Personas (ported over
+            from the AI Studio demo design, see chat) */}
+        <div className="lg:col-span-4 bg-white dark:bg-slate-850 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5 mb-4">
+              <div className="flex items-center space-x-2 text-xs font-bold uppercase tracking-wider text-cyan-600 dark:text-cyan-400">
+                <Users className="w-3.5 h-3.5" />
+                <span>DEMOGRAPHIC INTELLIGENCE</span>
+              </div>
+              <span className="text-[10px] font-mono font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                Age Brackets
+              </span>
             </div>
-            <Info className="w-3.5 h-3.5 text-slate-400" />
+
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                {
+                  bracket: '18 - 29',
+                  pct: '22%',
+                  label: 'Next-Gen UHNW',
+                  persona: 'Tech Innovators & Founders',
+                  img: youngBuyerImg,
+                  accent: 'border-amber-400/40 text-amber-500 dark:text-amber-400',
+                },
+                {
+                  bracket: '30 - 39',
+                  pct: '12%',
+                  label: 'Executive Leaders',
+                  persona: 'Corporate Partners & Ex-pats',
+                  img: youngBuyerImg,
+                  accent: 'border-sky-400/40 text-sky-500 dark:text-sky-400',
+                },
+                {
+                  bracket: '40 - 59',
+                  pct: '22%',
+                  label: 'Private Wealth',
+                  persona: 'Principals & Family Offices',
+                  img: midBuyerImg,
+                  accent: 'border-emerald-400/40 text-emerald-500 dark:text-emerald-400',
+                },
+                {
+                  bracket: '60+',
+                  pct: '44%',
+                  label: 'Legacy Trustees',
+                  persona: 'Portfolio Patriarchs & Matriarchs',
+                  img: seniorPatronImg,
+                  accent: 'border-purple-400/40 text-purple-500 dark:text-purple-400',
+                },
+              ].map((item) => (
+                <div
+                  key={item.bracket}
+                  className="group relative flex flex-col items-center p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-750/80 hover:border-slate-300 dark:hover:border-slate-650 transition duration-200 shadow-2xs hover:shadow-xs"
+                >
+                  {/* Luxury Portrait Frame */}
+                  <div className="relative w-16 h-16 rounded-full p-0.5 bg-gradient-to-tr from-slate-300 via-amber-200/50 to-slate-400 dark:from-slate-700 dark:via-amber-500/30 dark:to-slate-600 shadow-xs mb-2 overflow-hidden group-hover:scale-105 transition duration-300">
+                    <img
+                      src={item.img}
+                      alt={item.label}
+                      referrerPolicy="no-referrer"
+                      className="w-full h-full object-cover object-center rounded-full"
+                    />
+                    <div className="absolute inset-0 rounded-full ring-1 ring-inset ring-black/10 dark:ring-white/10" />
+                  </div>
+
+                  {/* Demographic Tier Labels */}
+                  <span className="text-[11px] font-bold text-slate-800 dark:text-slate-100 text-center truncate max-w-full leading-tight">
+                    {item.label}
+                  </span>
+                  <span className="text-[9px] text-slate-500 dark:text-slate-400 text-center truncate max-w-full mb-2">
+                    {item.persona}
+                  </span>
+
+                  {/* Sleek Dark Badge with Bracket & Percentage */}
+                  <div className="w-full flex items-center justify-between px-2 py-0.5 rounded-md bg-slate-900 text-white text-[10px] font-mono font-semibold shadow-2xs border border-slate-800">
+                    <span className="text-slate-300">{item.bracket}</span>
+                    <span className={item.accent.split(' ')[1] || 'text-cyan-400'}>{item.pct}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            {[
-              {
-                bracket: '19 - 29',
-                pct: '22%',
-                label: 'Young Buyers',
-                avatarBg: 'from-amber-100 to-amber-200 dark:from-slate-700 dark:to-slate-800',
-              },
-              {
-                bracket: '30 - 39',
-                pct: '11%',
-                label: 'Executives',
-                avatarBg: 'from-sky-100 to-sky-200 dark:from-slate-700 dark:to-slate-800',
-              },
-              {
-                bracket: '40 - 59',
-                pct: '22%',
-                label: 'Families',
-                avatarBg: 'from-emerald-100 to-emerald-200 dark:from-slate-700 dark:to-slate-800',
-              },
-              {
-                bracket: '60+',
-                pct: '44%',
-                label: 'Retirees',
-                avatarBg: 'from-purple-100 to-purple-200 dark:from-slate-700 dark:to-slate-800',
-              },
-            ].map((item) => (
-              <div key={item.bracket} className="flex flex-col items-center p-2 rounded-xl bg-slate-50/70 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-750">
-                {/* Stylized Illustrated Avatar Circle */}
-                <div className={`w-16 h-16 rounded-full bg-gradient-to-br ${item.avatarBg} flex items-center justify-center p-1 shadow-2xs relative overflow-hidden mb-2`}>
-                  <svg viewBox="0 0 100 100" className="w-full h-full">
-                    {/* Left person */}
-                    <circle cx="38" cy="42" r="16" fill="#fbcfe8" />
-                    <rect x="22" y="60" width="32" height="40" rx="8" fill="#1e293b" />
-                    {/* Hair */}
-                    <path d="M22,38 Q38,18 54,38 Q38,28 22,38 Z" fill="#78350f" />
-                    {/* Right person */}
-                    <circle cx="65" cy="45" r="15" fill="#fed7aa" />
-                    <rect x="50" y="62" width="30" height="38" rx="8" fill="#0284c7" />
-                    {/* Glasses/hair on right person */}
-                    <path d="M50,42 Q65,22 80,42" stroke="#475569" strokeWidth="2" fill="none" />
-                  </svg>
-                </div>
-
-                {/* Dark badge with range | % */}
-                <div className="px-3 py-1 rounded-md bg-slate-900 text-white text-xs font-bold shadow-2xs">
-                  {item.bracket} | <span className="text-cyan-400">{item.pct}</span>
-                </div>
-              </div>
-            ))}
+          <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+            <span>Primary Core Segment</span>
+            <span className="font-semibold text-slate-700 dark:text-slate-200">60+ Trustees (44%)</span>
           </div>
         </div>
 
@@ -601,7 +668,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
               <div className="flex items-center space-x-1.5 text-xs font-bold uppercase tracking-wider text-cyan-600 dark:text-cyan-400">
                 <BarChart2 className="w-3.5 h-3.5" />
-                <span>LSM AND SUBURB ATTRACTIVENESS</span>
+                <span>LSM & SUBURB ATTRACTIVENESS</span>
               </div>
               <Info className="w-3.5 h-3.5 text-slate-400" />
             </div>
@@ -627,20 +694,20 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
               {/* Group 0-3 */}
               <div className="flex items-end space-x-1.5 h-full">
-                <div className="w-6 bg-red-600 rounded-t-xs" style={{ height: '0%' }} title="LSM: 0" />
-                <div className="w-6 bg-cyan-500 rounded-t-xs" style={{ height: '20%' }} title="Suburb Attractiveness: 2" />
+                <div className="w-6 bg-gradient-to-t from-rose-800 to-rose-600 rounded-t-sm transition-all duration-300 hover:brightness-110" style={{ height: '0%' }} title="LSM: 0" />
+                <div className="w-6 bg-gradient-to-t from-cyan-700 to-cyan-500 rounded-t-sm transition-all duration-300 hover:brightness-110" style={{ height: '20%' }} title="Suburb Attractiveness: 2" />
               </div>
 
               {/* Group 4-7 */}
               <div className="flex items-end space-x-1.5 h-full">
-                <div className="w-6 bg-red-600 rounded-t-xs" style={{ height: '20%' }} title="LSM: 2" />
-                <div className="w-6 bg-cyan-500 rounded-t-xs" style={{ height: '0%' }} title="Suburb Attractiveness: 0" />
+                <div className="w-6 bg-gradient-to-t from-rose-800 to-rose-600 rounded-t-sm transition-all duration-300 hover:brightness-110" style={{ height: '20%' }} title="LSM: 2" />
+                <div className="w-6 bg-gradient-to-t from-cyan-700 to-cyan-500 rounded-t-sm transition-all duration-300 hover:brightness-110" style={{ height: '0%' }} title="Suburb Attractiveness: 0" />
               </div>
 
               {/* Group 8-10 */}
               <div className="flex items-end space-x-1.5 h-full">
-                <div className="w-6 bg-red-600 rounded-t-xs" style={{ height: '30%' }} title="LSM: 3" />
-                <div className="w-6 bg-cyan-500 rounded-t-xs" style={{ height: '50%' }} title="Suburb Attractiveness: 5" />
+                <div className="w-6 bg-gradient-to-t from-rose-800 to-rose-600 rounded-t-sm transition-all duration-300 hover:brightness-110" style={{ height: '30%' }} title="LSM: 3" />
+                <div className="w-6 bg-gradient-to-t from-cyan-700 to-cyan-500 rounded-t-sm transition-all duration-300 hover:brightness-110" style={{ height: '50%' }} title="Suburb Attractiveness: 5" />
               </div>
             </div>
 
@@ -651,18 +718,18 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <span>8-10</span>
             </div>
             <div className="text-center text-xs font-bold text-slate-700 dark:text-slate-300 mt-1">
-              Score
+              Score Tier
             </div>
           </div>
 
           {/* Legend */}
           <div className="flex items-center justify-center space-x-4 pt-3 border-t border-slate-100 dark:border-slate-800 text-xs">
             <div className="flex items-center space-x-1.5">
-              <span className="w-3 h-3 bg-red-600 rounded-xs inline-block" />
-              <span className="text-slate-600 dark:text-slate-300 text-[11px] font-medium">LSM</span>
+              <span className="w-3 h-3 bg-gradient-to-tr from-rose-800 to-rose-600 rounded-xs inline-block shadow-2xs" />
+              <span className="text-slate-600 dark:text-slate-300 text-[11px] font-medium">LSM Score</span>
             </div>
             <div className="flex items-center space-x-1.5">
-              <span className="w-3 h-3 bg-cyan-500 rounded-xs inline-block" />
+              <span className="w-3 h-3 bg-gradient-to-tr from-cyan-700 to-cyan-500 rounded-xs inline-block shadow-2xs" />
               <span className="text-slate-600 dark:text-slate-300 text-[11px] font-medium">Suburb Attractiveness</span>
             </div>
           </div>
@@ -674,7 +741,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
               <div className="flex items-center space-x-1.5 text-xs font-bold uppercase tracking-wider text-cyan-600 dark:text-cyan-400">
                 <BarChart2 className="w-3.5 h-3.5" />
-                <span>CLIENT LIKELIHOOD TO BUY AND SELL</span>
+                <span>CLIENT LIKELIHOOD TO BUY & SELL</span>
               </div>
               <Info className="w-3.5 h-3.5 text-slate-400" />
             </div>
@@ -700,32 +767,32 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
               {/* Very Unlikely */}
               <div className="flex items-end space-x-1 h-full">
-                <div className="w-3.5 bg-red-600 rounded-t-xs" style={{ height: '30%' }} title="Buy: 3" />
-                <div className="w-3.5 bg-cyan-500 rounded-t-xs" style={{ height: '20%' }} title="Sell: 2" />
+                <div className="w-3.5 bg-gradient-to-t from-rose-800 to-rose-600 rounded-t-sm" style={{ height: '30%' }} title="Buy: 3" />
+                <div className="w-3.5 bg-gradient-to-t from-cyan-700 to-cyan-500 rounded-t-sm" style={{ height: '20%' }} title="Sell: 2" />
               </div>
 
               {/* Unlikely */}
               <div className="flex items-end space-x-1 h-full">
-                <div className="w-3.5 bg-red-600 rounded-t-xs" style={{ height: '0%' }} />
-                <div className="w-3.5 bg-cyan-500 rounded-t-xs" style={{ height: '0%' }} />
+                <div className="w-3.5 bg-gradient-to-t from-rose-800 to-rose-600 rounded-t-sm" style={{ height: '0%' }} />
+                <div className="w-3.5 bg-gradient-to-t from-cyan-700 to-cyan-500 rounded-t-sm" style={{ height: '0%' }} />
               </div>
 
               {/* Somewhat Likely */}
               <div className="flex items-end space-x-1 h-full">
-                <div className="w-3.5 bg-red-600 rounded-t-xs" style={{ height: '0%' }} />
-                <div className="w-3.5 bg-cyan-500 rounded-t-xs" style={{ height: '10%' }} title="Sell: 1" />
+                <div className="w-3.5 bg-gradient-to-t from-rose-800 to-rose-600 rounded-t-sm" style={{ height: '0%' }} />
+                <div className="w-3.5 bg-gradient-to-t from-cyan-700 to-cyan-500 rounded-t-sm" style={{ height: '10%' }} title="Sell: 1" />
               </div>
 
               {/* Likely */}
               <div className="flex items-end space-x-1 h-full">
-                <div className="w-3.5 bg-red-600 rounded-t-xs" style={{ height: '0%' }} />
-                <div className="w-3.5 bg-cyan-500 rounded-t-xs" style={{ height: '10%' }} title="Sell: 1" />
+                <div className="w-3.5 bg-gradient-to-t from-rose-800 to-rose-600 rounded-t-sm" style={{ height: '0%' }} />
+                <div className="w-3.5 bg-gradient-to-t from-cyan-700 to-cyan-500 rounded-t-sm" style={{ height: '10%' }} title="Sell: 1" />
               </div>
 
               {/* Highly Likely */}
               <div className="flex items-end space-x-1 h-full">
-                <div className="w-3.5 bg-red-600 rounded-t-xs" style={{ height: '0%' }} />
-                <div className="w-3.5 bg-cyan-500 rounded-t-xs" style={{ height: '30%' }} title="Sell: 3" />
+                <div className="w-3.5 bg-gradient-to-t from-rose-800 to-rose-600 rounded-t-sm" style={{ height: '0%' }} />
+                <div className="w-3.5 bg-gradient-to-t from-cyan-700 to-cyan-500 rounded-t-sm" style={{ height: '30%' }} title="Sell: 3" />
               </div>
             </div>
 
@@ -738,18 +805,18 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <span className="text-center leading-tight">Highly<br />Likely</span>
             </div>
             <div className="text-center text-xs font-bold text-slate-700 dark:text-slate-300 mt-1">
-              Propensity
+              Propensity Tier
             </div>
           </div>
 
           {/* Legend */}
           <div className="flex items-center justify-center space-x-4 pt-3 border-t border-slate-100 dark:border-slate-800 text-xs">
             <div className="flex items-center space-x-1.5">
-              <span className="w-3 h-3 bg-red-600 rounded-xs inline-block" />
+              <span className="w-3 h-3 bg-gradient-to-tr from-rose-800 to-rose-600 rounded-xs inline-block shadow-2xs" />
               <span className="text-slate-600 dark:text-slate-300 text-[11px] font-medium">Likelihood To Buy</span>
             </div>
             <div className="flex items-center space-x-1.5">
-              <span className="w-3 h-3 bg-cyan-500 rounded-xs inline-block" />
+              <span className="w-3 h-3 bg-gradient-to-tr from-cyan-700 to-cyan-500 rounded-xs inline-block shadow-2xs" />
               <span className="text-slate-600 dark:text-slate-300 text-[11px] font-medium">Likelihood To Sell</span>
             </div>
           </div>
