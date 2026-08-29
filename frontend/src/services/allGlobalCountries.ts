@@ -225,6 +225,654 @@ export const ALL_196_COUNTRIES_DATA: CompactCountryEntry[] = [
   ['VU', 'Vanuatu', '🇻🇺', 'VUV', 'VT', 'Vanuatu Vatu', '+678', 'Port Vila', 'Vanuatu Real Estate Agents Association', 'Department of Lands, Surveys and Records', 'Registered Lease Title (Title & Sector ID)', ['Nambatu', 'Tassiriki', 'Elluk Plateau', 'Havannah Harbour']]
 ];
 
+// Specific regulatory & licensing detail overrides by country code
+interface CountryRegulatoryOverride {
+  regBody?: string;
+  licenseName?: string;
+  licensePlaceholder?: string;
+  complianceAuth?: string;
+  statutoryAct?: string;
+  regulatoryRequirements?: string;
+  licenseFormatDescription?: string;
+  renewalCycle?: string;
+  trustAccountObligation?: string;
+  agentTypes?: string[];
+  portals?: { name: string; url: string }[];
+}
+
+const SPECIFIC_COUNTRY_REGULATORY_MAP: Record<string, CountryRegulatoryOverride> = {
+  ZA: {
+    regBody: 'Property Practitioners Regulatory Authority (PPRA / EAAB)',
+    licenseName: 'PPRA / EAAB Fidelity Fund Certificate (FFC)',
+    licensePlaceholder: '20241098234 (Fidelity Fund Certificate)',
+    complianceAuth: 'PPRA & Financial Intelligence Centre (FIC Act Compliance)',
+    statutoryAct: 'Property Practitioners Act 22 of 2019 (PPA) Section 47',
+    regulatoryRequirements: 'Every practicing property practitioner (Principal, Non-Principal, or Candidate) must hold a valid Fidelity Fund Certificate (FFC) issued annually by the PPRA. Practicing without a valid FFC is illegal under Section 48 and prohibits claiming commission. Practitioners must maintain compliant trust account audits and log annual CPD (Continuing Professional Development) points.',
+    licenseFormatDescription: '11-Digit Numeric Certificate Number (e.g. 20241098234) issued following NQF 4/5 PDE examination.',
+    renewalCycle: 'Annual renewal required before October 31st for the subsequent calendar year.',
+    trustAccountObligation: 'Section 54 Audited Trust Account with designated banking institution and annual Independent Auditor Report submission.',
+    agentTypes: [
+      'Principal Property Practitioner (PPRA)',
+      'Non-Principal Property Practitioner (PPRA)',
+      'Candidate Property Practitioner (Intern FFC)',
+      'Master Practitioner in Real Estate (MPRE)'
+    ],
+    portals: [
+      { name: 'Property24', url: 'https://www.property24.com' },
+      { name: 'Private Property', url: 'https://www.privateproperty.co.za' }
+    ]
+  },
+  US: {
+    regBody: 'State Real Estate Commission (DRE / FREC / TREC)',
+    licenseName: 'DRE / State Real Estate Broker License #',
+    licensePlaceholder: 'DRE# 02194821 / FREC-BK3489201',
+    complianceAuth: 'FinCEN Real Estate Compliance & State Licensing Division',
+    statutoryAct: 'State Real Estate Licensing Acts (e.g. CA Business & Professions Code § 10150, FL Statutes Ch. 475, TX Occupations Code Ch. 1101)',
+    regulatoryRequirements: 'Real estate brokers and salespersons must hold an active license issued by their state regulatory commission (such as California DRE, Florida FREC, Texas TREC, or NY DOS). Requires accredited pre-licensing courses, passing state examinations, background fingerprint clearance, and active broker sponsorship.',
+    licenseFormatDescription: '8-Digit DRE License Number (e.g. 02194821) or State Prefix + Alphanumeric ID (e.g. FREC-BK3489201, TREC-059281).',
+    renewalCycle: '2 to 4-year renewal cycle with mandatory 18–45 hours of Continuing Education (CE).',
+    trustAccountObligation: 'Designated Real Estate Broker Escrow / Trust Account subject to state unannounced audits.',
+    agentTypes: [
+      'Licensed Real Estate Broker (DRE / Commission)',
+      'Licensed Real Estate Salesperson',
+      'Realtor® / Associate Managing Broker',
+      'Commercial Investment Specialist (CCIM)'
+    ],
+    portals: [
+      { name: 'Zillow', url: 'https://www.zillow.com' },
+      { name: 'Realtor.com', url: 'https://www.realtor.com' },
+      { name: 'Redfin', url: 'https://www.redfin.com' }
+    ]
+  },
+  GB: {
+    regBody: 'NAEA Propertymark & RICS (Royal Institution of Chartered Surveyors)',
+    licenseName: 'RICS Membership / NAEA Registration #',
+    licensePlaceholder: 'RICS-884920 / MNAEA-49201',
+    complianceAuth: 'NAEA Propertymark & Money Laundering Regs (MLR)',
+    statutoryAct: 'Estate Agents Act 1979 & Consumer Protection from Unfair Trading Regulations (CPRs)',
+    regulatoryRequirements: 'Estate agents operating in the UK must register with an approved redress scheme (The Property Ombudsman - TPO or Property Redress Scheme - PRS), maintain HMRC Anti-Money Laundering supervision, and hold mandatory Client Money Protection (CMP). Professional designations require certified RICS or NAEA Propertymark registration.',
+    licenseFormatDescription: 'RICS-[6-digit Member #] (e.g. RICS-884920) or MNAEA-[5-digit #] / Redress Scheme ID.',
+    renewalCycle: 'Annual professional membership renewal with mandatory 20+ hours of verifiable CPD.',
+    trustAccountObligation: 'Mandatory ring-fenced Client Account protected by statutory Client Money Protection (CMP) insurance.',
+    agentTypes: [
+      'Chartered Surveyor (MRICS / FRICS)',
+      'Licensed Estate Agent (MNAEA Propertymark)',
+      'Senior Residential Valuer & Branch Director',
+      'Commercial Property Consultant'
+    ],
+    portals: [
+      { name: 'Rightmove UK', url: 'https://www.rightmove.co.uk' },
+      { name: 'Zoopla', url: 'https://www.zoopla.co.uk' },
+      { name: 'OnTheMarket', url: 'https://www.onthemarket.com' }
+    ]
+  },
+  AU: {
+    regBody: 'Fair Trading Property Services & Real Estate Institute of Australia (REIA)',
+    licenseName: 'Real Estate Agent Licence (Fair Trading / REIA)',
+    licensePlaceholder: 'LIC-20491823 (Class 1 Agent)',
+    complianceAuth: 'Fair Trading Property Compliance & AUSTRAC AML Framework',
+    statutoryAct: 'Property and Stock Agents Act 2002 (NSW) / Estate Agents Act 1980 (VIC) / Property Occupations Act 2014 (QLD)',
+    regulatoryRequirements: 'Real estate agents must hold a valid Class 1 (Licensee-in-Charge) or Class 2 qualification issued by state fair trading authorities (e.g. NSW Fair Trading, Consumer Affairs Victoria). Requires Certificate IV/Diploma in Real Estate Practice, annual CPD completion, and strict AUSTRAC AML reporting.',
+    licenseFormatDescription: 'LIC-[8-digit License #] (e.g. LIC-20491823) or State Registration ID.',
+    renewalCycle: 'Annual or 3-year license renewal with mandatory annual CPD modules.',
+    trustAccountObligation: 'Statutory trust account audited annually by an independent registered company auditor within 3 months of audit year-end.',
+    agentTypes: [
+      'Licensed Real Estate Agent (Class 1)',
+      'Registered Assistant Agent (Class 2)',
+      'Principal Licensee / Agency Director',
+      'Accredited Property Valuer & Auctioneer'
+    ],
+    portals: [
+      { name: 'Domain.com.au', url: 'https://www.domain.com.au' },
+      { name: 'Realestate.com.au', url: 'https://www.realestate.com.au' }
+    ]
+  },
+  AE: {
+    regBody: 'Real Estate Regulatory Agency (RERA / Dubai Land Department)',
+    licenseName: 'RERA Broker ID (BRN) / DLD License',
+    licensePlaceholder: 'BRN-48920 / ORN-29182',
+    complianceAuth: 'RERA & UAE Anti-Money Laundering (AML) Compliance',
+    statutoryAct: 'Dubai Law No. 85 of 2006 (Regulating the Real Estate Brokers Register in the Emirate of Dubai)',
+    regulatoryRequirements: 'All real estate brokers operating in Dubai and the UAE must hold an active Broker Registration Number (BRN) issued by RERA under the Dubai Land Department (DLD). Agents must pass the DREI certified exam, hold valid residency, operate under a licensed brokerage (ORN), and obtain electronic Trakheesi permits for listing advertisements.',
+    licenseFormatDescription: 'BRN-[5-digit Broker ID] (e.g. BRN-48920) or ORN-[5-digit Office Registration Number] (e.g. ORN-29182).',
+    renewalCycle: 'Annual renewal via DLD REST / Trakheesi portal subject to mandatory CPD modules and police clearance.',
+    trustAccountObligation: 'Project Escrow Accounts supervised directly by the Dubai Land Department (DLD) Escrow Accounts Department.',
+    agentTypes: [
+      'RERA Certified Real Estate Broker (BRN)',
+      'RERA Registered Property Consultant',
+      'Commercial Real Estate Broker (DED)',
+      'Managing Broker / Agency Director (ORN)'
+    ],
+    portals: [
+      { name: 'Property Finder UAE', url: 'https://www.propertyfinder.ae' },
+      { name: 'Bayut', url: 'https://www.bayut.com' }
+    ]
+  },
+  CA: {
+    regBody: 'Canadian Real Estate Association (CREA / RECO / BCFSA / OACIQ)',
+    licenseName: 'Real Estate Broker / Agent Permit # (RECO/OACIQ)',
+    licensePlaceholder: 'RECO-4920194 / OACIQ-E1234',
+    complianceAuth: 'FINTRAC Real Estate Compliance & Provincial Council',
+    statutoryAct: 'Trust in Real Estate Services Act (TRESA, Ontario) / Real Estate Services Act (RESA, BC) / Real Estate Brokerage Act (Quebec)',
+    regulatoryRequirements: 'Agents must be registered with their provincial regulatory council (e.g., RECO in Ontario, BCFSA in BC, OACIQ in Quebec) and be a member of CREA for MLS access. Requires accredited real estate education, passing provincial licensing exams, mandatory errors & omissions insurance, and compliance with FINTRAC client identification guidelines.',
+    licenseFormatDescription: 'Provincial Registration ID (e.g. RECO-4920194, BCFSA-189201, OACIQ-E1234).',
+    renewalCycle: '2-year registration cycle with mandatory continuing education credits.',
+    trustAccountObligation: 'Designated Real Estate Brokerage Trust Account regulated by provincial authority.',
+    agentTypes: [
+      'Licensed Real Estate Broker (CREA)',
+      'Real Estate Sales Representative',
+      'Managing Broker / Agency Director',
+      'Accredited Commercial Real Estate Specialist'
+    ],
+    portals: [
+      { name: 'Realtor.ca', url: 'https://www.realtor.ca' },
+      { name: 'Centris.ca', url: 'https://www.centris.ca' }
+    ]
+  },
+  FR: {
+    regBody: 'Chambre de Commerce et d’Industrie (CCI) - Loi Hoguet',
+    licenseName: "Carte Professionnelle Transaction 'T' (Loi Hoguet) #",
+    licensePlaceholder: 'CPI 7501 2024 000 012 345',
+    complianceAuth: 'TRACFIN & Conseil National des Transactions Immobilières (CNTGI)',
+    statutoryAct: 'Loi N° 70-9 du 2 janvier 1970 (Loi Hoguet) & Décret N° 72-678 du 20 juillet 1972',
+    regulatoryRequirements: 'Any individual or agency carrying out real estate transactions in France must hold a Carte Professionnelle "Transactions sur immeubles et fonds de commerce" (Carte T) issued by the local CCI. Requires verified professional aptitude (diploma or experience), civil liability insurance (RC Pro), financial guarantee (Garantie Financière) for holding funds, and clean bulletin N° 2 criminal record.',
+    licenseFormatDescription: 'CPI [Department Code] [Year] [Serial 10 Digits] (e.g. CPI 7501 2024 000 012 345).',
+    renewalCycle: 'Valid for 3 years, renewable subject to 42 hours of mandatory continuous training (Loi Alur).',
+    trustAccountObligation: 'Compte Spécial Séquestre (Article 55 Décret 1972) backed by a certified financial guarantee bond.',
+    agentTypes: [
+      'Agent Immobilier Titulaire Carte T (Loi Hoguet)',
+      'Négociateur Immobilier Salarié',
+      'Agent Commercial Indépendant (RSAC)',
+      'Expert Évaluateur Foncier et Immobilier (CEIF)'
+    ],
+    portals: [
+      { name: 'SeLoger', url: 'https://www.seloger.com' },
+      { name: 'Le Figaro Immobilier', url: 'https://immobilier.lefigaro.fr' },
+      { name: 'Belles Demeures', url: 'https://www.bellesdemeures.com' }
+    ]
+  },
+  DE: {
+    regBody: 'Industrie- und Handelskammer (IHK) & Gewerbeamt (§34c GewO)',
+    licenseName: 'Maklererlaubnis §34c GewO / IHK Registrierung #',
+    licensePlaceholder: '§34c-GEW-2024-8849',
+    complianceAuth: 'Geldwäschegesetz (GwG) & IHK Aufsichtsbehörde',
+    statutoryAct: 'Gewerbeordnung § 34c (GewO) & Makler- und Bauträgerverordnung (MaBV)',
+    regulatoryRequirements: 'Real estate brokers in Germany require an official license under Section 34c of the Industrial Code (Gewerbeordnung). Issued by the IHK or local Gewerbeamt upon verifying personal reliability (clean SCHUFA, criminal record certificate, tax clearance) and orderly financial circumstances. Mandatory 20 hours of continuing professional education within every 3-year period under § 15b MaBV.',
+    licenseFormatDescription: 'Official §34c GewO Registration / Approval File Number (e.g. §34c-GEW-2024-8849).',
+    renewalCycle: 'Indefinite validity upon approval, subject to mandatory 20 hours CPD every 3 years.',
+    trustAccountObligation: 'Anderkonto (Trust Account) strictly segregated from business assets under § 6 MaBV.',
+    agentTypes: [
+      'Immobilienmakler mit §34c GewO Erlaubnis',
+      'Geprüfter Immobilienfachwirt (IHK)',
+      'Freier Sachverständiger für Immobilienbewertung',
+      'Gewerbeimmobilien-Berater'
+    ],
+    portals: [
+      { name: 'ImmobilienScout24', url: 'https://www.immobilienscout24.de' },
+      { name: 'Immowelt', url: 'https://www.immowelt.de' }
+    ]
+  },
+  ES: {
+    regBody: 'Colegio Oficial de Agentes de la Propiedad Inmobiliaria (COAPI)',
+    licenseName: 'Número de Colegiado API / Registro Homologado (RAICV/AICAT)',
+    licensePlaceholder: 'API-20491 / AICAT-8920',
+    complianceAuth: 'SEPBLAC Prevención Blanqueo & Consejo General COAPI',
+    statutoryAct: 'Ley 10/2010 de Prevención del Blanqueo de Capitales & Decretos Autonómicos Inmobiliarios (AICAT/RAICV)',
+    regulatoryRequirements: 'In regulated autonomous regions (Catalonia AICAT, Valencian Community RAICV, Balearics, Madrid), agents must be registered on the official Registry of Real Estate Agents. Requires accredited API qualification, mandatory civil liability insurance, surety bond/guarantee for advance deposits, and compliance with strict consumer protection rules.',
+    licenseFormatDescription: 'API-[5-digit Colegiado #] or Regional Registry Number (e.g. AICAT-8920, RAICV-1204).',
+    renewalCycle: 'Annual certificate of registry validity and insurance policy updates.',
+    trustAccountObligation: 'Segregated client funds deposit account backed by minimum €60,000 surety bond.',
+    agentTypes: [
+      'Agente de la Propiedad Inmobiliaria (API Colegiado)',
+      'Asesor Inmobiliario Registrado (AICAT/RAICV)',
+      'Director de Agencia Inmobiliaria',
+      'Consultor en Inversiones Inmobiliarias'
+    ],
+    portals: [
+      { name: 'Idealista', url: 'https://www.idealista.com' },
+      { name: 'Fotocasa', url: 'https://www.fotocasa.es' },
+      { name: 'Habitaclia', url: 'https://www.habitaclia.com' }
+    ]
+  },
+  IT: {
+    regBody: 'Camera di Commercio (Ruolo Mediatori / Registro Imprese REA)',
+    licenseName: 'Patentino Agente Immobiliare / N° REA Camera di Commercio',
+    licensePlaceholder: 'REA MI-2049182 / Patentino',
+    complianceAuth: 'UIF Banca d’Italia & Camera di Commercio (Mediazione)',
+    statutoryAct: 'Legge 3 febbraio 1989 n. 39 & D.Lgs. 59/2010 (Disciplina della professione di mediatore)',
+    regulatoryRequirements: 'Italian real estate brokers must hold the official Patentino di Agente di Affari in Mediazione and be registered in the REA (Repertorio Economico Amministrativo) at the local Chamber of Commerce. Requires passing a rigorous provincial written and oral examination, holding civil liability insurance policy, and maintaining professional independence.',
+    licenseFormatDescription: 'REA [Province Code]-[7-Digit Number] (e.g. REA MI-2049182) or Patentino Number.',
+    renewalCycle: '4-year mandatory periodic review (revisione dinamica dei requisiti) at the Camera di Commercio.',
+    trustAccountObligation: 'Strict fiduciary management of deposit checks made directly to the seller/escrow notary.',
+    agentTypes: [
+      'Agente di Affari in Mediazione Immobiliare (Patentino)',
+      'Mediatore Creditizio e Immobiliare Registrato',
+      'Responsabile Tecnico di Agenzia',
+      'Consulente Immobiliare Senior'
+    ],
+    portals: [
+      { name: 'Immobiliare.it', url: 'https://www.immobiliare.it' },
+      { name: 'Idealista IT', url: 'https://www.idealista.it' },
+      { name: 'Casa.it', url: 'https://www.casa.it' }
+    ]
+  },
+  IN: {
+    regBody: 'Real Estate Regulatory Authority (RERA State Council)',
+    licenseName: 'RERA Real Estate Agent Registration #',
+    licensePlaceholder: 'MahaRERA/A51900028491 / HRERA-291',
+    complianceAuth: 'RERA Authority & Financial Intelligence Unit (FIU-IND)',
+    statutoryAct: 'Real Estate (Regulation and Development) Act 2016 (RERA Act)',
+    regulatoryRequirements: 'All real estate agents facilitating sales of registered real estate projects in India must hold an active RERA registration certificate issued by the respective State RERA Authority (e.g., MahaRERA, HRERA, UP-RERA, Karnataka RERA). Mandates quoting the RERA registration number on all advertisements, maintaining books of accounts, and undergoing mandatory RERA CP certification training.',
+    licenseFormatDescription: 'State Prefix + RERA Alphanumeric ID (e.g. MahaRERA/A51900028491 or HRERA-PKL-REA-291).',
+    renewalCycle: 'Valid for 5 years, renewable upon application and compliance verification.',
+    trustAccountObligation: 'Strict compliance with Section 4(2)(l)(D) 70% project escrow bank account regulations.',
+    agentTypes: [
+      'RERA Registered Real Estate Agent',
+      'Principal Real Estate Broker',
+      'Certified Commercial Real Estate Consultant',
+      'Channel Partner / Strategic Marketing Director'
+    ],
+    portals: [
+      { name: 'MagicBricks', url: 'https://www.magicbricks.com' },
+      { name: '99acres', url: 'https://www.99acres.com' },
+      { name: 'Housing.com', url: 'https://www.housing.com' }
+    ]
+  },
+  SG: {
+    regBody: 'Council for Estate Agencies (CEA)',
+    licenseName: 'CEA Registration Number (Public Register)',
+    licensePlaceholder: 'CEA Reg: R019283A / L3001234K',
+    complianceAuth: 'Council for Estate Agencies (CEA) & STRO Compliance',
+    statutoryAct: 'Estate Agents Act 2010 (Cap. 95A)',
+    regulatoryRequirements: 'All real estate salespersons (RES) and estate agents in Singapore must be registered or licensed by the Council for Estate Agencies (CEA). Requires passing the Real Estate Salesperson (RES) exam, holding professional indemnity insurance, being registered under an authorized licensed estate agent agency (KEO), and completing 6 CPD credits annually.',
+    licenseFormatDescription: 'R[6 digits][1 letter] for Salespersons (e.g. R019283A) and L[7 digits][1 letter] for Agencies.',
+    renewalCycle: 'Annual renewal (by 31 October) via CEA public portal subject to mandatory CPD fulfillment.',
+    trustAccountObligation: 'Client money accounts strictly forbidden for salespersons; funds managed by licensed banks/escrow.',
+    agentTypes: [
+      'CEA Registered Real Estate Salesperson (RES)',
+      'Key Executive Officer (KEO)',
+      'Licensed Estate Agent (Agency Principal)',
+      'Senior Marketing Director'
+    ],
+    portals: [
+      { name: 'PropertyGuru SG', url: 'https://www.propertyguru.com.sg' },
+      { name: '99.co Singapore', url: 'https://www.99.co/singapore' },
+      { name: 'EdgeProp SG', url: 'https://www.edgeprop.sg' }
+    ]
+  },
+  MY: {
+    regBody: 'Board of Valuers, Appraisers, Estate Agents and Property Managers (BOVAEP)',
+    licenseName: 'BOVAEP Real Estate Agent (REA) License (E-Number)',
+    licensePlaceholder: 'E-2918 / PEA-1928 / REN-49201',
+    complianceAuth: 'BOVAEP & Bank Negara Malaysia Anti-Money Laundering (AMLA)',
+    statutoryAct: 'Valuers, Appraisers, Estate Agents and Property Managers Act 1981 (Act 242)',
+    regulatoryRequirements: 'Estate agency practice in Malaysia is governed by BOVAEP (Lembaga Penilai, Pentaksir, Ejen Harta Tanah dan Pengurus Harta). Registered Estate Agents (REA) hold an E-number following diploma examinations and a 2-year Test of Professional Competence (TPC). Real Estate Negotiators (REN) work under REA supervision with mandatory REN tag certification.',
+    licenseFormatDescription: 'E-[4 digits] for REA (e.g. E-2918) or REN-[5 digits] for Negotiators (e.g. REN-49201).',
+    renewalCycle: 'Annual renewal of practicing certificate (Form K) with mandatory CPD attendance.',
+    trustAccountObligation: 'Mandatory Section 23 Clients Account governed by Rule 105 of the Board Rules.',
+    agentTypes: [
+      'Registered Estate Agent (REA - E Number)',
+      'Probationary Estate Agent (PEA)',
+      'Real Estate Negotiator (REN Tagged)',
+      'Registered Property Valuer & Manager'
+    ],
+    portals: [
+      { name: 'PropertyGuru Malaysia', url: 'https://www.propertyguru.com.my' },
+      { name: 'iProperty Malaysia', url: 'https://www.iproperty.com.my' }
+    ]
+  },
+  NZ: {
+    regBody: 'Real Estate Authority (REA / REINZ)',
+    licenseName: 'REA Licensed Real Estate Agent Licence #',
+    licensePlaceholder: 'REA Lic # 20049182',
+    complianceAuth: 'Real Estate Authority (REA) & DIA AML/CFT Regulatory Body',
+    statutoryAct: 'Real Estate Agents Act 2008 & Professional Conduct and Client Care Rules',
+    regulatoryRequirements: 'All individuals carrying out real estate agency work in New Zealand must hold a current licence issued by the Real Estate Authority (REA). Requires completion of the New Zealand Certificate in Real Estate, passing fit and proper person assessments, and completing 10 hours of verifiable and 10 hours of non-verifiable continuing education every year.',
+    licenseFormatDescription: 'REA Lic # [8-digit Number] (e.g. REA Lic # 20049182).',
+    renewalCycle: 'Annual license renewal on or before the anniversary date of issue.',
+    trustAccountObligation: 'Section 122 Audited Trust Account required for holding deposits for 10 working days.',
+    agentTypes: [
+      'Licensed Real Estate Agent (Branch Manager / Director)',
+      'Licensed Real Estate Salesperson (REA)',
+      'Accredited Commercial & Rural Specialist',
+      'Registered Property Valuer (ANZIV)'
+    ],
+    portals: [
+      { name: 'Realestate.co.nz', url: 'https://www.realestate.co.nz' },
+      { name: 'Trade Me Property', url: 'https://www.trademe.co.nz/property' },
+      { name: 'OneRoof NZ', url: 'https://www.oneroof.co.nz' }
+    ]
+  },
+  SA: {
+    regBody: 'Real Estate General Authority (REGA / Fal)',
+    licenseName: 'Fal Real Estate Brokerage License (رخصة فال العقارية)',
+    licensePlaceholder: 'FAL-Lic: 1100294820',
+    complianceAuth: 'Saudi Central Bank (AML) & REGA Fal Regulatory Platform',
+    statutoryAct: 'Saudi Real Estate Brokerage Law (Cabinet Decision No. 671 / 1443H) & REGA Regulations',
+    regulatoryRequirements: 'Brokers and marketers in Saudi Arabia must obtain an official Fal license (رخصة فال للوساطة والتسويق العقاري) issued by the Real Estate General Authority (REGA). Requires passing accredited National Real Estate Institute (MAPI) courses, completing Ejar rental platform integration, and issuing electronic brokerage contracts registered via the REGA electronic portal.',
+    licenseFormatDescription: 'FAL-Lic: 10-Digit Alphanumeric Code (e.g. 1100294820 / 1200039281).',
+    renewalCycle: '1, 2, or 3-year validity with digital renewal via the REGA electronic platform.',
+    trustAccountObligation: 'Ejar electronic payment gateway for rental escrow and verified client bank accounts.',
+    agentTypes: [
+      'Licensed Real Estate Broker (Fal Brokerage License)',
+      'Licensed Property Marketer (Fal Marketing)',
+      'Certified Real Estate Valuer (Taqeem)',
+      'Commercial Real Estate Advisor'
+    ],
+    portals: [
+      { name: 'Aqar Saudi (عقار)', url: 'https://sa.aqar.fm' },
+      { name: 'Bayut KSA', url: 'https://www.bayut.sa' },
+      { name: 'Property Finder KSA', url: 'https://www.propertyfinder.sa' }
+    ]
+  },
+  BR: {
+    regBody: 'Conselho Federal de Corretores de Imóveis (COFECI / CRECI)',
+    licenseName: 'Número de Registro CRECI (Pessoa Física / Jurídica)',
+    licensePlaceholder: 'CRECI-SP 184920-F',
+    complianceAuth: 'COAF & Conselho Regional de Corretores de Imóveis (CRECI)',
+    statutoryAct: 'Lei Federal Nº 6.530 de 12 de maio de 1978 & Resoluções COFECI',
+    regulatoryRequirements: 'Real estate brokers in Brazil must be registered with their Regional Council of Real Estate Brokers (CRECI). Requires a recognized Technical Degree in Real Estate Transactions (TTI) or Bachelor in Real Estate Sciences, completion of formal supervised internship, registration at COFECI, and compliance with the Professional Code of Ethics.',
+    licenseFormatDescription: 'CRECI-[State Code] [6-Digit Number]-[F for Person / J for Legal Entity] (e.g. CRECI-SP 184920-F).',
+    renewalCycle: 'Annual registration renewal with the regional CRECI council (Anuidade CRECI).',
+    trustAccountObligation: 'Fiduciary escrow account in compliance with COFECI financial oversight rules.',
+    agentTypes: [
+      'Corretor de Imóveis Credenciado (CRECI)',
+      'Perito Avaliador Imobiliário (CNAI)',
+      'Diretor Responsável de Imobiliária (CRECI-J)',
+      'Consultor Imobiliário de Alto Padrão'
+    ],
+    portals: [
+      { name: 'Zap Imóveis', url: 'https://www.zapimoveis.com.br' },
+      { name: 'Viva Real', url: 'https://www.vivareal.com.br' },
+      { name: 'Imovelweb', url: 'https://www.imovelweb.com.br' }
+    ]
+  },
+  MX: {
+    regBody: 'Asociación Mexicana de Profesionales Inmobiliarios (AMPI)',
+    licenseName: 'Matrícula Inmobiliaria AMPI / Licencia Estatal #',
+    licensePlaceholder: 'AMPI-CDMX-849201',
+    complianceAuth: 'UIF Secretaría de Hacienda & AMPI Inmobiliario',
+    statutoryAct: 'Leyes Estatales de Prestación de Servicios Inmobiliarios & Ley Federal Antilavado (LFPIORPI)',
+    regulatoryRequirements: 'In states with real estate legislation (CDMX, Quintana Roo, Jalisco, Baja California, etc.), brokers must obtain an official state real estate license and register with AMPI. Requires certified CONOCER real estate competency (EC0110.01 / EC0903), continuous training, civil liability coverage, and strict anti-money laundering reporting under LFPIORPI.',
+    licenseFormatDescription: 'AMPI-[State Code]-[6-Digit Number] or State License Registry Number.',
+    renewalCycle: 'Annual or biennial state license renewal with mandatory continuous education units.',
+    trustAccountObligation: 'Segregated escrow account managed via registered Mexican financial institution or notary.',
+    agentTypes: [
+      'Profesional Inmobiliario Certificado (AMPI)',
+      'Asesor Inmobiliario con Licencia Estatal',
+      'Broker / Director de Franquicia Inmobiliaria',
+      'Valuador Inmobiliario Certificado'
+    ],
+    portals: [
+      { name: 'Inmuebles24', url: 'https://www.inmuebles24.com' },
+      { name: 'Vivanuncios', url: 'https://www.vivanuncios.com.mx' },
+      { name: 'Propiedades.com', url: 'https://propiedades.com' }
+    ]
+  },
+  JP: {
+    regBody: 'Ministry of Land, Infrastructure, Transport and Tourism (MLIT)',
+    licenseName: 'Takken License # (宅地建物取引士 登録番号)',
+    licensePlaceholder: '東京都知事(1)第89201号 / 宅建士',
+    complianceAuth: 'MLIT & Japan Financial Intelligence Center (JAFIC) AML Framework',
+    statutoryAct: 'Building Lots and Buildings Transaction Business Act (宅地建物取引業法)',
+    regulatoryRequirements: 'Real estate transaction specialists in Japan must pass the national Takken (宅建試験) exam and be officially registered with the prefectural governor. Real estate offices must employ at least one full-time licensed Takken specialist for every five staff members to execute explanation of important matters (重要事項説明書).',
+    licenseFormatDescription: 'Prefecture Name + Governor License No. (e.g. 東京都知事(1)第89201号).',
+    renewalCycle: '5-year renewal cycle requiring mandatory statutory refresher lectures (法定講習).',
+    trustAccountObligation: 'Mandatory Business Guarantee Deposit (営業保証金) deposited at the Legal Affairs Bureau or membership in a Guaranty Association.',
+    agentTypes: [
+      'Licensed Real Estate Transaction Specialist (宅地建物取引士)',
+      'Certified Real Estate Appraiser (不動産鑑定士)',
+      'Real Estate Agency Representative (代表取締役 / 宅建業者)',
+      'Commercial Property Consultant'
+    ],
+    portals: [
+      { name: 'SUUMO Japan', url: 'https://suumo.jp' },
+      { name: 'HOME’S (LIFULL)', url: 'https://www.homes.co.jp' },
+      { name: 'Athome Japan', url: 'https://www.athome.co.jp' }
+    ]
+  },
+  IE: {
+    regBody: 'Property Services Regulatory Authority (PSRA)',
+    licenseName: 'PSRA Property Services Provider Licence #',
+    licensePlaceholder: 'PSRA Lic No. 003921-008129',
+    complianceAuth: 'PSRA & Criminal Justice (Money Laundering) Supervisory Authority',
+    statutoryAct: 'Property Services (Regulation) Act 2011 & Client Services Regulations',
+    regulatoryRequirements: 'All property service providers (estate agents, letting agents, management agents, and auctioneers) in Ireland must hold a valid PSRA licence. Requires certified property qualifications, tax clearance certificate, professional indemnity insurance, client money protection, and contribution to the Property Services Compensation Fund.',
+    licenseFormatDescription: 'PSRA Lic No. [6-Digit Firm #]-[6-Digit Individual #] (e.g. 003921-008129).',
+    renewalCycle: 'Annual licence renewal via the PSRA online licensing portal.',
+    trustAccountObligation: 'Statutory Client Account maintained under Property Services (Regulation) Act 2011 (Client Funds) Regulations.',
+    agentTypes: [
+      'Licensed Property Services Provider (PSRA Class B/C/D)',
+      'Chartered Valuation Surveyor (SCSI/RICS)',
+      'Senior Estate Agent & Auctioneer',
+      'Commercial Property Advisor'
+    ],
+    portals: [
+      { name: 'Daft.ie', url: 'https://www.daft.ie' },
+      { name: 'MyHome.ie', url: 'https://www.myhome.ie' }
+    ]
+  },
+  CH: {
+    regBody: 'Schweizerischer Verband der Immobilienwirtschaft (SVIT)',
+    licenseName: 'SVIT Diplomierter Immobilientreuhänder Reg. #',
+    licensePlaceholder: 'SVIT-CH-884920',
+    complianceAuth: 'FINMA & SVIT Standesregeln zur Geldwäschereibekämpfung',
+    statutoryAct: 'Schweizerisches Obligationenrecht (OR Art. 412 ff. Mäklervertrag) & Standesregeln SVIT',
+    regulatoryRequirements: 'Real estate brokers and property fiduciaries in Switzerland operate under the Swiss Code of Obligations and professional canons of SVIT (Schweizerischer Verband der Immobilienwirtschaft). Certification as "Diplomierter Immobilientreuhänder" or "Immobilienvermarkter mit eidg. Fachausweis" requires federal professional examinations, strict adherence to due diligence in anti-money laundering (GwG), and client funds protection.',
+    licenseFormatDescription: 'SVIT-CH-[6-Digit Register ID] or Cantonal Commercial Registry UID (e.g. CHE-123.456.789).',
+    renewalCycle: 'Annual SVIT professional membership accreditation and audit review.',
+    trustAccountObligation: 'Sperrkonto / Treuhandkonto (escrow client account) segregated under Swiss banking legislation.',
+    agentTypes: [
+      'Immobilientreuhänder mit eidg. Fachausweis',
+      'Immobilienvermarkter mit eidg. Fachausweis',
+      'Immobilienbewerter mit eidg. Fachausweis',
+      'Senior Real Estate Consultant'
+    ],
+    portals: [
+      { name: 'Homegate.ch', url: 'https://www.homegate.ch' },
+      { name: 'ImmoScout24 CH', url: 'https://www.immoscout24.ch' }
+    ]
+  },
+  NL: {
+    regBody: 'Nederlandse Vereniging van Makelaars (NVM) & VastgoedCert',
+    licenseName: 'NVM / VastgoedCert Registratienummer',
+    licensePlaceholder: 'NVM-REG-84920 / KRMT-4921',
+    complianceAuth: 'Wwft & Stichting VastgoedCert Toezicht Makelaardij',
+    statutoryAct: 'Wet ter voorkoming van witwassen en financieren van terrorisme (Wwft) & NVM Erecode',
+    regulatoryRequirements: 'Certified real estate agents in the Netherlands are registered with Stichting VastgoedCert or NRVT (Nederlands Register Vastgoed Taxateurs) and hold NVM or VBO membership. Requires accredited Real Estate diploma (SVMNIVO), adherence to the NVM Code of Ethics (Erecode), compliance with mandatory Wwft client due diligence, and annual permanent education (PE).',
+    licenseFormatDescription: 'NVM-REG-[5 Digits] / VastgoedCert Registration (e.g. KRMT-4921, RMT-84920).',
+    renewalCycle: 'Annual VastgoedCert re-certification subject to mandatory permanent education (PE) points.',
+    trustAccountObligation: 'Stichting Derdengelden (Escrow Foundation Account) or direct notary escrow management.',
+    agentTypes: [
+      'Register Makelaar-Taxateur (RMT / NVM)',
+      'Kandidaat Register Makelaar-Taxateur (KRMT)',
+      'Vastgoedadviseur Commercieel Vastgoed',
+      'Gecertificeerd Woningtaxateur (NWWI)'
+    ],
+    portals: [
+      { name: 'Funda', url: 'https://www.funda.nl' },
+      { name: 'Pararius', url: 'https://www.pararius.nl' }
+    ]
+  },
+  BE: {
+    regBody: 'Beroepsinstituut van Vastgoedmakelaars (BIV / IPI)',
+    licenseName: 'BIV / IPI Erkenningsnummer (Titulaire)',
+    licensePlaceholder: 'BIV 509.821 / IPI Titulaire',
+    complianceAuth: 'CFI-CTIF & Beroepsinstituut van Vastgoedmakelaars (BIV)',
+    statutoryAct: 'Koninklijk Besluit van 6 september 1993 tot bescherming van de beroepstitel en van de uitoefening van het beroep van vastgoedmakelaar',
+    regulatoryRequirements: 'Every real estate broker operating in Belgium must be an approved member of the Professional Institute of Real Estate Agents (BIV / IPI). Requires a recognized bachelor degree, passing the BIV proficiency test, completing a 1-year supervised professional internship (stage), passing the practical competence assessment, and holding mandatory collective professional insurance and financial guarantee.',
+    licenseFormatDescription: 'BIV / IPI [6-Digit Accreditation #] (e.g. BIV 509.821).',
+    renewalCycle: 'Continuous registration subject to annual institute subscription and mandatory 10h/year continuous training.',
+    trustAccountObligation: 'Derdenrekening / Compte Tiers (Third-party trust account) under Article 21 of the BIV Code of Ethics.',
+    agentTypes: [
+      'Erkend Vastgoedmakelaar-Bemiddelaar (BIV/IPI)',
+      'Erkend Vastgoedmakelaar-Syndicus',
+      'Stagiair Vastgoedmakelaar (BIV Stage)',
+      'Vastgoedexpert & Beëdigd Schatter'
+    ],
+    portals: [
+      { name: 'Immoweb', url: 'https://www.immoweb.be' },
+      { name: 'Immovlan', url: 'https://www.immovlan.be' }
+    ]
+  },
+  QA: {
+    regBody: 'Ministry of Justice - Real Estate Brokerage Department',
+    licenseName: 'MOJ Real Estate Broker Card (بطاقة وسيط عقاري)',
+    licensePlaceholder: 'Q-MOJ-REB-8492',
+    complianceAuth: 'Qatar Financial Information Unit (QFIU) & MOJ Brokerage Dept',
+    statutoryAct: 'Law No. 22 of 2017 Regulating Real Estate Brokerage Activities in the State of Qatar',
+    regulatoryRequirements: 'All real estate brokers operating in Qatar must obtain an official Broker Card issued by the Real Estate Brokerage Department at the Ministry of Justice. Requires passing specialized training programs at the Centre for Legal and Judicial Studies, criminal background clearance, a designated registered office in Qatar, and mandatory electronic registration on the Sak real estate portal.',
+    licenseFormatDescription: 'Q-MOJ-REB-[4-Digit Number] (e.g. Q-MOJ-REB-8492).',
+    renewalCycle: 'Renewable every 2 years through the Ministry of Justice Sak portal.',
+    trustAccountObligation: 'Regulated escrow account designated under Law No. 22 of 2017 for property deposits.',
+    agentTypes: [
+      'Certified Real Estate Broker (MOJ Licensed)',
+      'Real Estate Office Managing Partner',
+      'Commercial Property Consultant',
+      'Real Estate Valuer (MOJ Certified)'
+    ],
+    portals: [
+      { name: 'Property Finder Qatar', url: 'https://www.propertyfinder.qa' },
+      { name: 'Qatar Living Properties', url: 'https://www.qatarliving.com/properties' }
+    ]
+  },
+  NG: {
+    regBody: 'Estate Surveyors and Valuers Registration Board of Nigeria (ESVARBON / NIESV)',
+    licenseName: 'ESVARBON Registration & Practicing Licence #',
+    licensePlaceholder: 'ESVARBON Reg No. A-4920',
+    complianceAuth: 'Special Control Unit Against Money Laundering (SCUML) & ESVARBON',
+    statutoryAct: 'Estate Surveyors and Valuers (Registration, etc.) Act Cap. E13 LFN 2007',
+    regulatoryRequirements: 'Real estate practice and valuation in Nigeria are regulated by ESVARBON and the Nigerian Institution of Estate Surveyors and Valuers (NIESV). Registered Estate Surveyors and Valuers (ANIVS/FNIVS) must hold an annual practicing license and SCUML certificate issued by the EFCC for anti-money laundering compliance.',
+    licenseFormatDescription: 'ESVARBON Reg No. [Letter Prefix]-[4 Digits] (e.g. ESVARBON Reg No. A-4920).',
+    renewalCycle: 'Annual renewal of practicing license with mandatory MCPD (Mandatory Continuing Professional Development).',
+    trustAccountObligation: 'Designated Client Account in accordance with ESVARBON Rules and Regulations.',
+    agentTypes: [
+      'Registered Estate Surveyor & Valuer (ANIVS/FNIVS)',
+      'Licensed Real Estate Practitioner',
+      'Principal Partner / Agency Head',
+      'Property Rating & Valuation Consultant'
+    ],
+    portals: [
+      { name: 'PropertyPro Nigeria', url: 'https://www.propertypro.ng' },
+      { name: 'Nigeria Property Centre', url: 'https://www.nigeriapropertycentre.com' }
+    ]
+  },
+  KE: {
+    regBody: 'Estate Agents Registration Board (EARB / ISK)',
+    licenseName: 'EARB Full Practicing Certificate # (Chapter 533)',
+    licensePlaceholder: 'EARB Reg No. A/1294',
+    complianceAuth: 'Financial Reporting Centre (FRC) & EARB Kenya Licensing',
+    statutoryAct: 'Estate Agents Act Chapter 533 of the Laws of Kenya',
+    regulatoryRequirements: 'All individuals practicing estate agency in Kenya must be registered with the Estate Agents Registration Board (EARB) under Cap 533. Requires a degree in Land Economics/Real Estate or full membership with the Institution of Surveyors of Kenya (MISK), a valid annual practicing certificate, and registration with the Financial Reporting Centre (FRC).',
+    licenseFormatDescription: 'EARB Reg No. [Category]/[4-Digit Number] (e.g. EARB Reg No. A/1294).',
+    renewalCycle: 'Annual practicing certificate renewal required before the 31st of December.',
+    trustAccountObligation: 'Section 18 Statutory Clients Account maintained with a commercial bank in Kenya.',
+    agentTypes: [
+      'Registered Real Estate Agent (EARB / ISK)',
+      'Full Member Institution of Surveyors of Kenya (MISK)',
+      'Licensed Valuer and Estate Manager',
+      'Senior Commercial Property Negotiator'
+    ],
+    portals: [
+      { name: 'BuyRentKenya', url: 'https://www.buyrentkenya.com' },
+      { name: 'Hauzisha', url: 'https://hauzisha.co.ke' }
+    ]
+  },
+  MU: {
+    regBody: 'Real Estate Association of Mauritius (REAM) & Economic Development Board (EDB)',
+    licenseName: 'REAM Real Estate Agent Registration / Licence #',
+    licensePlaceholder: 'REAM-MU-49201',
+    complianceAuth: 'Financial Intelligence Unit (FIU Mauritius) & REAM Regulatory Code',
+    statutoryAct: 'Real Estate Agent Authority Act & FIAMLA (Financial Intelligence and Anti-Money Laundering Act)',
+    regulatoryRequirements: 'Estate agents operating in Mauritius and dealing with foreign investment schemes (IRS, RES, PDS, Smart Cities) must be registered with the Economic Development Board (EDB) and the Financial Intelligence Unit (FIU). Agents must comply with FIAMLA KYC/AML due diligence guidelines and hold valid professional liability insurance.',
+    licenseFormatDescription: 'REAM-MU-[5 Digits] or EDB Property Practitioner License ID.',
+    renewalCycle: 'Annual registration renewal with FIU compliance validation.',
+    trustAccountObligation: 'Escrow account supervised under Mauritius Notarial Practice Regulations for deed settlements.',
+    agentTypes: [
+      'Licensed Real Estate Agent (REAM/EDB)',
+      'IRS / RES / PDS Scheme Property Specialist',
+      'Chartered Property Surveyor',
+      'Senior Luxury Property Consultant'
+    ],
+    portals: [
+      { name: 'Lexpress Property Mauritius', url: 'https://www.lexpressproperty.com' },
+      { name: 'PropertyCloud Mauritius', url: 'https://www.propertycloud.mu' }
+    ]
+  },
+  PH: {
+    regBody: 'Professional Regulation Commission (PRC - Professional Regulatory Board of Real Estate)',
+    licenseName: 'PRC Real Estate Broker License # (REBL)',
+    licensePlaceholder: 'PRC REBL No. 0029182',
+    complianceAuth: 'Anti-Money Laundering Council (AMLC) & PRC Real Estate Service Board',
+    statutoryAct: 'Republic Act No. 9646 (Real Estate Service Act of the Philippines - RESA Law)',
+    regulatoryRequirements: 'Real estate brokers in the Philippines must hold a valid PRC Real Estate Broker License (REBL) and Professional Identification Card issued by the Professional Regulation Commission. Requires a Bachelor of Science in Real Estate Management (BS REM), passing the PRC licensure board exam, holding a surety bond (minimum ₱20,000), and accreditation with the Accredited and Integrated Professional Organization (AIPO/PHILRES).',
+    licenseFormatDescription: 'PRC REBL No. [7-Digit Registration Number] (e.g. PRC REBL No. 0029182).',
+    renewalCycle: '3-year renewal cycle coinciding with the licensee’s birth month, subject to 45 CPD units.',
+    trustAccountObligation: 'Designated escrow deposit account in compliance with PRC RESA fiduciary standards.',
+    agentTypes: [
+      'Licensed Real Estate Broker (PRC REBL)',
+      'Accredited Real Estate Salesperson',
+      'Licensed Real Estate Appraiser (PRC REA)',
+      'Licensed Real Estate Consultant (PRC REC)'
+    ],
+    portals: [
+      { name: 'Lamudi Philippines', url: 'https://www.lamudi.com.ph' },
+      { name: 'Dot Property Philippines', url: 'https://www.dotproperty.com.ph' }
+    ]
+  },
+  TR: {
+    regBody: 'Taşınmaz Ticareti Bilgi Sistemi (TTBS / Ticaret Bakanlığı)',
+    licenseName: 'Taşınmaz Ticareti Yetki Belgesi (TTBS Numarası)',
+    licensePlaceholder: 'TTBS-3400192-2024',
+    complianceAuth: 'MASAK Mali Suçları Araştırma Kurulu & Taşınmaz Ticareti Yönetmeliği',
+    statutoryAct: 'Taşınmaz Ticareti Hakkında Yönetmelik (Resmî Gazete Sayı: 30442)',
+    regulatoryRequirements: 'All real estate agencies and consultants in Turkey must hold a Taşınmaz Ticareti Yetki Belgesi (Real Estate Trade Authorization Certificate) issued by the Ministry of Trade via TTBS. Requires holding a Level 5 (Seviye 5) Vocational Qualification Certificate (MYK), minimum 100 hours of certified real estate training, tax registry, and clean judicial record.',
+    licenseFormatDescription: 'TTBS-[Provincial Plate Code][7-Digit Authorization #] (e.g. TTBS-3400192-2024).',
+    renewalCycle: 'Valid for 5 years from issuance, renewable via the Ministry of Trade TTBS portal.',
+    trustAccountObligation: 'Mandatory escrow mechanisms (Tapu Takas / Takasbank) for safe title deed money transfers.',
+    agentTypes: [
+      'Yetki Belgeli Emlak Danışmanı (Seviye 5)',
+      'Sorumlu Emlak Danışmanı (Seviye 5)',
+      'Emlak İşletmesi Sahibi / Broker',
+      'Gayrimenkul Değerleme Uzmanı (SPK Lisanslı)'
+    ],
+    portals: [
+      { name: 'Sahibinden', url: 'https://www.sahibinden.com' },
+      { name: 'Hepsiemlak', url: 'https://www.hepsiemlak.com' },
+      { name: 'Zingat', url: 'https://www.zingat.com' }
+    ]
+  }
+};
+
+// Helper to resolve localized agent types for any country
+function resolveAgentTypesForCountry(countryName: string, regBody: string, overrideTypes?: string[]): string[] {
+  if (overrideTypes && overrideTypes.length > 0) {
+    return overrideTypes;
+  }
+  return [
+    `Principal Real Estate Practitioner (${regBody})`,
+    `Licensed Real Estate Broker & Valuer (${countryName})`,
+    `Certified Residential & Luxury Property Specialist`,
+    `Commercial Investment & Cadastral Advisor`
+  ];
+}
+
+// Helper to resolve specific license name for any country
+function resolveLicenseNameForCountry(countryName: string, regBody: string, overrideName?: string): string {
+  if (overrideName) {
+    return overrideName;
+  }
+  return `${regBody} Practicing Licence / Registration #`;
+}
+
+// Helper to resolve sample license placeholder for any country
+function resolveLicensePlaceholderForCountry(isoCode: string, overridePlaceholder?: string): string {
+  if (overridePlaceholder) {
+    return overridePlaceholder;
+  }
+  return `${isoCode}-REB-2024-884920`;
+}
+
 // Helper to convert compact array into full CountryOption objects
 export function generateAll196CountryOptions(): CountryOption[] {
   return ALL_196_COUNTRIES_DATA.map((item) => {
@@ -232,6 +880,25 @@ export function generateAll196CountryOptions(): CountryOption[] {
       id, name, flag, currCode, currSym, currName,
       phoneDial, capital, regBody, landRegistry, titleIdName, suburbs
     ] = item;
+
+    const override = SPECIFIC_COUNTRY_REGULATORY_MAP[id] || {};
+
+    const effectiveRegBody = override.regBody || regBody;
+    const effectiveLicenseName = resolveLicenseNameForCountry(name, effectiveRegBody, override.licenseName);
+    const effectiveLicensePlaceholder = resolveLicensePlaceholderForCountry(id, override.licensePlaceholder);
+    const effectiveComplianceAuth = override.complianceAuth || `${effectiveRegBody} & National Anti-Money Laundering (AML/CFT) Framework`;
+    const effectiveAgentTypes = resolveAgentTypesForCountry(name, effectiveRegBody, override.agentTypes);
+
+    const effectiveStatutoryAct = override.statutoryAct || `${effectiveRegBody} Statutory Real Estate Regulations & National Property Code`;
+    const effectiveRequirements = override.regulatoryRequirements || `Practitioners operating in ${name} must hold a valid practicing authorization issued by ${effectiveRegBody}. Real estate agents must maintain compliant fiduciary practices, adhere to the national property code, and satisfy mandatory identification verification and Anti-Money Laundering (AML/CFT) screening for all property transactions.`;
+    const effectiveLicenseFormatDesc = override.licenseFormatDescription || `Official ${effectiveRegBody} Practitioner License / Registration Number (e.g. ${effectiveLicensePlaceholder}).`;
+    const effectiveRenewalCycle = override.renewalCycle || `Periodic regulatory renewal subject to professional standing and license validation with ${effectiveRegBody}.`;
+    const effectiveTrustObligation = override.trustAccountObligation || `Fiduciary client escrow or designated trust funds repository in compliance with national banking standards.`;
+
+    const effectivePortals = override.portals || [
+      { name: `${name} National Property Portal`, url: `https://www.google.com/search?q=${encodeURIComponent(name + ' real estate property portal listings')}` },
+      { name: `${capital} Luxury Real Estate Directory`, url: `https://www.google.com/search?q=${encodeURIComponent(capital + ' ' + name + ' real estate properties for sale')}` }
+    ];
 
     const cityOption: CityTownOption = {
       id: `${id}-CITY-1`,
@@ -272,15 +939,19 @@ export function generateAll196CountryOptions(): CountryOption[] {
       phonePlaceholder: `${phoneDial} 123 456 789`,
       idNumberPlaceholder: `${name} National ID / Passport Number`,
       idFormatHint: `Enter valid Identification or Passport in ${name}`,
-      regulatoryBody: regBody,
-      ffcLicenseName: `${regBody} Real Estate License / Registration`,
-      ffcLicensePlaceholder: `LIC-${id}-884920`,
-      defaultDateFormat: 'DD/MM/YYYY',
-      defaultUnit: 'Metric (m²)',
-      complianceAuthorityName: `${regBody} & National Anti-Money Laundering Framework`,
-      majorPortals: [
-        { name: `${name} Property Portal`, url: `https://www.google.com/search?q=${encodeURIComponent(name + ' real estate property portal')}` }
-      ],
+      regulatoryBody: effectiveRegBody,
+      ffcLicenseName: effectiveLicenseName,
+      ffcLicensePlaceholder: effectiveLicensePlaceholder,
+      statutoryAct: effectiveStatutoryAct,
+      regulatoryRequirements: effectiveRequirements,
+      licenseFormatDescription: effectiveLicenseFormatDesc,
+      renewalCycle: effectiveRenewalCycle,
+      trustAccountObligation: effectiveTrustObligation,
+      defaultDateFormat: id === 'US' ? 'MM/DD/YYYY' : id === 'ZA' ? 'YYYY/MM/DD' : 'DD/MM/YYYY',
+      defaultUnit: id === 'US' ? 'Imperial (sq ft)' : 'Metric (m²)',
+      complianceAuthorityName: effectiveComplianceAuth,
+      agentTypeOptions: effectiveAgentTypes,
+      majorPortals: effectivePortals,
       provinces: [provinceOption]
     };
   });

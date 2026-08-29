@@ -43,6 +43,11 @@ export interface CountryOption {
   regulatoryBody: string;
   ffcLicenseName: string;
   ffcLicensePlaceholder: string;
+  statutoryAct?: string;
+  regulatoryRequirements?: string;
+  licenseFormatDescription?: string;
+  renewalCycle?: string;
+  trustAccountObligation?: string;
   defaultDateFormat: string;
   defaultUnit: string;
   complianceAuthorityName: string;
@@ -742,6 +747,11 @@ const DETAILED_PRIMARY_COUNTRIES: CountryOption[] = [
     regulatoryBody: 'Property Practitioners Regulatory Authority (PPRA / EAAB)',
     ffcLicenseName: 'PPRA / EAAB Fidelity Fund Certificate (FFC)',
     ffcLicensePlaceholder: '20241098234 (Fidelity Fund Certificate)',
+    statutoryAct: 'Property Practitioners Act 22 of 2019 (PPA) Section 47',
+    regulatoryRequirements: 'Every practicing real estate practitioner (Principal, Non-Principal, or Candidate) must hold a valid Fidelity Fund Certificate (FFC) issued annually by the PPRA. Practicing without a valid FFC is illegal under Section 48 and prohibits claiming commission. Practitioners must maintain compliant trust account audits and log annual CPD (Continuing Professional Development) points.',
+    licenseFormatDescription: '11-Digit Numeric Certificate Number (e.g. 20241098234) issued following NQF 4/5 PDE examination.',
+    renewalCycle: 'Annual renewal required before October 31st for the subsequent calendar year.',
+    trustAccountObligation: 'Section 54 Audited Trust Account with designated banking institution and annual Independent Auditor Report submission.',
     defaultDateFormat: 'YYYY/MM/DD',
     defaultUnit: 'Metric (m²)',
     complianceAuthorityName: 'PPRA & FICA (Financial Intelligence Centre Act)',
@@ -845,6 +855,11 @@ const DETAILED_PRIMARY_COUNTRIES: CountryOption[] = [
     regulatoryBody: 'NAEA Propertymark & RICS (Royal Institution of Chartered Surveyors)',
     ffcLicenseName: 'RICS Membership / NAEA Registration #',
     ffcLicensePlaceholder: 'RICS-884920 / MNAEA-49201',
+    statutoryAct: 'Estate Agents Act 1979 & Consumer Protection from Unfair Trading Regulations (CPRs)',
+    regulatoryRequirements: 'Estate agents operating in the UK must register with an approved redress scheme (The Property Ombudsman - TPO or Property Redress Scheme - PRS), maintain HMRC Anti-Money Laundering supervision, and hold mandatory Client Money Protection (CMP). Professional designations require certified RICS or NAEA Propertymark registration.',
+    licenseFormatDescription: 'RICS-[6-digit Member #] (e.g. RICS-884920) or MNAEA-[5-digit #] / Redress Scheme ID.',
+    renewalCycle: 'Annual professional membership renewal with mandatory 20+ hours of verifiable CPD.',
+    trustAccountObligation: 'Mandatory ring-fenced Client Account protected by statutory Client Money Protection (CMP) insurance.',
     defaultDateFormat: 'DD/MM/YYYY',
     defaultUnit: 'Metric (m²)',
     complianceAuthorityName: 'NAEA Propertymark & Money Laundering Regs (MLR)',
@@ -931,6 +946,11 @@ const DETAILED_PRIMARY_COUNTRIES: CountryOption[] = [
     regulatoryBody: 'California Department of Real Estate (DRE) / State Commission',
     ffcLicenseName: 'DRE / State Real Estate Broker License #',
     ffcLicensePlaceholder: 'DRE# 02194821 / FREC-BK3489201',
+    statutoryAct: 'State Real Estate Licensing Acts (e.g. CA Business & Professions Code § 10150, FL Statutes Ch. 475)',
+    regulatoryRequirements: 'Real estate brokers and salespersons must hold an active license issued by their state regulatory commission (such as California DRE, Florida FREC, Texas TREC, or NY DOS). Requires accredited pre-licensing courses, passing state examinations, background fingerprint clearance, and active broker sponsorship.',
+    licenseFormatDescription: '8-Digit DRE License Number (e.g. 02194821) or State Prefix + Alphanumeric ID (e.g. FREC-BK3489201).',
+    renewalCycle: '2 to 4-year renewal cycle with mandatory 18–45 hours of Continuing Education (CE).',
+    trustAccountObligation: 'Designated Real Estate Broker Escrow / Trust Account subject to state unannounced audits.',
     defaultDateFormat: 'MM/DD/YYYY',
     defaultUnit: 'Imperial (sq ft)',
     complianceAuthorityName: 'FinCEN Real Estate Compliance & State Licensing',
@@ -1033,6 +1053,11 @@ const DETAILED_PRIMARY_COUNTRIES: CountryOption[] = [
     regulatoryBody: 'NSW Fair Trading & Real Estate Institute of Australia (REIA)',
     ffcLicenseName: 'Real Estate Agent Licence (Fair Trading / REIA)',
     ffcLicensePlaceholder: 'LIC-20491823 (Class 1 Agent)',
+    statutoryAct: 'Property and Stock Agents Act 2002 (NSW) / Estate Agents Act 1980 (VIC)',
+    regulatoryRequirements: 'Real estate agents must hold a valid Class 1 (Licensee-in-Charge) or Class 2 qualification issued by state fair trading authorities (e.g. NSW Fair Trading, Consumer Affairs Victoria). Requires Certificate IV/Diploma in Real Estate Practice, annual CPD completion, and strict AUSTRAC AML reporting.',
+    licenseFormatDescription: 'LIC-[8-digit License #] (e.g. LIC-20491823) or State Registration ID.',
+    renewalCycle: 'Annual or 3-year license renewal with mandatory annual CPD modules.',
+    trustAccountObligation: 'Statutory trust account audited annually by an independent registered company auditor within 3 months of audit year-end.',
     defaultDateFormat: 'DD/MM/YYYY',
     defaultUnit: 'Metric (m²)',
     complianceAuthorityName: 'AUSTRAC AML/CTF & Fair Trading Regulations',
@@ -1102,6 +1127,11 @@ const DETAILED_PRIMARY_COUNTRIES: CountryOption[] = [
     regulatoryBody: 'Real Estate Regulatory Agency (RERA / Dubai Land Department)',
     ffcLicenseName: 'RERA Broker ID (BRN) / DLD License',
     ffcLicensePlaceholder: 'BRN-48920 / ORN-29182',
+    statutoryAct: 'Dubai Law No. 85 of 2006 (Regulating the Real Estate Brokers Register in the Emirate of Dubai)',
+    regulatoryRequirements: 'All real estate brokers operating in Dubai and the UAE must hold an active Broker Registration Number (BRN) issued by RERA under the Dubai Land Department (DLD). Agents must pass the DREI certified exam, hold valid residency, operate under a licensed brokerage (ORN), and obtain electronic Trakheesi permits for listing advertisements.',
+    licenseFormatDescription: 'BRN-[5-digit Broker ID] (e.g. BRN-48920) or ORN-[5-digit Office Registration Number] (e.g. ORN-29182).',
+    renewalCycle: 'Annual renewal via DLD REST / Trakheesi portal subject to mandatory CPD modules and police clearance.',
+    trustAccountObligation: 'Project Escrow Accounts supervised directly by the Dubai Land Department (DLD) Escrow Accounts Department.',
     defaultDateFormat: 'DD/MM/YYYY',
     defaultUnit: 'Metric (m²)',
     complianceAuthorityName: 'RERA & UAE Anti-Money Laundering (AML) Compliance',

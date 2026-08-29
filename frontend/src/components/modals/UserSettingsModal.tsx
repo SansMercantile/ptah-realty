@@ -54,7 +54,12 @@ import {
   Hash,
   CheckSquare,
   ChevronRight,
-  ChevronDown
+  ChevronDown,
+  Info,
+  Scale,
+  BookOpen,
+  FileCheck,
+  Copy
 } from 'lucide-react';
 
 import { 
@@ -339,6 +344,16 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
   const [isSaved, setIsSaved] = useState(false);
   const [showBrochureModal, setShowBrochureModal] = useState(false);
   const [newFarmingArea, setNewFarmingArea] = useState('');
+  const [customFarmingInput, setCustomFarmingInput] = useState('');
+
+  // Territory-matched practitioner designation & statutory regulatory
+  // dossier state -- see the "Regulatory FFC / License Number" tooltip
+  // and "Full Regulatory Dossier" modal further down.
+  const [showRegulatoryTooltip, setShowRegulatoryTooltip] = useState(false);
+  const [isRegulatoryTooltipPinned, setIsRegulatoryTooltipPinned] = useState(false);
+  const [showFullRegulatoryModal, setShowFullRegulatoryModal] = useState(false);
+  const [copiedLicenseExample, setCopiedLicenseExample] = useState(false);
+
   const [newSocialPlatform, setNewSocialPlatform] = useState('LinkedIn');
   const [newSocialUrl, setNewSocialUrl] = useState('');
   const [showAddSocial, setShowAddSocial] = useState(false);
@@ -1040,31 +1055,221 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
                   {/* ID / Passport Number */}
                   <div>
                     <div className="flex items-center justify-between mb-1">
-                      <label className="text-slate-600 font-semibold">ID / Passport Number</label>
-                      <span className="text-[10px] text-slate-400">{activeCountry.idFormatHint}</span>
+                      <label className="text-slate-600 font-semibold text-xs">ID / Passport Number</label>
+                      <span className="text-[10px] text-slate-400 font-mono">{activeCountry.idFormatHint}</span>
                     </div>
                     <input 
                       type="text" 
                       value={profile.idNumber} 
                       onChange={(e) => setProfile({ ...profile, idNumber: e.target.value })}
                       placeholder={activeCountry.idNumberPlaceholder}
-                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-slate-800 font-mono font-semibold shadow-2xs"
+                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-slate-800 font-mono font-semibold shadow-2xs text-xs"
                     />
                   </div>
 
-                  {/* Regulatory FFC / License Number */}
-                  <div>
+                  {/* Regulatory FFC / License Number with Dynamic Tooltip */}
+                  <div className="relative">
                     <div className="flex items-center justify-between mb-1">
-                      <label className="text-slate-600 font-semibold truncate">{activeCountry.ffcLicenseName}</label>
-                      <span className="text-[10px] text-slate-400 font-mono">{activeCountry.code}</span>
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <label className="text-slate-700 font-semibold truncate text-xs">
+                          {activeCountry.ffcLicenseName}
+                        </label>
+                        <button
+                          type="button"
+                          id="btn-toggle-regulatory-tooltip"
+                          onMouseEnter={() => setShowRegulatoryTooltip(true)}
+                          onMouseLeave={() => {
+                            if (!isRegulatoryTooltipPinned) setShowRegulatoryTooltip(false);
+                          }}
+                          onClick={() => {
+                            setIsRegulatoryTooltipPinned(!isRegulatoryTooltipPinned);
+                            setShowRegulatoryTooltip(!showRegulatoryTooltip);
+                          }}
+                          className={`p-0.5 rounded text-xs transition-colors cursor-pointer flex items-center justify-center shrink-0 ${
+                            showRegulatoryTooltip || isRegulatoryTooltipPinned
+                              ? 'bg-cyan-600 text-white shadow-xs ring-2 ring-cyan-300'
+                              : 'bg-cyan-50 hover:bg-cyan-100 text-cyan-700 border border-cyan-200'
+                          }`}
+                          title={`View statutory regulatory requirements for ${activeCountry.name} (${activeCountry.regulatoryBody})`}
+                        >
+                          <Info className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                      <span className="text-[10px] bg-slate-100 text-slate-600 font-mono px-1.5 py-0.5 rounded border border-slate-200 shrink-0">
+                        {activeCountry.code}
+                      </span>
                     </div>
                     <input 
                       type="text" 
                       value={profile.ffcNumber} 
                       onChange={(e) => setProfile({ ...profile, ffcNumber: e.target.value })}
                       placeholder={activeCountry.ffcLicensePlaceholder}
-                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-slate-800 font-mono font-semibold shadow-2xs"
+                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-slate-800 font-mono font-semibold shadow-2xs text-xs"
                     />
+
+                    {/* Dynamic Regulatory Requirements Popover Tooltip */}
+                    {(showRegulatoryTooltip || isRegulatoryTooltipPinned) && (
+                      <div 
+                        id="popover-regulatory-tooltip"
+                        className="absolute z-50 top-full mt-1.5 right-0 sm:left-0 w-[calc(100vw-3rem)] sm:w-[440px] max-w-[460px] bg-white border-2 border-cyan-500/80 rounded-xl shadow-2xl p-4 text-xs space-y-3 animate-fade-in text-slate-700 backdrop-blur-xs"
+                        onMouseEnter={() => setShowRegulatoryTooltip(true)}
+                        onMouseLeave={() => {
+                          if (!isRegulatoryTooltipPinned) setShowRegulatoryTooltip(false);
+                        }}
+                      >
+                        {/* Header */}
+                        <div className="flex items-start justify-between border-b border-slate-100 pb-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-2xl leading-none">{activeCountry.flag}</span>
+                            <div>
+                              <div className="font-extrabold text-slate-900 leading-tight">
+                                {activeCountry.regulatoryBody}
+                              </div>
+                              <div className="text-[10px] text-slate-500 font-medium">
+                                Official Statutory Authority • {activeCountry.name} ({activeCountry.code})
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            {isRegulatoryTooltipPinned && (
+                              <span className="text-[9px] bg-cyan-100 text-cyan-800 font-bold px-1.5 py-0.5 rounded">
+                                PINNED
+                              </span>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setIsRegulatoryTooltipPinned(false);
+                                setShowRegulatoryTooltip(false);
+                              }}
+                              className="text-slate-400 hover:text-slate-600 p-0.5 rounded hover:bg-slate-100"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Governing Statutory Law */}
+                        <div className="bg-slate-50 border border-slate-200 rounded-lg p-2.5 space-y-1">
+                          <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1">
+                            <Scale className="w-3.5 h-3.5 text-cyan-600" />
+                            <span>Statutory Governance & Act</span>
+                          </div>
+                          <div className="font-bold text-slate-800 text-[11px] leading-tight">
+                            {activeCountry.statutoryAct}
+                          </div>
+                        </div>
+
+                        {/* Requirements Breakdown */}
+                        <div className="space-y-1">
+                          <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1">
+                            <BookOpen className="w-3.5 h-3.5 text-cyan-600" />
+                            <span>Authority Licensing Requirements</span>
+                          </div>
+                          <p className="text-[11px] text-slate-600 leading-relaxed max-h-28 overflow-y-auto pr-1">
+                            {activeCountry.regulatoryRequirements}
+                          </p>
+                        </div>
+
+                        {/* Format Specification */}
+                        <div className="bg-cyan-50/70 border border-cyan-200 rounded-lg p-2.5 space-y-1.5">
+                          <div className="text-[10px] font-bold text-cyan-950 flex items-center justify-between">
+                            <span className="flex items-center gap-1">
+                              <FileCheck className="w-3.5 h-3.5 text-cyan-700" />
+                              <span>ID & License Format Pattern</span>
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const sample = activeCountry.ffcLicensePlaceholder.split(' / ')[0].trim();
+                                setProfile({ ...profile, ffcNumber: sample });
+                                setCopiedLicenseExample(true);
+                                setTimeout(() => setCopiedLicenseExample(false), 2000);
+                              }}
+                              className="text-[10px] text-cyan-800 hover:text-cyan-950 font-bold underline flex items-center gap-0.5 cursor-pointer"
+                            >
+                              <Copy className="w-2.5 h-2.5" />
+                              <span>{copiedLicenseExample ? 'Applied to Form!' : 'Use Format Example'}</span>
+                            </button>
+                          </div>
+                          <div className="text-[11px] text-cyan-950 font-medium leading-tight">
+                            {activeCountry.licenseFormatDescription}
+                          </div>
+                          <div className="font-mono text-[10px] bg-white border border-cyan-200 px-2 py-1 rounded text-cyan-900 flex items-center justify-between shadow-2xs">
+                            <span>Format Example: <strong>{activeCountry.ffcLicensePlaceholder}</strong></span>
+                          </div>
+                        </div>
+
+                        {/* Mandatory Renewal & Escrow/Trust rules */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[10px] text-slate-600">
+                          <div className="bg-slate-50 border border-slate-200 rounded-lg p-2">
+                            <div className="font-bold text-slate-800 flex items-center gap-1 mb-0.5">
+                              <Clock className="w-3 h-3 text-indigo-600 shrink-0" />
+                              <span>Renewal & CPD Cycle</span>
+                            </div>
+                            <div className="leading-snug text-slate-600">{activeCountry.renewalCycle}</div>
+                          </div>
+
+                          <div className="bg-slate-50 border border-slate-200 rounded-lg p-2">
+                            <div className="font-bold text-slate-800 flex items-center gap-1 mb-0.5">
+                              <ShieldCheck className="w-3 h-3 text-emerald-600 shrink-0" />
+                              <span>Trust & Escrow Obligation</span>
+                            </div>
+                            <div className="leading-snug text-slate-600">{activeCountry.trustAccountObligation}</div>
+                          </div>
+                        </div>
+
+                        {/* Supervisory Compliance Authority Footer */}
+                        <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-500">
+                          <span className="truncate max-w-[240px]">Oversight: {activeCountry.complianceAuthorityName}</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsRegulatoryTooltipPinned(false);
+                              setShowRegulatoryTooltip(false);
+                              setShowFullRegulatoryModal(true);
+                            }}
+                            className="text-cyan-700 hover:text-cyan-900 font-bold shrink-0 underline ml-2 cursor-pointer flex items-center gap-1"
+                          >
+                            <span>Inspect Full Dossier</span>
+                            <ExternalLink className="w-2.5 h-2.5" />
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Practitioner Designation (Territory-Matched) */}
+                  <div className="sm:col-span-2">
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-slate-600 font-semibold flex items-center gap-1.5 text-xs">
+                        <span>Practitioner Statutory Designation</span>
+                        <span className="text-[10px] text-cyan-700 bg-cyan-50 px-1.5 py-0.5 rounded border border-cyan-200 font-normal">
+                          {activeCountry.regulatoryBody}
+                        </span>
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setShowFullRegulatoryModal(true)}
+                        className="text-[10px] text-cyan-700 hover:text-cyan-900 underline font-medium flex items-center gap-1 cursor-pointer"
+                      >
+                        <Scale className="w-3 h-3" />
+                        <span>Statutory Rules</span>
+                      </button>
+                    </div>
+                    <select
+                      value={profile.agentType}
+                      onChange={(e) => setProfile({ ...profile, agentType: e.target.value })}
+                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-slate-800 font-medium shadow-2xs text-xs"
+                    >
+                      {activeCountry.agentTypeOptions && activeCountry.agentTypeOptions.map((designation) => (
+                        <option key={designation} value={designation}>{designation}</option>
+                      ))}
+                      {/* Preserve custom or previous designation if not explicitly in the list */}
+                      {activeCountry.agentTypeOptions && !activeCountry.agentTypeOptions.includes(profile.agentType) && (
+                        <option value={profile.agentType}>{profile.agentType} (Current)</option>
+                      )}
+                    </select>
                   </div>
 
                   {/* Office Phone */}
@@ -1079,7 +1284,7 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
                   </div>
 
                   {/* Company / Agency Name */}
-                  <div>
+                  <div className="sm:col-span-2">
                     <label className="block text-slate-600 font-semibold mb-1">Company / Agency Name</label>
                     <input 
                       type="text" 
@@ -1302,37 +1507,81 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
                 </div>
 
                 {/* Add Suburb Row (Matches the selected Country & Area) */}
-                <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100">
-                  <select
-                    value={newFarmingArea}
-                    onChange={(e) => setNewFarmingArea(e.target.value)}
-                    className="bg-white border border-slate-300 rounded px-3 py-1.5 text-xs text-slate-800 font-medium shadow-2xs"
-                  >
-                    <option value="">Select Suburb in {activeCity.name} to Add...</option>
-                    {activeCity.suburbs.filter(s => !profile.farmingAreas.includes(s)).map((suburb) => (
-                      <option key={suburb} value={suburb}>{suburb}</option>
-                    ))}
-                  </select>
+                <div className="space-y-2 pt-2 border-t border-slate-100">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <select
+                      value={newFarmingArea}
+                      onChange={(e) => setNewFarmingArea(e.target.value)}
+                      className="bg-white border border-slate-300 rounded px-3 py-1.5 text-xs text-slate-800 font-medium shadow-2xs"
+                    >
+                      <option value="">Select Suburb in {activeCity.name}...</option>
+                      {activeCity.suburbs.filter(s => !profile.farmingAreas.includes(s)).map((suburb) => (
+                        <option key={suburb} value={suburb}>{suburb}</option>
+                      ))}
+                    </select>
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (newFarmingArea) {
-                        handleAddFarmingArea(newFarmingArea);
-                        setNewFarmingArea('');
-                      }
-                    }}
-                    disabled={!newFarmingArea}
-                    className="bg-slate-800 hover:bg-slate-700 disabled:opacity-50 text-white font-bold px-3 py-1.5 rounded text-xs flex items-center gap-1 cursor-pointer"
-                  >
-                    <Plus className="w-3.5 h-3.5" /> Add Suburb
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (newFarmingArea) {
+                          handleAddFarmingArea(newFarmingArea);
+                          setNewFarmingArea('');
+                        }
+                      }}
+                      disabled={!newFarmingArea}
+                      className="bg-slate-800 hover:bg-slate-700 disabled:opacity-50 text-white font-bold px-3 py-1.5 rounded text-xs flex items-center gap-1 cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" /> Add Selected
+                    </button>
 
-                  <span className="text-[11px] text-slate-400 pl-2">
-                    Quick suggestions from {activeCity.name}:
-                  </span>
-                  <div className="flex flex-wrap gap-1">
-                    {activeCity.suburbs.slice(0, 4).map((sub, idx) => (
+                    <span className="text-slate-300">|</span>
+
+                    {/* Custom suburb input */}
+                    <input
+                      type="text"
+                      value={customFarmingInput}
+                      onChange={(e) => setCustomFarmingInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && customFarmingInput.trim()) {
+                          e.preventDefault();
+                          handleAddFarmingArea(customFarmingInput.trim());
+                          setCustomFarmingInput('');
+                        }
+                      }}
+                      placeholder={`Or type custom suburb in ${activeCity.name}...`}
+                      className="px-3 py-1.5 bg-white border border-slate-300 rounded text-xs text-slate-800 placeholder-slate-400 font-medium shadow-2xs min-w-[200px]"
+                    />
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (customFarmingInput.trim()) {
+                          handleAddFarmingArea(customFarmingInput.trim());
+                          setCustomFarmingInput('');
+                        }
+                      }}
+                      disabled={!customFarmingInput.trim()}
+                      className="bg-cyan-700 hover:bg-cyan-800 disabled:opacity-50 text-white font-bold px-3 py-1.5 rounded text-xs flex items-center gap-1 cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" /> Add Custom
+                    </button>
+
+                    {profile.farmingAreas.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setProfile({ ...profile, farmingAreas: [] })}
+                        className="text-xs text-rose-600 hover:text-rose-700 font-medium ml-auto px-2 py-1 hover:bg-rose-50 rounded cursor-pointer"
+                      >
+                        Clear All
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                    <span className="text-[11px] text-slate-400">
+                      Territory suggestions for {activeCity.name}:
+                    </span>
+                    {activeCity.suburbs.map((sub, idx) => (
                       <button
                         key={idx}
                         type="button"
@@ -3016,6 +3265,184 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
               >
                 <Check className="w-4 h-4" />
                 <span>Verify & Confirm Resident</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Full Regulatory Dossier Modal -- opened from the FFC/License
+          tooltip's "Inspect Full Dossier" link or the Practitioner
+          Designation field's "Statutory Rules" link. */}
+      {showFullRegulatoryModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xs animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] flex flex-col overflow-hidden border border-cyan-300">
+            {/* Modal Header */}
+            <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between border-b border-cyan-800">
+              <div className="flex items-center gap-3">
+                <span className="text-3xl leading-none">{activeCountry.flag}</span>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-extrabold text-base sm:text-lg text-white">
+                      {activeCountry.regulatoryBody}
+                    </h3>
+                    <span className="text-[11px] bg-cyan-900/80 text-cyan-200 border border-cyan-700 px-2 py-0.5 rounded font-mono">
+                      {activeCountry.code}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-300">
+                    Statutory Real Estate Licensing & Compliance Dossier • {activeCountry.name}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowFullRegulatoryModal(false)}
+                className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-5 text-slate-700 text-xs">
+              {/* Statutory Act Section */}
+              <div className="bg-slate-50 border-2 border-slate-200 rounded-xl p-4 space-y-1.5">
+                <div className="flex items-center gap-2 text-cyan-800 font-bold uppercase tracking-wider text-[11px]">
+                  <Scale className="w-4 h-4 text-cyan-600" />
+                  <span>Governing Statutory Act & Legislation</span>
+                </div>
+                <div className="text-sm font-extrabold text-slate-900">
+                  {activeCountry.statutoryAct}
+                </div>
+                <p className="text-slate-600 text-xs leading-relaxed">
+                  This legislation serves as the supreme national property practice statute for real estate transactions, agency contracts, fiduciary obligations, and consumer protection in {activeCountry.name}.
+                </p>
+              </div>
+
+              {/* Requirements & Qualifications */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-slate-900 font-bold text-xs uppercase tracking-wider">
+                  <BookOpen className="w-4 h-4 text-cyan-600" />
+                  <span>Statutory Practitioner Requirements & Qualifications</span>
+                </div>
+                <div className="bg-white border border-slate-200 rounded-xl p-4 text-slate-700 leading-relaxed text-xs space-y-2 shadow-2xs">
+                  <p>{activeCountry.regulatoryRequirements}</p>
+                </div>
+              </div>
+
+              {/* Grid of Key Fiduciary Rules */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* License ID Format */}
+                <div className="bg-cyan-50/60 border border-cyan-200 rounded-xl p-4 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-cyan-950 flex items-center gap-1.5">
+                      <FileCheck className="w-4 h-4 text-cyan-700" />
+                      <span>Licensing Identification Format</span>
+                    </span>
+                    <span className="text-[10px] text-cyan-800 font-mono font-bold">
+                      {activeCountry.code} Standard
+                    </span>
+                  </div>
+                  <p className="text-cyan-900 text-xs">{activeCountry.licenseFormatDescription}</p>
+                  <div className="bg-white border border-cyan-200 rounded p-2 text-cyan-950 font-mono text-[11px] flex items-center justify-between shadow-2xs">
+                    <span>{activeCountry.ffcLicensePlaceholder}</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const sample = activeCountry.ffcLicensePlaceholder.split(' / ')[0].trim();
+                        setProfile({ ...profile, ffcNumber: sample });
+                        setCopiedLicenseExample(true);
+                        setTimeout(() => setCopiedLicenseExample(false), 2000);
+                      }}
+                      className="text-[10px] text-cyan-700 hover:text-cyan-900 font-bold underline cursor-pointer"
+                    >
+                      {copiedLicenseExample ? 'Applied!' : 'Apply Example'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Renewal & CPD Rules */}
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2">
+                  <div className="font-bold text-slate-800 flex items-center gap-1.5">
+                    <Clock className="w-4 h-4 text-indigo-600" />
+                    <span>Licence Renewal & Continuing Education (CPD)</span>
+                  </div>
+                  <p className="text-slate-600 text-xs leading-relaxed">
+                    {activeCountry.renewalCycle}
+                  </p>
+                </div>
+
+                {/* Trust / Escrow Account Obligations */}
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2">
+                  <div className="font-bold text-slate-800 flex items-center gap-1.5">
+                    <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                    <span>Fiduciary Client Trust / Escrow Obligation</span>
+                  </div>
+                  <p className="text-slate-600 text-xs leading-relaxed">
+                    {activeCountry.trustAccountObligation}
+                  </p>
+                </div>
+
+                {/* AML / KYC Supervisory Body */}
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2">
+                  <div className="font-bold text-slate-800 flex items-center gap-1.5">
+                    <ShieldAlert className="w-4 h-4 text-amber-600" />
+                    <span>AML/CFT Anti-Money Laundering Supervisory Body</span>
+                  </div>
+                  <p className="text-slate-600 text-xs leading-relaxed">
+                    Supervised by <strong>{activeCountry.complianceAuthorityName}</strong> for mandatory beneficial ownership screening, suspicious transaction reporting, and source of funds verification.
+                  </p>
+                </div>
+              </div>
+
+              {/* Cadastral Land Registry & Portals */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-1">
+                  <div className="font-bold text-slate-800 flex items-center gap-1.5">
+                    <Building2 className="w-4 h-4 text-slate-600" />
+                    <span>Cadastral Deeds & Land Registry Office</span>
+                  </div>
+                  <div className="font-semibold text-slate-900">{activeCountry.landRegistryAuthority}</div>
+                  <div className="text-[11px] text-slate-500">
+                    Legal Identifier System: <strong>{activeCountry.legalIdentifierName}</strong>
+                  </div>
+                </div>
+
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-1">
+                  <div className="font-bold text-slate-800 flex items-center gap-1.5">
+                    <Globe className="w-4 h-4 text-cyan-600" />
+                    <span>Authorized National Real Estate Portals</span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {activeCountry.majorPortals.map((portal) => (
+                      <a
+                        key={portal.name}
+                        href={portal.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-[11px] bg-white border border-slate-300 hover:border-cyan-500 text-slate-800 hover:text-cyan-800 px-2 py-1 rounded shadow-2xs transition-colors"
+                      >
+                        <span>{portal.name}</span>
+                        <ExternalLink className="w-2.5 h-2.5 opacity-60" />
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="bg-slate-50 px-6 py-3 border-t border-slate-200 flex items-center justify-between">
+              <div className="text-[11px] text-slate-500">
+                Data verified according to national statutory provisions for <strong>{activeCountry.name}</strong>.
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowFullRegulatoryModal(false)}
+                className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs px-5 py-2 rounded-lg cursor-pointer transition-colors"
+              >
+                Close Dossier
               </button>
             </div>
           </div>
