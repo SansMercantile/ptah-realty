@@ -45,6 +45,10 @@ interface HeaderProps {
   userEmail: string;
   onLogout: () => void;
   selectedPropertyAddress?: string;
+  currentCountryFlag?: string;
+  currentCountryName?: string;
+  currentCityName?: string;
+  currentCurrencySymbol?: string;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -68,7 +72,11 @@ export const Header: React.FC<HeaderProps> = ({
   prepaidBalance = 1250,
   userEmail,
   onLogout,
-  selectedPropertyAddress
+  selectedPropertyAddress,
+  currentCountryFlag = '🇿🇦',
+  currentCountryName = 'South Africa',
+  currentCityName = 'Cape Town',
+  currentCurrencySymbol = 'R'
 }) => {
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
@@ -253,6 +261,24 @@ export const Header: React.FC<HeaderProps> = ({
             Balance moved into the nav tabs above (first position), so
             it's no longer duplicated here. */}
         <div className="flex items-center gap-2.5 text-xs">
+          {/* Active Operating Jurisdiction Pill -- click opens the
+              Country & Area Jurisdiction section in Settings > Profile,
+              where the cascading Country/Province/City pickers live. */}
+          <button
+            id="header-jurisdiction-badge"
+            onClick={() => onOpenUserSettings('profile')}
+            className="flex items-center gap-1.5 bg-slate-800/90 hover:bg-slate-700/90 border border-slate-700 hover:border-cyan-400/60 px-2.5 py-1 rounded text-xs transition-all shadow-xs cursor-pointer group"
+            title={`Active Jurisdiction: ${currentCityName}, ${currentCountryName}. Click to change Country, Province & Area.`}
+          >
+            <span className="text-sm">{currentCountryFlag}</span>
+            <span className="text-slate-200 font-bold hidden md:inline truncate max-w-[130px]">
+              {currentCityName}
+            </span>
+            <span className="bg-cyan-500/20 text-cyan-300 font-mono font-bold text-[10px] px-1.5 py-0.2 rounded border border-cyan-400/30">
+              {currentCurrencySymbol}
+            </span>
+          </button>
+
           {/* Notifications Button & Popover -- on the CRM tab this opens
               CRM's own notifications & task reminders drawer instead (see
               handleBellClick above); CRM's own second bell icon that used

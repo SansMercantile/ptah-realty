@@ -25,11 +25,24 @@ import { SearchHistoryModal } from './components/modals/SearchHistoryModal';
 import CRMApp from './crm/CRMApp';
 import { LoginScreen } from './components/LoginScreen';
 import { PROPERTIES_DATA } from './services/mockData';
+import { getJurisdictionByCode } from './services/jurisdictionsData';
 import { PropertyRecord, AccommodationDetails } from './types';
 import { getCurrentUser, logout, listProperties, createProperty, type AuthUser } from './services/api';
 
 export function App() {
   const [user, setUser] = useState<AuthUser | null>(getCurrentUser());
+
+  // Jurisdiction (Country -> Province/State -> City/Town). Defaults to
+  // South Africa -> Western Cape -> Cape Town, the real-backend-connected
+  // jurisdiction; switching away shows that jurisdiction's own rich demo
+  // dataset (jurisdictionsData.ts) instead, since there's no real backend
+  // data for other countries/cities yet -- see handleJurisdictionChange.
+  const [countryId, setCountryId] = useState('ZA');
+  const [provinceId, setProvinceId] = useState('WC');
+  const [cityId, setCityId] = useState('CPT');
+  const activeJurisdiction = getJurisdictionByCode(countryId, provinceId, cityId);
+  const { country: activeCountry, city: activeCity } = activeJurisdiction;
+
   const [properties, setProperties] = useState<PropertyRecord[]>(PROPERTIES_DATA);
   const [selectedProperty, setSelectedProperty] = useState<PropertyRecord | null>(PROPERTIES_DATA[0]); // Default 5 Richmond Road
   const [isLoadingProperties, setIsLoadingProperties] = useState(false);
@@ -217,6 +230,23 @@ export function App() {
     setActiveNavTab('kyc');
   };
 
+  // Country/Province/City switch from Settings > Profile's Jurisdiction
+  // section. The default jurisdiction (ZA/WC/CPT) is real-backend-merged
+  // (see the loadProperties effect above); every other jurisdiction has
+  // no real backend data behind it, so this swaps in that jurisdiction's
+  // own curated demo dataset instead -- currency, legal terminology and
+  // property listings all change together.
+  const handleJurisdictionChange = (newCountryId: string, newProvinceId: string, newCityId: string) => {
+    setCountryId(newCountryId);
+    setProvinceId(newProvinceId);
+    setCityId(newCityId);
+    const jur = getJurisdictionByCode(newCountryId, newProvinceId, newCityId);
+    if (jur.city.properties && jur.city.properties.length > 0) {
+      setProperties(jur.city.properties);
+      setSelectedProperty(jur.city.properties[0]);
+    }
+  };
+
   const handleOpenContactOwner = (prop: PropertyRecord, initialTab: 'call' | 'email' | 'whatsapp' = 'call') => {
     setContactOwnerProperty(prop);
     setContactOwnerTab(initialTab);
@@ -261,6 +291,10 @@ export function App() {
         onLogout={() => { logout(); setUser(null); }}
         selectedPropertyAddress={selectedProperty?.address}
         onOpenCRMNotifications={handleOpenCRMNotifications}
+        currentCountryFlag={activeCountry.flag}
+        currentCountryName={activeCountry.name}
+        currentCityName={activeCity.name}
+        currentCurrencySymbol={activeCountry.currency.symbol}
       />
       {/* Main Workspace Area (Google Maps & Cadastral Vector Canvas + Property Title Panel) */}
       <main className={`flex-1 overflow-hidden relative ${activeNavTab === 'crm' ? 'overflow-y-auto' : 'flex flex-row'}`}>
@@ -444,6 +478,7 @@ export function App() {
         onSelectProperty={handleSelectProperty}
         listings={listings}
         setListings={setListings}
+        onOpenQuickListing={() => setIsQuickListingOpen(true)}
       />
 
       {/* Quick Listing shortcut lives only in the CRM header now (see
@@ -468,6 +503,10 @@ export function App() {
         trustCredits={trustCredits}
         prepaidBalance={prepaidBalance}
         onTopUpSuccess={handleTopUpSuccess}
+        currentCountryId={countryId}
+        currentProvinceId={provinceId}
+        currentCityId={cityId}
+        onJurisdictionChange={handleJurisdictionChange}
       />
 
       {/* 17. Balance & Available Funds Details Modal */}

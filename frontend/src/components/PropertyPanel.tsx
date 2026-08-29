@@ -118,10 +118,25 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
     }));
   };
 
+  // Jurisdiction-aware currency symbol: detects the property's country
+  // from its deedsOffice/province fields (set per-city in
+  // jurisdictionsData.ts) so switching jurisdiction in the header/Settings
+  // shows £/$/A$/AED, not a hardcoded Rand, once that city's demo
+  // properties are on screen.
   const formatZar = (amount?: number) => {
     if (amount === undefined || amount === null || isNaN(amount)) return '-';
-    if (amount === 0) return 'R 0';
-    return `R ${amount.toLocaleString('en-ZA').replace(/,/g, ' ')}`;
+    let symbol = 'R ';
+    if (property?.deedsOffice?.includes('UK') || property?.province?.includes('ENGLAND') || property?.province?.includes('LONDON')) {
+      symbol = '£';
+    } else if (property?.deedsOffice?.includes('MIAMI') || property?.deedsOffice?.includes('LOS ANGELES') || property?.province?.includes('FLORIDA') || property?.province?.includes('CALIFORNIA') || property?.province?.includes('NEW YORK')) {
+      symbol = '$';
+    } else if (property?.deedsOffice?.includes('NSW') || property?.deedsOffice?.includes('SYDNEY') || property?.province?.includes('NEW SOUTH WALES')) {
+      symbol = 'A$';
+    } else if (property?.deedsOffice?.includes('DUBAI') || property?.deedsOffice?.includes('DLD') || property?.province?.includes('DUBAI')) {
+      symbol = 'AED ';
+    }
+    if (amount === 0) return `${symbol}0`;
+    return `${symbol}${amount.toLocaleString('en-US')}`;
   };
 
   const formatMaskedId = (idString: string) => {

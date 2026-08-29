@@ -46,6 +46,7 @@ interface DealViewPipelineProps {
   listings: ListingDealRecord[];
   activeStage: DealStage;
   onSelectStage: (stage: DealStage) => void;
+  onQuickListingClick?: () => void;
   onStartFullSyndication: () => void;
   viewings: ViewingAppointment[];
   onAddViewing: (viewing: ViewingAppointment) => void;
@@ -60,6 +61,7 @@ export const DealViewPipeline: React.FC<DealViewPipelineProps> = ({
   listings,
   activeStage,
   onSelectStage,
+  onQuickListingClick,
   onStartFullSyndication,
   viewings,
   onAddViewing,
@@ -205,6 +207,20 @@ export const DealViewPipeline: React.FC<DealViewPipelineProps> = ({
               <span className="font-bold text-xs text-slate-800 tracking-wide uppercase mt-1">
                 NEW LISTINGS
               </span>
+
+              {/* Quick Listing Pill Action */}
+              {onQuickListingClick && (
+                <button
+                  id="btn-quick-listing-pill"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onQuickListingClick();
+                  }}
+                  className="mt-2 px-3 py-1 bg-white/90 hover:bg-white text-[#df382b] font-bold text-[10px] tracking-wider rounded-full shadow-xs border border-red-200 hover:border-red-300 transition-all uppercase cursor-pointer"
+                >
+                  QUICK LISTING
+                </button>
+              )}
             </div>
 
             {/* STAGE 2: PROPERTY VIEWING */}

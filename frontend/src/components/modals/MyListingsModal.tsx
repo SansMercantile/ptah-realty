@@ -59,6 +59,7 @@ interface MyListingsModalProps {
   // chat) can add to the same list from outside this modal's tree.
   listings: ListingDealRecord[];
   setListings: React.Dispatch<React.SetStateAction<ListingDealRecord[]>>;
+  onOpenQuickListing?: () => void;
 }
 
 export interface ListingDealRecord {
@@ -186,7 +187,8 @@ export const MyListingsModal: React.FC<MyListingsModalProps> = ({
   selectedProperty,
   onSelectProperty,
   listings,
-  setListings
+  setListings,
+  onOpenQuickListing
 }) => {
   // Modal View: 'LISTINGS_GRID' or 'SYNDICATION_WIZARD'
   const [currentView, setCurrentView] = useState<'LISTINGS_GRID' | 'SYNDICATION_WIZARD'>('LISTINGS_GRID');
@@ -396,6 +398,7 @@ export const MyListingsModal: React.FC<MyListingsModalProps> = ({
               listings={listings}
               activeStage={activeDealStage}
               onSelectStage={setActiveDealStage}
+              onQuickListingClick={onOpenQuickListing}
               onStartFullSyndication={() => handleStartNewSyndication()}
               viewings={viewings}
               onAddViewing={(v) => setViewings(prev => [v, ...prev])}
