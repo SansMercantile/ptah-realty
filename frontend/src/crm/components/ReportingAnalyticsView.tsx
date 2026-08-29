@@ -39,6 +39,7 @@ import {
 import { Lead, LeadSource } from '../types';
 import { formatCurrency, formatShortCurrency, exportLeadsToCSV } from '../utils/formatters';
 import { LeadGeoHeatmap } from './LeadGeoHeatmap';
+import { AgentPerformanceCard } from './AgentPerformanceCard';
 
 interface ReportingAnalyticsViewProps {
   leads: Lead[];
@@ -700,6 +701,10 @@ export const ReportingAnalyticsView: React.FC<ReportingAnalyticsViewProps> = ({ 
           </div>
         </div>
       </div>
+
+      {/* Agent Performance Leaderboard Card -- brought over from the AI
+          Studio demo (see chat). */}
+      <AgentPerformanceCard leads={leads} onSelectLead={onSelectLead} />
 
       {/* Geographic Lead Heatmap Visualizer */}
       <LeadGeoHeatmap leads={leads} onSelectLead={onSelectLead} />
