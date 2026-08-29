@@ -349,10 +349,10 @@ export const SlaResponseEfficiencyWidget: React.FC<SlaResponseEfficiencyWidgetPr
               onChange={(e) => setTargetSlaMinutes(parseInt(e.target.value, 10))}
               className="bg-transparent font-bold text-slate-900 dark:text-white outline-none cursor-pointer text-xs"
             >
-              <option value={5} className="dark:bg-slate-900">5 Mins (Ultra-Fast Inbound)</option>
-              <option value={10} className="dark:bg-slate-900">10 Mins (VIP Portal Priority)</option>
-              <option value={15} className="dark:bg-slate-900">15 Mins (Standard Ptah SLA)</option>
-              <option value={30} className="dark:bg-slate-900">30 Mins (Standard Benchmark)</option>
+              <option value={5} className="dark:bg-black">5 Mins (Ultra-Fast Inbound)</option>
+              <option value={10} className="dark:bg-black">10 Mins (VIP Portal Priority)</option>
+              <option value={15} className="dark:bg-black">15 Mins (Standard Ptah SLA)</option>
+              <option value={30} className="dark:bg-black">30 Mins (Standard Benchmark)</option>
             </select>
           </div>
 

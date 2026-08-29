@@ -45,7 +45,7 @@ export const AiAdvisorDrawer: React.FC<AiAdvisorDrawerProps> = ({
     return (
       <button
         onClick={onOpen}
-        className="w-10 shrink-0 h-full flex flex-col items-center justify-center gap-3 bg-white/70 dark:bg-slate-900/60 backdrop-blur-xl border-l border-white/40 dark:border-slate-700/40 text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/40 transition cursor-pointer"
+        className="w-10 shrink-0 h-full flex flex-col items-center justify-center gap-3 bg-white/70 dark:bg-black/80 backdrop-blur-xl border-l border-white/40 dark:border-slate-700/40 text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/40 transition cursor-pointer"
         title="Open AI Copilot"
       >
         <Sparkles className="w-4 h-4" />
@@ -102,9 +102,9 @@ export const AiAdvisorDrawer: React.FC<AiAdvisorDrawerProps> = ({
   ];
 
   return (
-    <div className="w-full max-w-xs lg:max-w-sm shrink-0 h-full flex flex-col bg-white/80 dark:bg-slate-900/70 backdrop-blur-xl border-l border-white/40 dark:border-slate-700/40 shadow-2xl">
+    <div className="w-full max-w-xs lg:max-w-sm shrink-0 h-full flex flex-col bg-white/80 dark:bg-black/90 backdrop-blur-xl border-l border-white/40 dark:border-slate-700/40 shadow-2xl">
       {/* Top Header */}
-      <div className="p-4 bg-slate-50/70 dark:bg-slate-800/50 border-b border-white/40 dark:border-slate-700/40 flex items-center justify-between">
+      <div className="p-4 bg-slate-50/70 dark:bg-black/60 border-b border-white/40 dark:border-slate-700/40 flex items-center justify-between">
         <div className="flex items-center space-x-2.5">
           <div className="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 flex items-center justify-center border border-amber-200 dark:border-amber-800">
             <Sparkles className="w-4 h-4" />
@@ -181,7 +181,7 @@ export const AiAdvisorDrawer: React.FC<AiAdvisorDrawerProps> = ({
           e.preventDefault();
           handleSendMessage();
         }}
-        className="p-3 bg-white/60 dark:bg-slate-900/50 border-t border-white/40 dark:border-slate-700/40 flex items-center space-x-2"
+        className="p-3 bg-white/60 dark:bg-black/70 border-t border-white/40 dark:border-slate-700/40 flex items-center space-x-2"
       >
         <input
           type="text"

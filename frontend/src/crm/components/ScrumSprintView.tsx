@@ -422,7 +422,7 @@ export const ScrumSprintView: React.FC<ScrumSprintViewProps> = ({
                   ? 'bg-purple-50/70 dark:bg-purple-950/50 border-purple-500 ring-2 ring-purple-400'
                   : isTargetActive && (pickedUpLead?.sprintStage || 'backlog') !== col.id
                   ? 'bg-purple-50/30 dark:bg-purple-950/20 border-purple-400 dark:border-purple-700/60'
-                  : 'bg-slate-100/80 dark:bg-slate-900/90 border-slate-200 dark:border-slate-800'
+                  : 'bg-slate-100/80 dark:bg-black/90 border-slate-200 dark:border-slate-800'
               }`}
             >
               {/* Column Header */}

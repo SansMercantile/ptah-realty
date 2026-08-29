@@ -218,7 +218,7 @@ export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({
         className="w-full max-w-lg bg-white dark:bg-black border-l border-slate-200 dark:border-slate-800 h-full flex flex-col shadow-2xl transition-colors duration-200"
       >
         {/* Header */}
-        <div className="p-4 bg-slate-50 dark:bg-slate-900/90 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+        <div className="p-4 bg-slate-50 dark:bg-black/90 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <div className="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center border border-amber-200 dark:border-amber-800 shadow-xs relative">
               <Bell className="w-4 h-4" />
@@ -276,7 +276,7 @@ export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({
         </div>
 
         {/* Primary Tabs */}
-        <div className="px-4 pt-3 pb-2 bg-slate-50/70 dark:bg-slate-900/60 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-2">
+        <div className="px-4 pt-3 pb-2 bg-slate-50/70 dark:bg-black/60 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-2">
           <div className="flex items-center space-x-1 bg-slate-200/70 dark:bg-slate-800 p-0.5 rounded-xl text-xs font-medium w-full">
             <button
               onClick={() => setActiveTab('tasks')}
@@ -498,7 +498,7 @@ export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({
 
         {/* Task Filter Chips (Visible when in tasks tab) */}
         {activeTab === 'tasks' && (
-          <div className="px-4 py-2 bg-slate-50 dark:bg-slate-900/60 border-b border-slate-200 dark:border-slate-800 flex items-center space-x-1.5 overflow-x-auto text-[11px]">
+          <div className="px-4 py-2 bg-slate-50 dark:bg-black/60 border-b border-slate-200 dark:border-slate-800 flex items-center space-x-1.5 overflow-x-auto text-[11px]">
             <button
               onClick={() => setTaskFilter('all')}
               className={`px-2.5 py-1 rounded-full font-medium whitespace-nowrap transition cursor-pointer ${
@@ -595,7 +595,7 @@ export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({
                       key={task.id}
                       className={`p-3.5 rounded-xl border transition shadow-2xs group ${
                         isCompleted
-                          ? 'bg-slate-100/60 dark:bg-slate-900/60 border-slate-200 dark:border-slate-800 opacity-60'
+                          ? 'bg-slate-100/60 dark:bg-black/60 border-slate-200 dark:border-slate-800 opacity-60'
                           : isOverdue
                           ? 'bg-white dark:bg-black border-rose-300 dark:border-rose-800/80 hover:border-rose-400'
                           : 'bg-white dark:bg-black border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
@@ -855,7 +855,7 @@ export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({
         </div>
 
         {/* Drawer Footer */}
-        <div className="p-3 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-2">
+        <div className="p-3 bg-slate-50 dark:bg-black border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-2">
           {onOpenFullTasksView ? (
             <button
               onClick={onOpenFullTasksView}

@@ -33,7 +33,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenCommandPalette,
 }) => {
   return (
-    <header className="bg-white/70 dark:bg-slate-900/60 backdrop-blur-xl border-b border-white/40 dark:border-slate-700/40 text-slate-900 dark:text-slate-100 sticky top-0 z-30 shadow-xs transition-colors duration-200">
+    <header className="bg-white/70 dark:bg-black/80 backdrop-blur-xl border-b border-white/40 dark:border-slate-700/40 text-slate-900 dark:text-slate-100 sticky top-0 z-30 shadow-xs transition-colors duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/*
           Flex justify-between, not the old three-column centered grid:

@@ -368,7 +368,7 @@ export const QuickListingsModal: React.FC<QuickListingsModalProps> = ({
                         </span>
                       </div>
 
-                      <div className="absolute top-2.5 right-2.5 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xs px-2 py-0.5 rounded text-[10px] font-mono font-semibold text-slate-700 dark:text-slate-300">
+                      <div className="absolute top-2.5 right-2.5 bg-white/90 dark:bg-black/90 backdrop-blur-xs px-2 py-0.5 rounded text-[10px] font-mono font-semibold text-slate-700 dark:text-slate-300">
                         {listing.referenceNumber}
                       </div>
 

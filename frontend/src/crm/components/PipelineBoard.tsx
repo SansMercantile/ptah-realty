@@ -237,7 +237,7 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
       {/* 1. ELEVATED LEAD METRICS STRIP */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
         {/* Metric 1: Total Pipeline Value */}
-        <div className="bg-white/60 dark:bg-slate-900/50 backdrop-blur-xl rounded-2xl p-4 border border-white/50 dark:border-slate-700/40 shadow-lg relative overflow-hidden transition hover:shadow-xl">
+        <div className="bg-white/60 dark:bg-black/50 backdrop-blur-xl rounded-2xl p-4 border border-white/50 dark:border-slate-700/40 shadow-lg relative overflow-hidden transition hover:shadow-xl">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Active Pipeline Value</span>
             <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400">
@@ -283,7 +283,7 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
         </div>
 
         {/* Metric 3: Active Agency Leads & Inflow */}
-        <div className="bg-white/60 dark:bg-slate-900/50 backdrop-blur-xl rounded-2xl p-4 border border-white/50 dark:border-slate-700/40 shadow-lg relative overflow-hidden transition hover:shadow-xl">
+        <div className="bg-white/60 dark:bg-black/50 backdrop-blur-xl rounded-2xl p-4 border border-white/50 dark:border-slate-700/40 shadow-lg relative overflow-hidden transition hover:shadow-xl">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Active Agency Leads</span>
             <div className="p-2 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400">
@@ -300,7 +300,7 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
         </div>
 
         {/* Metric 4: Closed Deals & Conversion */}
-        <div className="bg-white/60 dark:bg-slate-900/50 backdrop-blur-xl rounded-2xl p-4 border border-white/50 dark:border-slate-700/40 shadow-lg relative overflow-hidden transition hover:shadow-xl">
+        <div className="bg-white/60 dark:bg-black/50 backdrop-blur-xl rounded-2xl p-4 border border-white/50 dark:border-slate-700/40 shadow-lg relative overflow-hidden transition hover:shadow-xl">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Closed & Won Deals</span>
             <div className="p-2 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400">
@@ -432,7 +432,7 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
       </AnimatePresence>
 
       {/* 4. CONTROLS & FILTER STRIP */}
-      <div className="bg-white/60 dark:bg-slate-900/50 backdrop-blur-xl rounded-2xl p-4 border border-white/50 dark:border-slate-700/40 shadow-lg transition-colors">
+      <div className="bg-white/60 dark:bg-black/50 backdrop-blur-xl rounded-2xl p-4 border border-white/50 dark:border-slate-700/40 shadow-lg transition-colors">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
           {/* Search bar */}
           <div className="relative flex-1">
@@ -576,7 +576,7 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
                     ? 'bg-emerald-50/70 dark:bg-emerald-950/50 border-emerald-500 ring-2 ring-emerald-400'
                     : isDropTargetActive && pickedUpLead?.status !== col.id
                     ? 'bg-emerald-50/30 dark:bg-emerald-950/20 border-emerald-400 dark:border-emerald-700/60'
-                    : 'bg-white/40 dark:bg-slate-900/40 border-white/50 dark:border-slate-700/30'
+                    : 'bg-white/40 dark:bg-black/40 border-white/50 dark:border-slate-700/30'
                 }`}
               >
                 {/* Column Header */}
