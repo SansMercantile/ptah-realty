@@ -16,6 +16,7 @@ import {
   Share2
 } from 'lucide-react';
 import { PropertyRecord, PortalListingPayload, AIGeneratedCMACopy } from '../../types';
+import { getListingCopy } from '../../services/api';
 
 interface PortalSyncModalProps {
   isOpen: boolean;
@@ -92,15 +93,7 @@ export const PortalSyncModal: React.FC<PortalSyncModalProps> = ({
     if (!property) return;
     setIsGeneratingAi(true);
     try {
-      const res = await fetch('/api/ai/listing-copy', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          property,
-          tone: 'Luxury'
-        })
-      });
-      const data = await res.json();
+      const data = await getListingCopy(property, 'Property24', property.currentSale?.salePrice || property.property24Listing?.askingPrice);
       setAiListingCopy(data);
     } catch (err) {
       console.error(err);

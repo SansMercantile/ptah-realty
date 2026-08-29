@@ -227,6 +227,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
   // Dialog states for dashboard actions
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [verificationCardTab, setVerificationCardTab] = useState<'verification' | 'status'>('verification');
   const [isPortfolioShareOpen, setIsPortfolioShareOpen] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
 
@@ -692,49 +693,101 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
         </div>
 
-        {/* Clients Awaiting Verification */}
-        <div className="bg-white dark:bg-black rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-xs flex items-center justify-between">
-          <div>
-            <div className="flex items-center space-x-2">
-              <span className="text-xl font-extrabold text-cyan-600 dark:text-cyan-400">0</span>
-              <span className="text-sm font-bold text-cyan-600 dark:text-cyan-400">Clients</span>
+        {/* Clients Awaiting Verification + Client Status -- restructured
+            to match the CLOSED SALES METRICS card's structural design
+            (header bar with a two-way toggle badge, content area, and a
+            divider-separated footer link) instead of the old flat
+            icon+button row, and now also houses Client Status (moved
+            here from its own separate top-row card) as the second tab. */}
+        <div className="bg-white dark:bg-black rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between">
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2 mb-2">
+            <div className="flex items-center space-x-1.5 text-xs font-bold uppercase tracking-wider text-cyan-600 dark:text-cyan-400">
+              <UploadCloud className="w-3.5 h-3.5" />
+              <span>Clients</span>
             </div>
-            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
-              AWAITING VERIFICATION
-            </span>
+            {/* Verification | Status Toggle Badge */}
+            <div className="flex rounded-md bg-slate-900 dark:bg-slate-750 text-[10px] font-mono font-extrabold tracking-wider overflow-hidden">
+              <button
+                onClick={() => setVerificationCardTab('verification')}
+                className={`px-2 py-0.5 transition ${verificationCardTab === 'verification' ? 'text-white' : 'text-slate-500 hover:text-slate-300'}`}
+              >
+                VERIFY
+              </button>
+              <span className="text-cyan-400 font-bold self-center">|</span>
+              <button
+                onClick={() => setVerificationCardTab('status')}
+                className={`px-2 py-0.5 transition ${verificationCardTab === 'status' ? 'text-white' : 'text-slate-500 hover:text-slate-300'}`}
+              >
+                STATUS
+              </button>
+            </div>
           </div>
 
-          <div className="text-right">
-            <UploadCloud className="w-6 h-6 text-slate-300 dark:text-slate-600 ml-auto mb-1" />
+          {verificationCardTab === 'verification' ? (
+            <div className="flex items-center justify-between my-auto py-1">
+              <div>
+                <div className="flex items-center space-x-2">
+                  <span className="text-xl font-extrabold text-cyan-600 dark:text-cyan-400">0</span>
+                  <span className="text-sm font-bold text-cyan-600 dark:text-cyan-400">Clients</span>
+                </div>
+                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
+                  Awaiting Verification
+                </span>
+              </div>
+              <UploadCloud className="w-8 h-8 text-slate-200 dark:text-slate-700" />
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-3 my-auto py-1">
+              <div className="space-y-0.5">
+                <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">Validated</span>
+                <div className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                  {leads.length ? '100%' : '0%'}
+                </div>
+                <div className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">{leads.length} of {leads.length}</div>
+              </div>
+              <div className="space-y-0.5 border-l border-slate-200 dark:border-slate-800 pl-3">
+                <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">Obtained Consent</span>
+                <div className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white tracking-tight">0%</div>
+                <div className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">0 of {leads.length}</div>
+              </div>
+            </div>
+          )}
+
+          <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-end text-[11px]">
             <button
               onClick={() => onNavigateView('pipeline')}
-              className="text-xs font-semibold text-blue-600 dark:text-blue-400 underline"
+              className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center space-x-0.5"
             >
-              Verify Clients
+              <span>{verificationCardTab === 'verification' ? 'Verify Clients' : 'View Consent Log'}</span>
+              <ChevronRight className="w-3 h-3" />
             </button>
           </div>
         </div>
 
-        {/* Scheduled Today & Calendar */}
-        <div className="bg-white dark:bg-black rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-xs flex items-center justify-between">
-          <div>
-            <div className="flex items-center space-x-2">
-              <span className="text-xl font-extrabold text-cyan-600 dark:text-cyan-400">0</span>
-              <span className="text-sm font-bold text-cyan-600 dark:text-cyan-400">Events</span>
+        {/* Scheduled Today & Calendar -- footer divider added to match
+            CLOSED SALES METRICS' footer link row. */}
+        <div className="bg-white dark:bg-black rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between">
+          <div className="flex items-center justify-between my-auto py-1">
+            <div>
+              <div className="flex items-center space-x-2">
+                <span className="text-xl font-extrabold text-cyan-600 dark:text-cyan-400">0</span>
+                <span className="text-sm font-bold text-cyan-600 dark:text-cyan-400">Events</span>
+              </div>
+              <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
+                Scheduled Today
+              </span>
+              <span className="text-[10px] text-slate-400">0% Events Complete</span>
             </div>
-            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
-              SCHEDULED TODAY
-            </span>
-            <span className="text-[10px] text-slate-400">0 % EVENTS COMPLETE</span>
+            <Calendar className="w-8 h-8 text-slate-200 dark:text-slate-700" />
           </div>
 
-          <div className="text-right">
-            <Calendar className="w-6 h-6 text-slate-300 dark:text-slate-600 ml-auto mb-1" />
+          <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-end text-[11px]">
             <button
               onClick={() => onNavigateView('calendar')}
-              className="text-xs font-semibold text-blue-600 dark:text-blue-400 underline"
+              className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center space-x-0.5"
             >
-              Calendar
+              <span>Calendar</span>
+              <ChevronRight className="w-3 h-3" />
             </button>
           </div>
         </div>

@@ -494,6 +494,27 @@ export async function getOutreachEmail(
   });
 }
 
+export interface ListingCopyDraft {
+  headline: string;
+  description: string;
+  features: string[];
+}
+
+export async function getListingCopy(
+  property: PropertyRecord,
+  targetPortal: string = 'Property24',
+  askingPrice?: number
+): Promise<ListingCopyDraft> {
+  return authJson<ListingCopyDraft>('/ai/listing-copy', {
+    method: 'POST',
+    body: JSON.stringify({
+      property,
+      asking_price: askingPrice,
+      target_portal: targetPortal,
+    }),
+  });
+}
+
 // ---------------------------------------------------------------------
 // Media
 // ---------------------------------------------------------------------
