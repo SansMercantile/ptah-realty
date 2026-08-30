@@ -57,6 +57,16 @@ interface HeaderProps {
   currentCountryCode?: string;
 }
 
+// ---------------------------------------------------------------------
+// NOTICE: the owner has explicitly asked that this header (the main
+// Ptah app header -- logo, nav tabs, quick search, notifications, user
+// dropdown) NOT be modified without their consent. Do not add, remove,
+// reposition, or restyle anything in this file -- including via
+// automated/background edits -- unless the owner has explicitly asked
+// for that specific change in the current request. If a task seems to
+// call for a header change, flag it and ask first rather than doing it.
+// ---------------------------------------------------------------------
+
 export const Header: React.FC<HeaderProps> = ({
   activeTab,
   onSelectTab,
@@ -276,17 +286,7 @@ export const Header: React.FC<HeaderProps> = ({
             <span>CRM</span>
           </button>
 
-          {onOpenQuickListing && (
-            <button
-              id="nav-tab-quick-listing"
-              onClick={onOpenQuickListing}
-              className="px-2.5 py-1 rounded text-xs font-bold flex items-center gap-1.5 transition-all bg-gradient-to-r from-emerald-700 to-teal-700 hover:from-emerald-600 hover:to-teal-600 text-white shadow-xs ring-1 ring-emerald-400/60"
-              title="Quick Listing Creator: Auto-fill property details, asking price & 1-click syndicate"
-            >
-              <Zap className="w-3.5 h-3.5 text-amber-300 fill-amber-300" />
-              <span>Quick Listing</span>
-            </button>
-          )}
+          {/* Quick Listing button removed per explicit request. */}
         </nav>
 
         {/* Right Section: Quick Search, Notifications & User Dropdown --
