@@ -585,13 +585,9 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
               <span>Matterport 3D</span>
             </button>
 
-            {/* Close */}
-            <button
-              onClick={onClose}
-              className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-900 transition cursor-pointer"
-            >
-              <X className="w-5 h-5" />
-            </button>
+            {/* Redundant inline Close button removed here -- the
+                dedicated corner X (top-right of the card, plus
+                backdrop-click and Escape) already covers closing. */}
           </div>
         </div>
 
