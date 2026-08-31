@@ -37,7 +37,7 @@ export function getToken(): string | null {
 
 // For the small number of CRM fetch() calls that hit backend paths
 // outside this file's /api/v1/realty/* convention (the CRM's AI
-// endpoints at /api/gemini/* and /api/campaigns/dispatch -- see
+// endpoints at /api/ptah/* and /api/campaigns/dispatch -- see
 // api/crm_ai.py) and so can't use authFetch/authJson below, which
 // prepend that prefix. Spread this into a fetch() call's headers.
 export function authHeaders(): Record<string, string> {
@@ -474,7 +474,7 @@ export async function getIndividualValuation(
 export interface OutreachEmailDraft {
   subject: string;
   body: string;
-  generatedBy: 'bedrock' | 'template_fallback';
+  generatedBy: 'ai' | 'template_fallback';
 }
 
 export async function getOutreachEmail(

@@ -366,7 +366,7 @@ export const ValuationModal: React.FC<ValuationModalProps> = ({
                           {aiValuationData.individualValuation.confidenceScore}% AI Confidence
                         </span>
                         <span className="block text-[10px] text-slate-400 mt-1">
-                          Powered by AWS Bedrock
+                          Powered by Ptah AI
                         </span>
                       </div>
                     </div>

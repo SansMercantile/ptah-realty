@@ -72,7 +72,7 @@ export const AiAdvisorDrawer: React.FC<AiAdvisorDrawerProps> = ({
         dealsWon: leads.filter((l) => l.status === 'deal_won').length,
       };
 
-      const response = await fetch('/api/gemini/chat-assistant', {
+      const response = await fetch('/api/ptah/chat-assistant', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify({

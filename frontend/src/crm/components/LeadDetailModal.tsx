@@ -354,7 +354,7 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
   const handleGenerateAiEmail = async () => {
     setAiGenerating(true);
     try {
-      const response = await fetch('/api/gemini/generate-email', {
+      const response = await fetch('/api/ptah/generate-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify({
@@ -382,7 +382,7 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
   const handleAnalyzeLead = async () => {
     setAnalyzingLead(true);
     try {
-      const response = await fetch('/api/gemini/analyze-lead', {
+      const response = await fetch('/api/ptah/analyze-lead', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify({ lead }),
@@ -977,7 +977,7 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
                   className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition flex items-center justify-center space-x-2 shadow-xs cursor-pointer"
                 >
                   <Sparkles className={`w-4 h-4 ${aiGenerating ? 'animate-spin' : ''}`} />
-                  <span>{aiGenerating ? 'Drafting Custom Real Estate Pitch...' : 'Generate Follow-up Email with AWS Bedrock AI'}</span>
+                  <span>{aiGenerating ? 'Drafting Custom Real Estate Pitch...' : 'Generate Follow-up Email with AI'}</span>
                 </button>
 
                 {aiDraftBody && (
