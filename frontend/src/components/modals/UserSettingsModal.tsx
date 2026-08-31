@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   X, 
   User, 
@@ -61,6 +61,7 @@ import {
   FileCheck,
   Copy
 } from 'lucide-react';
+import { uploadAvatar, removeAvatar, uploadCompanyLogo, removeCompanyLogo, changePassword, getMyProfile } from '../../services/api';
 
 import { 
   GLOBAL_COUNTRIES_DATA, 
@@ -350,6 +351,70 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
   const [newFarmingArea, setNewFarmingArea] = useState('');
   const [customFarmingInput, setCustomFarmingInput] = useState('');
 
+  // Real avatar/logo upload (api/user_profile.py) -- profile.profilePhotoUrl
+  // and profile.companyLogoUrl above start as demo placeholders; this loads
+  // whatever the account actually has saved (if anything) over them on
+  // mount, and the two upload handlers below keep both in sync going
+  // forward. Kept as plain profile.* fields (not a separate piece of
+  // state) so every existing render/PDF/brochure use of profilePhotoUrl/
+  // companyLogoUrl elsewhere in this file picks up the real image for
+  // free once it's loaded.
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+  const [imageUploadError, setImageUploadError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    getMyProfile()
+      .then((real) => {
+        setProfile((prev) => ({
+          ...prev,
+          ...(real.avatarUrl ? { profilePhotoUrl: real.avatarUrl } : {}),
+          ...(real.companyLogoUrl ? { companyLogoUrl: real.companyLogoUrl } : {}),
+        }));
+      })
+      .catch(() => {
+        // Not fatal -- just means this account has nothing saved yet
+        // (or the backend is briefly unreachable); the demo placeholders
+        // stay put either way.
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
+
+  const handleAvatarFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = ''; // allow re-selecting the same file next time
+    if (!file) return;
+    setImageUploadError(null);
+    setIsUploadingAvatar(true);
+    try {
+      const { avatarUrl } = await uploadAvatar(file);
+      setProfile((prev) => ({ ...prev, profilePhotoUrl: avatarUrl }));
+    } catch (err: any) {
+      setImageUploadError(err?.message || 'Failed to upload photo.');
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
+
+  const handleLogoFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setImageUploadError(null);
+    setIsUploadingLogo(true);
+    try {
+      const { companyLogoUrl } = await uploadCompanyLogo(file);
+      setProfile((prev) => ({ ...prev, companyLogoUrl }));
+    } catch (err: any) {
+      setImageUploadError(err?.message || 'Failed to upload logo.');
+    } finally {
+      setIsUploadingLogo(false);
+    }
+  };
+
   // Territory-matched practitioner designation & statutory regulatory
   // dossier state -- see the "Regulatory FFC / License Number" tooltip
   // and "Full Regulatory Dossier" modal further down.
@@ -400,6 +465,8 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPasswords, setShowPasswords] = useState(false);
   const [passwordSaved, setPasswordSaved] = useState(false);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(true);
 
   // Billing & Credits State
@@ -568,27 +635,34 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
     setTimeout(() => setIsSaved(false), 2500);
   };
 
-  const handleSavePassword = (e: React.FormEvent) => {
+  const handleSavePassword = async (e: React.FormEvent) => {
     e.preventDefault();
+    setPasswordError(null);
     if (!currentPassword) {
-      alert('Please enter your current password.');
+      setPasswordError('Please enter your current password.');
       return;
     }
     if (newPassword.length < 8) {
-      alert('New password must be at least 8 characters long.');
+      setPasswordError('New password must be at least 8 characters long.');
       return;
     }
     if (newPassword !== confirmPassword) {
-      alert('New passwords do not match.');
+      setPasswordError('New passwords do not match.');
       return;
     }
-    setPasswordSaved(true);
-    setTimeout(() => {
-      setPasswordSaved(false);
+    setIsChangingPassword(true);
+    try {
+      await changePassword(currentPassword, newPassword);
+      setPasswordSaved(true);
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
-    }, 2500);
+      setTimeout(() => setPasswordSaved(false), 4000);
+    } catch (err: any) {
+      setPasswordError(err?.message || 'Failed to change password.');
+    } finally {
+      setIsChangingPassword(false);
+    }
   };
 
   const handleSelectLanguage = (code: string) => {
@@ -912,6 +986,21 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
 
               {/* Agent Photos & Branding Banner */}
               <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-4">
+                <input
+                  ref={avatarInputRef}
+                  type="file"
+                  accept="image/jpeg,image/jpg,image/png,image/webp"
+                  className="hidden"
+                  onChange={handleAvatarFileSelected}
+                />
+                <input
+                  ref={logoInputRef}
+                  type="file"
+                  accept="image/jpeg,image/jpg,image/png,image/webp"
+                  className="hidden"
+                  onChange={handleLogoFileSelected}
+                />
+
                 <div className="flex items-center gap-4">
                   <div className="relative group">
                     <img 
@@ -920,10 +1009,16 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
                       className="w-16 h-16 rounded-full object-cover border-2 border-cyan-500 shadow-sm"
                     />
                     <button 
-                      onClick={() => alert('Photo upload dialog opened.')}
-                      className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={() => avatarInputRef.current?.click()}
+                      disabled={isUploadingAvatar}
+                      className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-100 cursor-pointer"
+                      title="Upload a new profile photo"
                     >
-                      <Camera className="w-5 h-5" />
+                      {isUploadingAvatar ? (
+                        <RefreshCw className="w-5 h-5 animate-spin" />
+                      ) : (
+                        <Camera className="w-5 h-5" />
+                      )}
                     </button>
                   </div>
 
@@ -955,13 +1050,38 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
                     <span className="text-xs font-bold text-slate-800 block">Agency Branding Logo</span>
                     <span className="text-[10px] text-slate-400">Appears on all CMA & Valuation Reports</span>
                   </div>
-                  <img 
-                    src={profile.companyLogoUrl} 
-                    alt="Company Logo" 
-                    className="w-12 h-12 rounded object-cover border border-slate-200 p-0.5 bg-white shadow-xs"
-                  />
+                  <div className="relative group shrink-0">
+                    <img 
+                      src={profile.companyLogoUrl} 
+                      alt="Company Logo" 
+                      className="w-12 h-12 rounded object-cover border border-slate-200 p-0.5 bg-white shadow-xs"
+                    />
+                    <button
+                      onClick={() => logoInputRef.current?.click()}
+                      disabled={isUploadingLogo}
+                      className="absolute inset-0 bg-black/40 rounded flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-100 cursor-pointer"
+                      title="Upload a new agency logo"
+                    >
+                      {isUploadingLogo ? (
+                        <RefreshCw className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Camera className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
                 </div>
               </div>
+
+              {imageUploadError && (
+                <div className="bg-rose-50 border-2 border-rose-400 p-3 rounded-lg flex items-center gap-2.5 text-rose-900 text-xs font-bold animate-in fade-in slide-in-from-top-2">
+                  <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+                  <span>{imageUploadError}</span>
+                  <button onClick={() => setImageUploadError(null)} className="ml-auto text-rose-500 hover:text-rose-700 cursor-pointer">
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
+
 
               {/* ============================================================ */}
               {/* SECTION 1: IDENTITY & RESIDENCY (Right above Country & Area / Bio) */}
@@ -1753,6 +1873,13 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
                   </div>
                 )}
 
+                {passwordError && (
+                  <div className="bg-rose-50 border-2 border-rose-400 text-rose-800 px-4 py-2.5 rounded text-xs font-bold flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+                    <span>{passwordError}</span>
+                  </div>
+                )}
+
                 <form onSubmit={handleSavePassword} className="space-y-3.5 text-xs">
                   <div>
                     <label className="block text-slate-700 font-semibold mb-1">Current Password</label>
@@ -1807,9 +1934,11 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
                   <div className="pt-2">
                     <button
                       type="submit"
-                      className="bg-[#00bcd4] hover:bg-[#00acc1] text-white font-bold text-xs px-6 py-2 rounded shadow-xs uppercase tracking-wider transition-colors"
+                      disabled={isChangingPassword}
+                      className="bg-[#00bcd4] hover:bg-[#00acc1] disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold text-xs px-6 py-2 rounded shadow-xs uppercase tracking-wider transition-colors flex items-center gap-1.5 cursor-pointer"
                     >
-                      Update Password
+                      {isChangingPassword && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
+                      <span>{isChangingPassword ? 'Updating…' : 'Update Password'}</span>
                     </button>
                   </div>
                 </form>

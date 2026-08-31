@@ -861,3 +861,54 @@ export async function getCadastralParcels(bbox: {
   });
   return authJson<CadastralParcelFeatureCollection>(`/cadastre/parcels?${params.toString()}`);
 }
+
+// ---------------------------------------------------------------------
+// User profile: avatar/logo upload, password change (api/user_profile.py)
+// ---------------------------------------------------------------------
+
+export interface MyProfile {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+  avatarUrl?: string | null;
+  companyLogoUrl?: string | null;
+}
+
+export async function getMyProfile(): Promise<MyProfile> {
+  return authJson<MyProfile>('/users/me');
+}
+
+async function uploadImage(path: string, file: File): Promise<any> {
+  const formData = new FormData();
+  formData.append('file', file);
+  const res = await authFetch(path, { method: 'POST', body: formData });
+  if (!res.ok) {
+    const detail = await res.json().catch(() => ({}));
+    throw new Error(detail.detail || `Upload failed: ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function uploadAvatar(file: File): Promise<{ avatarUrl: string }> {
+  return uploadImage('/users/me/avatar', file);
+}
+
+export async function removeAvatar(): Promise<{ removed: boolean }> {
+  return authJson<{ removed: boolean }>('/users/me/avatar', { method: 'DELETE' });
+}
+
+export async function uploadCompanyLogo(file: File): Promise<{ companyLogoUrl: string }> {
+  return uploadImage('/users/me/logo', file);
+}
+
+export async function removeCompanyLogo(): Promise<{ removed: boolean }> {
+  return authJson<{ removed: boolean }>('/users/me/logo', { method: 'DELETE' });
+}
+
+export async function changePassword(currentPassword: string, newPassword: string): Promise<{ changed: boolean }> {
+  return authJson<{ changed: boolean }>('/users/me/change-password', {
+    method: 'POST',
+    body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }),
+  });
+}
