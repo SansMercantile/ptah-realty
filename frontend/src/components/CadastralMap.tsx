@@ -14,6 +14,7 @@ import { PropertyRecord } from '../types';
 import { CadastralTooltip } from './CadastralTooltip';
 import { GoogleMapPolygons } from './GoogleMapPolygons';
 import { RealCadastreMap, extractHouseNumber } from './RealCadastreMap';
+import { LiveCadastreMap } from './LiveCadastreMap';
 import { PropertyPopupCard } from './PropertyPopupCard';
 import { StreetFilterControls } from './StreetFilterControls';
 import { CompassTool } from './CompassTool';
@@ -56,7 +57,7 @@ export const CadastralMap: React.FC<CadastralMapProps> = ({
   // AWS/GIS-first default: vector cadastral mode has no third-party map key
   // requirement. Google Maps Platform remains available as a clean,
   // explicit switch when a valid API key (and optionally Map ID) is supplied.
-  const [mapEngine, setMapEngine] = useState<'google' | 'vector'>('vector');
+  const [mapEngine, setMapEngine] = useState<'google' | 'vector' | 'live'>('vector');
   const [googleMapsError, setGoogleMapsError] = useState<string | null>(null);
   const [googleMapType, setGoogleMapType] = useState<'roadmap' | 'satellite' | 'hybrid' | 'terrain'>('hybrid');
   const [showRadiusRing, setShowRadiusRing] = useState(true);
@@ -281,6 +282,19 @@ export const CadastralMap: React.FC<CadastralMapProps> = ({
           >
             <Layers className="w-3.5 h-3.5 text-cyan-300" />
             <span>Vector Cadastre (SG Diagram)</span>
+          </button>
+
+          <button
+            onClick={() => setMapEngine('live')}
+            className={`px-3 py-1 rounded font-bold transition-all flex items-center gap-1.5 ${
+              mapEngine === 'live'
+                ? 'bg-[#006980] text-white shadow-xs'
+                : 'text-slate-300 hover:text-white'
+            }`}
+            title="Real, live cadastral parcels from the City of Cape Town's Open Data cadastre -- every parcel in view is clickable, not just hand-drawn demo lots"
+          >
+            <Layers className="w-3.5 h-3.5 text-emerald-300" />
+            <span>Live Cadastre (Every Parcel)</span>
           </button>
         </div>
 
@@ -597,6 +611,12 @@ export const CadastralMap: React.FC<CadastralMapProps> = ({
             </div>
           </div>
         )
+      ) : mapEngine === 'live' ? (
+        /* LIVE CADASTRE ENGINE -- real, per-parcel boundaries from the
+           City of Cape Town's Open Data cadastre; every parcel in view
+           is clickable, not just hand-drawn demo lots. See
+           LiveCadastreMap.tsx's module docstring. */
+        <LiveCadastreMap centerLat={currentCenter.lat} centerLng={currentCenter.lng} />
       ) : (
         /* VECTOR CADASTRAL ENGINE WITH REAL-WORLD MAP BASEMAP (SG DIAGRAM ACCURACY) */
         <RealCadastreMap

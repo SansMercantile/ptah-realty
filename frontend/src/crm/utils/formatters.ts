@@ -1,4 +1,63 @@
 import confetti from 'canvas-confetti';
+import { useEffect, useState } from 'react';
+
+// Date-format preference: set in the main app's Header dropdown > Settings
+// > Preferences > Date Format, persisted to localStorage under this key
+// (see UserSettingsModal.tsx's handleSavePreferences) since the CRM is
+// mounted as a separate embedded app in the same page, not sharing React
+// state with it directly.
+const DATE_FORMAT_STORAGE_KEY = 'ptah_date_format';
+const DATE_FORMAT_EVENT = 'ptah-date-format-changed';
+
+export type DateFormatPref = 'YYYY/MM/DD' | 'DD/MM/YYYY' | 'MM/DD/YYYY' | 'YYYY-MM-DD';
+
+export function getDateFormatPreference(): DateFormatPref {
+  const stored = localStorage.getItem(DATE_FORMAT_STORAGE_KEY);
+  if (stored === 'YYYY/MM/DD' || stored === 'DD/MM/YYYY' || stored === 'MM/DD/YYYY' || stored === 'YYYY-MM-DD') {
+    return stored;
+  }
+  return 'YYYY/MM/DD';
+}
+
+// Reactive hook: re-renders if the preference changes while this
+// component is mounted (Settings saved from the header while the CRM tab
+// is open), without needing a page reload.
+export function useDateFormatPreference(): DateFormatPref {
+  const [format, setFormat] = useState<DateFormatPref>(getDateFormatPreference());
+  useEffect(() => {
+    const handler = () => setFormat(getDateFormatPreference());
+    window.addEventListener(DATE_FORMAT_EVENT, handler);
+    window.addEventListener('storage', handler);
+    return () => {
+      window.removeEventListener(DATE_FORMAT_EVENT, handler);
+      window.removeEventListener('storage', handler);
+    };
+  }, []);
+  return format;
+}
+
+// Formats a date per the user's chosen preference, e.g. 08/30/26 for
+// MM/DD/YYYY, 2026/08/30 for YYYY/MM/DD, etc. Two-digit year to keep it
+// compact for tight card layouts (the dashboard event slideshow).
+export function formatDateWithPreference(dateString: string, pref: DateFormatPref): string {
+  const d = new Date(dateString);
+  if (isNaN(d.getTime())) return dateString;
+  const yyyy = d.getFullYear();
+  const yy = String(yyyy).slice(-2);
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  switch (pref) {
+    case 'DD/MM/YYYY':
+      return `${dd}/${mm}/${yy}`;
+    case 'MM/DD/YYYY':
+      return `${mm}/${dd}/${yy}`;
+    case 'YYYY-MM-DD':
+      return `${yyyy}-${mm}-${dd}`;
+    case 'YYYY/MM/DD':
+    default:
+      return `${yyyy}/${mm}/${dd}`;
+  }
+}
 
 export function formatCurrency(amount: number, currency: 'ZAR' | 'USD' = 'ZAR'): string {
   if (!amount) return 'R0';

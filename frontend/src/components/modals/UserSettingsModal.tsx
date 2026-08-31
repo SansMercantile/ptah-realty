@@ -435,7 +435,7 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
   const [languageSaved, setLanguageSaved] = useState(false);
 
   // Preferences state (Informed by Country & Area)
-  const [dateFormat, setDateFormat] = useState(activeCountry.defaultDateFormat || 'YYYY/MM/DD');
+  const [dateFormat, setDateFormat] = useState(localStorage.getItem('ptah_date_format') || activeCountry.defaultDateFormat || 'YYYY/MM/DD');
   const [measurementUnit, setMeasurementUnit] = useState(activeCountry.defaultUnit || 'Metric (m² & Hectares)');
   const [defaultCadastreSuburb, setDefaultCadastreSuburb] = useState('Three Anchor Bay');
   const [complianceAlertsEnabled, setComplianceAlertsEnabled] = useState(true);
@@ -505,6 +505,13 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
   };
 
   const handleSavePreferences = () => {
+    // Persisted to localStorage (not just this modal's local state) so
+    // other embedded surfaces in the same page -- the CRM tab, mounted
+    // separately -- can read the same date-format preference. The custom
+    // event lets it update live if the CRM is already open when this is
+    // saved, without needing a full reload.
+    localStorage.setItem('ptah_date_format', dateFormat);
+    window.dispatchEvent(new CustomEvent('ptah-date-format-changed', { detail: dateFormat }));
     setPreferencesSavedToast('System & regional formatting preferences saved successfully!');
     setTimeout(() => setPreferencesSavedToast(null), 3000);
   };

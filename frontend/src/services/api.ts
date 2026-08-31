@@ -817,3 +817,47 @@ export async function queryDeeds(
     body: JSON.stringify({ query_type: queryType, query_value: queryValue }),
   });
 }
+
+// ---------------------------------------------------------------------
+// Cadastre (live, per-parcel -- see api/cadastre.py / services/cadastre.py)
+// ---------------------------------------------------------------------
+
+export interface CadastralParcelProperties {
+  sgCode: string | null;
+  erfNumber: string | null;
+  addressNumber: number | null;
+  streetName: string | null;
+  suburb: string | null;
+  ward: string | null;
+  legalStatus: string | null;
+  zoning: string | null;
+  extentM2: number | null;
+  source: string;
+}
+
+export interface CadastralParcelFeature {
+  type: 'Feature';
+  geometry: { type: string; coordinates: unknown };
+  properties: CadastralParcelProperties;
+}
+
+export interface CadastralParcelFeatureCollection {
+  type: 'FeatureCollection';
+  features: CadastralParcelFeature[];
+  exceededTransferLimit?: boolean;
+}
+
+export async function getCadastralParcels(bbox: {
+  minLng: number;
+  minLat: number;
+  maxLng: number;
+  maxLat: number;
+}): Promise<CadastralParcelFeatureCollection> {
+  const params = new URLSearchParams({
+    min_lng: String(bbox.minLng),
+    min_lat: String(bbox.minLat),
+    max_lng: String(bbox.maxLng),
+    max_lat: String(bbox.maxLat),
+  });
+  return authJson<CadastralParcelFeatureCollection>(`/cadastre/parcels?${params.toString()}`);
+}

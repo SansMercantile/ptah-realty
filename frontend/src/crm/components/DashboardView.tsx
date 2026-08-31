@@ -35,8 +35,8 @@ import {
   Copy,
   Phone
 } from 'lucide-react';
-import { Lead, PropertyListing, ShowHouseRecord } from '../types';
-import { formatCurrency } from '../utils/formatters';
+import { Lead, PropertyListing, ShowHouseRecord, TaskItem } from '../types';
+import { formatCurrency, useDateFormatPreference, formatDateWithPreference } from '../utils/formatters';
 import { TopStatsOverview } from './TopStatsOverview';
 
 // High-End Luxury Editorial Assets -- ported over from the AI Studio demo
@@ -194,6 +194,112 @@ function getAgeGroupKey(ageBracket?: string): string | null {
   return '18-29';
 }
 
+// Reference "today" for the Events card's Today/Upcoming split -- matches
+// AgentScheduleCalendar's own hardcoded demo date so both surfaces agree
+// on what "today" means (the mock task data spans Aug 27-30, 2026).
+const EVENTS_CARD_TODAY = new Date(2026, 7, 27);
+
+interface EventSlideItem {
+  id: string;
+  name: string;
+  time: string;
+  isoDate: string;
+  typeBubble: 'Buy' | 'Sell' | 'Enquiry';
+}
+
+// Derives the Buy/Sell/Enquiry bubble from the task type, since Lead has
+// no dedicated buyer/seller intent field: a scheduled viewing means
+// someone's touring a property (Buy), a contract/OTP step means a deal's
+// closing (Sell), everything else (call/email/brochure/followup) is a
+// general Enquiry touchpoint.
+function taskTypeToBubble(type: TaskItem['type']): 'Buy' | 'Sell' | 'Enquiry' {
+  if (type === 'viewing') return 'Buy';
+  if (type === 'contract') return 'Sell';
+  return 'Enquiry';
+}
+
+function isSameCalendarDay(a: Date, b: Date): boolean {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+}
+
+const BUBBLE_STYLES: Record<EventSlideItem['typeBubble'], string> = {
+  Buy: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
+  Sell: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
+  Enquiry: 'bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300',
+};
+
+interface EventSlideshowProps {
+  items: EventSlideItem[];
+  showDate?: boolean;
+  dateFormatPref: ReturnType<typeof useDateFormatPreference>;
+  onSelect: (id: string) => void;
+}
+
+// The actual slideshow: cycles one event at a time behind the fixed
+// "Today"/"Upcoming" column header above it (rendered by the caller),
+// pausing 5s per event before cross-fading to the next. Shows "Done" when
+// the bucket is empty.
+const EventSlideshow: React.FC<EventSlideshowProps> = ({ items, showDate, dateFormatPref, onSelect }) => {
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    setIndex(0);
+  }, [items.length]);
+
+  useEffect(() => {
+    if (items.length <= 1) return;
+    const timer = setInterval(() => setIndex((i) => (i + 1) % items.length), 5000);
+    return () => clearInterval(timer);
+  }, [items.length]);
+
+  if (items.length === 0) {
+    return (
+      <div className="h-14 flex items-center justify-center text-xs font-semibold text-slate-300 dark:text-slate-700 italic">
+        Done
+      </div>
+    );
+  }
+
+  const item = items[index % items.length];
+
+  return (
+    <div className="h-14 relative overflow-hidden">
+      <button
+        key={item.id}
+        onClick={() => onSelect(item.id)}
+        className="absolute inset-0 flex flex-col justify-center text-left animate-fade-in cursor-pointer"
+      >
+        <div className="flex items-center justify-between gap-1.5">
+          <span className="text-xs font-bold text-slate-800 dark:text-slate-100 truncate">{item.name}</span>
+          <span className={`shrink-0 px-1.5 py-0.5 rounded-full text-[9px] font-bold ${BUBBLE_STYLES[item.typeBubble]}`}>
+            {item.typeBubble}
+          </span>
+        </div>
+        <div className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 flex items-center gap-1">
+          <Clock className="w-2.5 h-2.5" />
+          <span>
+            {showDate ? `${formatDateWithPreference(item.isoDate, dateFormatPref)} • ` : ''}
+            {item.time}
+          </span>
+        </div>
+      </button>
+
+      {items.length > 1 && (
+        <div className="absolute bottom-0.5 left-0 right-0 flex items-center justify-center gap-0.5">
+          {items.map((_, i) => (
+            <span
+              key={i}
+              className={`w-1 h-1 rounded-full transition-colors ${
+                i === index ? 'bg-cyan-500' : 'bg-slate-200 dark:bg-slate-700'
+              }`}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 interface DashboardViewProps {
   leads: Lead[];
   listings: PropertyListing[];
@@ -251,6 +357,57 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const totalWithAgeBracket = Object.values(ageBracketCounts).reduce((a, b) => a + b, 0);
   const ageBracketPct = (key: string) =>
     totalWithAgeBracket > 0 ? `${Math.round((ageBracketCounts[key] / totalWithAgeBracket) * 100)}%` : '0%';
+
+  // Events card: real pending tasks across all leads, split into Today
+  // and Upcoming buckets, each fed to its own EventSlideshow.
+  const dateFormatPref = useDateFormatPreference();
+  const allPendingTasks = useMemo(
+    () =>
+      leads
+        .flatMap((l) => (l.tasks || []).map((t) => ({ task: t, lead: l })))
+        .filter(({ task }) => task.status === 'pending'),
+    [leads]
+  );
+  const todayEvents: EventSlideItem[] = useMemo(
+    () =>
+      allPendingTasks
+        .filter(({ task }) => isSameCalendarDay(new Date(task.dueDate), EVENTS_CARD_TODAY))
+        .sort((a, b) => new Date(a.task.dueDate).getTime() - new Date(b.task.dueDate).getTime())
+        .map(({ task }) => ({
+          id: task.id,
+          name: task.leadName,
+          time: new Date(task.dueDate).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+          isoDate: task.dueDate,
+          typeBubble: taskTypeToBubble(task.type),
+        })),
+    [allPendingTasks]
+  );
+  const upcomingEvents: EventSlideItem[] = useMemo(() => {
+    const endOfToday = new Date(EVENTS_CARD_TODAY);
+    endOfToday.setHours(23, 59, 59, 999);
+    return allPendingTasks
+      .filter(({ task }) => new Date(task.dueDate).getTime() > endOfToday.getTime())
+      .sort((a, b) => new Date(a.task.dueDate).getTime() - new Date(b.task.dueDate).getTime())
+      .map(({ task }) => ({
+        id: task.id,
+        name: task.leadName,
+        time: new Date(task.dueDate).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+        isoDate: task.dueDate,
+        typeBubble: taskTypeToBubble(task.type),
+      }));
+  }, [allPendingTasks]);
+  const totalEventsToday = todayEvents.length;
+  const eventsCompletedPct = useMemo(() => {
+    const todaysAll = leads
+      .flatMap((l) => l.tasks || [])
+      .filter((t) => isSameCalendarDay(new Date(t.dueDate), EVENTS_CARD_TODAY));
+    if (todaysAll.length === 0) return 0;
+    return Math.round((todaysAll.filter((t) => t.status === 'completed').length / todaysAll.length) * 100);
+  }, [leads]);
+  const handleSelectEventTask = (taskId: string) => {
+    const match = allPendingTasks.find(({ task }) => task.id === taskId);
+    if (match) onSelectLead(match.lead);
+  };
 
   // Filtered show houses
   const openShowHouses = showHouses.filter(
@@ -764,21 +921,46 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
         </div>
 
-        {/* Scheduled Today & Calendar -- footer divider added to match
-            CLOSED SALES METRICS' footer link row. */}
+        {/* Events -- restructured to match CLOSED SALES METRICS' header
+            divider + two-column body + footer divider pattern (see chat).
+            Each half is a persistent "Today"/"Upcoming" label with a real
+            event slideshow (name, time, Buy/Sell/Enquiry bubble) cycling
+            underneath, cross-fading every 5s and pausing on "Done" when
+            that bucket is empty. */}
         <div className="bg-white dark:bg-black rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between">
-          <div className="flex items-center justify-between my-auto py-1">
-            <div>
-              <div className="flex items-center space-x-2">
-                <span className="text-xl font-extrabold text-cyan-600 dark:text-cyan-400">0</span>
-                <span className="text-sm font-bold text-cyan-600 dark:text-cyan-400">Events</span>
-              </div>
-              <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
-                Scheduled Today
-              </span>
-              <span className="text-[10px] text-slate-400">0% Events Complete</span>
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2 mb-2">
+            <div className="flex items-center space-x-1.5 text-xs font-bold uppercase tracking-wider text-cyan-600 dark:text-cyan-400">
+              <Calendar className="w-3.5 h-3.5" />
+              <span>Events</span>
             </div>
-            <Calendar className="w-8 h-8 text-slate-200 dark:text-slate-700" />
+            <div className="px-2 py-0.5 rounded-md bg-slate-900 dark:bg-black text-white text-[10px] font-mono font-extrabold tracking-wider">
+              {totalEventsToday} <span className="text-cyan-400 font-bold">Today</span> • {eventsCompletedPct}% Done
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 my-auto py-1">
+            {/* Today */}
+            <div className="space-y-1">
+              <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">Today</span>
+              <EventSlideshow
+                items={todayEvents}
+                dateFormatPref={dateFormatPref}
+                onSelect={handleSelectEventTask}
+              />
+            </div>
+
+            {/* Upcoming -- shows the date too (per the user's chosen
+                Date Format preference from Settings), since unlike Today
+                these span several different days. */}
+            <div className="space-y-1 border-l border-slate-200 dark:border-slate-800 pl-3">
+              <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">Upcoming</span>
+              <EventSlideshow
+                items={upcomingEvents}
+                showDate
+                dateFormatPref={dateFormatPref}
+                onSelect={handleSelectEventTask}
+              />
+            </div>
           </div>
 
           <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-end text-[11px]">

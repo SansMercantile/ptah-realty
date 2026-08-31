@@ -25,7 +25,8 @@ import {
   Mail,
   Smartphone,
   ChevronRight,
-  Plus
+  Plus,
+  AlertCircle
 } from 'lucide-react';
 import {
   MarketingCampaign,
@@ -91,6 +92,7 @@ export const CampaignsHubModal: React.FC<CampaignsHubModalProps> = ({
   // Dispatch state
   const [isDispatching, setIsDispatching] = useState(false);
   const [dispatchSuccess, setDispatchSuccess] = useState(false);
+  const [dispatchError, setDispatchError] = useState<string | null>(null);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
   // Filter state for registry
@@ -198,11 +200,16 @@ export const CampaignsHubModal: React.FC<CampaignsHubModalProps> = ({
     }
   };
 
-  // Dispatch campaign across Canva, Mailchimp, Zapier
+  // Dispatch campaign across Canva, Mailchimp, Zapier -- uses the real
+  // per-app backend result (api/crm_ai.py) rather than assuming success:
+  // each app genuinely gets called with the tenant's own stored connector
+  // credentials, and an app with no credentials configured or a failed
+  // call is surfaced as such, never silently marked successful.
   const handleDispatchCampaign = async (status: 'sent' | 'scheduled') => {
     if (!generatedCampaign) return;
 
     setIsDispatching(true);
+    setDispatchError(null);
 
     try {
       const response = await fetch('/api/campaigns/dispatch', {
@@ -212,71 +219,84 @@ export const CampaignsHubModal: React.FC<CampaignsHubModalProps> = ({
           campaignId: generatedCampaign.id,
           campaignTitle: generatedCampaign.title,
           apps: generatedCampaign.connectedApps,
-          recipientsCount: 480,
+          subject: generatedCampaign.subjectLine || generatedCampaign.title,
+          emailBody: generatedCampaign.emailBody || '',
+          fromName: 'Ptah Realty',
+          schedule: status === 'scheduled' ? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() : undefined,
         }),
       });
 
-      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(`Dispatch request failed (${response.status})`);
+      }
+
+      const result: {
+        dispatched: boolean;
+        results: { app: string; status: 'success' | 'error' | 'not_configured' | 'manual_required' | 'skipped'; detail: string; recipientsCount?: number; mailchimpCampaignId?: string }[];
+      } = await response.json();
+
+      const mailchimpResult = result.results.find((r) => r.app === 'mailchimp');
+      const anySucceeded = result.results.some((r) => r.status === 'success');
+      const allFailed = result.results.length > 0 && result.results.every((r) => r.status === 'error' || r.status === 'not_configured');
 
       const finalCampaign: MarketingCampaign = {
         ...(generatedCampaign as MarketingCampaign),
-        status,
-        sentAt: status === 'sent' ? new Date().toISOString() : undefined,
-        scheduledFor: status === 'scheduled' ? '2026-08-30 09:00' : undefined,
-        metrics: {
-          recipientsCount: 480,
-          openRate: status === 'sent' ? 51.8 : 0,
-          clickRate: status === 'sent' ? 22.4 : 0,
-          leadsGenerated: status === 'sent' ? 12 : 0,
-        },
+        // Only actually mark as sent/scheduled if at least one connected
+        // app genuinely went through -- otherwise this stays a draft so
+        // it doesn't sit in the registry looking sent when nothing was.
+        status: anySucceeded ? status : 'draft',
+        sentAt: anySucceeded && status === 'sent' ? new Date().toISOString() : undefined,
+        scheduledFor: anySucceeded && status === 'scheduled' ? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() : undefined,
+        mailchimpCampaignId: mailchimpResult?.mailchimpCampaignId,
+        // Real recipient count when Mailchimp actually reported one;
+        // open/click/leads are unknown immediately after send (those
+        // accumulate over hours/days on Mailchimp's side) -- omitted
+        // entirely rather than filled with fabricated numbers. Only
+        // set metrics at all once there's at least a real recipient
+        // count to show.
+        metrics: mailchimpResult?.status === 'success'
+          ? { recipientsCount: mailchimpResult.recipientsCount || 0, openRate: 0, clickRate: 0, leadsGenerated: 0 }
+          : undefined,
       };
 
       onAddCampaign(finalCampaign);
 
-      // Log sync events for each connected app
-      if (generatedCampaign.connectedApps?.includes('canva')) {
+      // Log one real sync event per app, reflecting its actual outcome.
+      const connectorMeta: Record<string, { connectorId: string; connectorName: string }> = {
+        canva: { connectorId: 'conn-canva', connectorName: 'Canva Real Estate Design Hub' },
+        mailchimp: { connectorId: 'conn-mailchimp', connectorName: 'Mailchimp VIP Audience API' },
+        zapier: { connectorId: 'conn-zapier', connectorName: 'Zapier Omnichannel Engine' },
+      };
+      for (const r of result.results) {
+        const meta = connectorMeta[r.app];
+        if (!meta) continue;
         onAddSyncEvent({
-          id: `sync-canva-${Date.now()}`,
-          connectorId: 'conn-canva',
-          connectorName: 'Canva Real Estate Design Hub',
-          event: 'Brand Kit Asset Pack Generated & Synced',
-          status: 'success',
+          id: `sync-${r.app}-${Date.now()}`,
+          connectorId: meta.connectorId,
+          connectorName: meta.connectorName,
+          event:
+            r.status === 'success' ? 'Campaign dispatched'
+              : r.status === 'not_configured' ? 'Not configured'
+              : r.status === 'manual_required' ? 'Manual step required'
+              : 'Dispatch failed',
+          status: r.status === 'success' ? 'success' : r.status === 'error' ? 'error' : 'warning',
           timestamp: new Date().toISOString(),
-          details: `Canva template "${finalCampaign.canvaDesignName}" generated and exported for ${finalCampaign.propertyTitle}.`,
+          details: r.detail,
         });
       }
 
-      if (generatedCampaign.connectedApps?.includes('mailchimp')) {
-        onAddSyncEvent({
-          id: `sync-mc-${Date.now()}`,
-          connectorId: 'conn-mailchimp',
-          connectorName: 'Mailchimp VIP Audience API',
-          event: status === 'sent' ? 'VIP Audience Segment Dispatched' : 'VIP Campaign Scheduled',
-          status: 'success',
-          timestamp: new Date().toISOString(),
-          details: `Campaign "${finalCampaign.title}" ${status === 'sent' ? 'broadcasted to 480 HNW buyers' : 'scheduled for Sunday 09:00'}. Tracking enabled.`,
-        });
+      if (allFailed) {
+        setDispatchError('None of the connected apps could be reached -- check Settings & Connectors. The campaign was saved as a draft.');
+      } else {
+        setDispatchSuccess(true);
+        setTimeout(() => {
+          setDispatchSuccess(false);
+          setActiveTab('registry');
+        }, 1500);
       }
-
-      if (generatedCampaign.connectedApps?.includes('zapier')) {
-        onAddSyncEvent({
-          id: `sync-zap-${Date.now()}`,
-          connectorId: 'conn-zapier',
-          connectorName: 'Zapier Omnichannel Engine',
-          event: 'Multi-App Campaign Catch Hook Executed',
-          status: 'success',
-          timestamp: new Date().toISOString(),
-          details: `Zapier webhook received campaign payload for ${finalCampaign.title}. Executed 4 automated actions.`,
-        });
-      }
-
-      setDispatchSuccess(true);
-      setTimeout(() => {
-        setDispatchSuccess(false);
-        setActiveTab('registry');
-      }, 1500);
     } catch (e) {
       console.error('Dispatch error:', e);
+      setDispatchError(e instanceof Error ? e.message : 'Dispatch failed unexpectedly.');
     } finally {
       setIsDispatching(false);
     }
@@ -982,6 +1002,16 @@ export const CampaignsHubModal: React.FC<CampaignsHubModalProps> = ({
                       )}
                     </div>
 
+                    {/* Real dispatch failure -- shown when every
+                        connected app either isn't configured or
+                        genuinely failed, not just a generic error. */}
+                    {dispatchError && (
+                      <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 flex items-start space-x-2">
+                        <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
+                        <p className="text-xs text-rose-700 dark:text-rose-300">{dispatchError}</p>
+                      </div>
+                    )}
+
                     {/* Dispatch and Action Controls */}
                     <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex flex-col sm:flex-row items-center justify-between gap-3">
                       <div>
@@ -992,7 +1022,7 @@ export const CampaignsHubModal: React.FC<CampaignsHubModalProps> = ({
                           </span>
                         </div>
                         <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                          Will push assets to Canva, queue Mailchimp broadcast, and fire Zapier Catch Hook.
+                          Sends via Mailchimp and fires the Zapier Catch Hook using your connected credentials. Canva asset creation still requires a manual step (no OAuth connection yet).
                         </p>
                       </div>
 
