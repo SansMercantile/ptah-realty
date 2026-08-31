@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useMemo } from 'react';
+import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { 
   Building2, 
   MapPin, 
@@ -22,6 +22,7 @@ import {
 import { PropertyRecord } from '../types';
 import { extractStreetName } from '../utils/cadastralFilters';
 import { ARCHITECTURAL_BUILDINGS_DATABASE, getArchitecturalBuilding, ArchitecturalBuildingBox } from '../utils/buildingGeometry';
+import { getCadastralParcels, CadastralParcelFeature } from '../services/api';
 
 // CARTO's basemaps.cartocdn.com raster tiles now require a dedicated,
 // free "Basemaps API key" (request one at https://carto.com/basemaps/apikey)
@@ -84,206 +85,79 @@ export const extractHouseNumber = (address?: string, fallback = ''): string => {
 };
 
 // Surrounding registered erven in Green Point / Three Anchor Bay cadastre with geographic coordinates
-const SURROUNDING_GEO_PARCELS: Array<{
+// Real cadastral parcel shape, kept identical to the old hand-authored
+// SURROUNDING_GEO_PARCELS entries below so every consumer further down
+// this file (filteredSurroundingGeoParcels, the SVG render loop, hover/
+// click handlers) needed zero changes -- only the DATA SOURCE changed,
+// from ~15 hand-vectored demo lots near one erf to every real parcel
+// the City of Cape Town's Open Data cadastre returns for the current
+// viewport (see api/cadastre.py / services/cadastre.py on the backend).
+interface LiveSurroundingParcel {
   erf: string;
   street: string;
   zoning: string;
   extentM2: number;
   center: [number, number]; // [lng, lat]
-  coords: Array<[number, number]>; // [[lng, lat], ...]
+  coords: Array<[number, number]>; // [[lng, lat], ...] -- real surveyed lot boundary
+  // Real cadastre data has no building-footprint geometry (only the lot
+  // boundary), unlike the old hand-drawn demo entries which had an
+  // artistic inset footprint. buildingCoords here is a COSMETIC inset of
+  // the real lot boundary (see insetPolygon below) purely so the
+  // 'building_boxes' render mode still shows a block -- it is NOT
+  // surveyed building geometry and should never be presented as such.
   buildingCoords?: Array<[number, number]>;
-}> = [
-  {
-    erf: '1680',
-    street: '3 Richmond Rd',
-    zoning: 'GR4',
-    extentM2: 195,
-    center: [18.40078, -33.90886],
-    coords: [
-      [18.40068, -33.90880],
-      [18.40088, -33.90878],
-      [18.40086, -33.90892],
-      [18.40066, -33.90894]
-    ],
-    buildingCoords: [
-      [18.40070, -33.90882],
-      [18.40085, -33.90880],
-      [18.40084, -33.90890],
-      [18.40069, -33.90891]
-    ]
-  },
-  {
-    erf: '1682',
-    street: '7 Richmond Rd',
-    zoning: 'GR4',
-    extentM2: 205,
-    center: [18.40124, -33.90872],
-    coords: [
-      [18.40114, -33.90866],
-      [18.40134, -33.90864],
-      [18.40132, -33.90878],
-      [18.40112, -33.90880]
-    ],
-    buildingCoords: [
-      [18.40116, -33.90868],
-      [18.40131, -33.90866],
-      [18.40129, -33.90876],
-      [18.40115, -33.90877]
-    ]
-  },
-  {
-    erf: '1683',
-    street: '9 Richmond Rd',
-    zoning: 'GR4',
-    extentM2: 210,
-    center: [18.40146, -33.90868],
-    coords: [
-      [18.40136, -33.90862],
-      [18.40156, -33.90860],
-      [18.40154, -33.90874],
-      [18.40134, -33.90876]
-    ],
-    buildingCoords: [
-      [18.40138, -33.90864],
-      [18.40153, -33.90862],
-      [18.40151, -33.90872],
-      [18.40137, -33.90873]
-    ]
-  },
-  {
-    erf: '1675',
-    street: '4 Richmond Rd',
-    zoning: 'GR4',
-    extentM2: 215,
-    center: [18.40098, -33.90852],
-    coords: [
-      [18.40088, -33.90846],
-      [18.40108, -33.90844],
-      [18.40106, -33.90858],
-      [18.40086, -33.90860]
-    ],
-    buildingCoords: [
-      [18.40090, -33.90848],
-      [18.40105, -33.90846],
-      [18.40104, -33.90856],
-      [18.40089, -33.90857]
-    ]
-  },
-  {
-    erf: '1676',
-    street: '6 Richmond Rd',
-    zoning: 'GR4',
-    extentM2: 218,
-    center: [18.40120, -33.90848],
-    coords: [
-      [18.40110, -33.90842],
-      [18.40130, -33.90840],
-      [18.40128, -33.90854],
-      [18.40108, -33.90856]
-    ],
-    buildingCoords: [
-      [18.40112, -33.90844],
-      [18.40127, -33.90842],
-      [18.40125, -33.90852],
-      [18.40111, -33.90853]
-    ]
-  },
-  {
-    erf: '2092',
-    street: '217 Main Rd',
-    zoning: 'GB5',
-    extentM2: 950,
-    center: [18.39920, -33.90845],
-    coords: [
-      [18.39900, -33.90835],
-      [18.39940, -33.90830],
-      [18.39938, -33.90855],
-      [18.39898, -33.90860]
-    ],
-    buildingCoords: [
-      [18.39904, -33.90838],
-      [18.39936, -33.90833],
-      [18.39934, -33.90852],
-      [18.39902, -33.90856]
-    ]
-  },
-  {
-    erf: '2094',
-    street: '221 Main Rd',
-    zoning: 'GB5',
-    extentM2: 1120,
-    center: [18.39995, -33.90830],
-    coords: [
-      [18.39975, -33.90820],
-      [18.40015, -33.90815],
-      [18.40013, -33.90840],
-      [18.39973, -33.90845]
-    ],
-    buildingCoords: [
-      [18.39980, -33.90823],
-      [18.40010, -33.90818],
-      [18.40008, -33.90837],
-      [18.39978, -33.90841]
-    ]
-  },
-  {
-    erf: '1796',
-    street: '3 Law Rd',
-    zoning: 'GR2',
-    extentM2: 340,
-    center: [18.39965, -33.90940],
-    coords: [
-      [18.39950, -33.90930],
-      [18.39980, -33.90926],
-      [18.39978, -33.90950],
-      [18.39948, -33.90954]
-    ],
-    buildingCoords: [
-      [18.39954, -33.90933],
-      [18.39976, -33.90930],
-      [18.39974, -33.90947],
-      [18.39952, -33.90950]
-    ]
-  },
-  {
-    erf: '973',
-    street: '15 St Bedes Rd',
-    zoning: 'SR1',
-    extentM2: 410,
-    center: [18.40040, -33.90920],
-    coords: [
-      [18.40025, -33.90910],
-      [18.40055, -33.90908],
-      [18.40053, -33.90930],
-      [18.40023, -33.90932]
-    ],
-    buildingCoords: [
-      [18.40028, -33.90913],
-      [18.40051, -33.90911],
-      [18.40050, -33.90927],
-      [18.40026, -33.90928]
-    ]
-  },
-  {
-    erf: '62',
-    street: '1 Blackheath Rd',
-    zoning: 'SR1',
-    extentM2: 480,
-    center: [18.40085, -33.90935],
-    coords: [
-      [18.40065, -33.90925],
-      [18.40105, -33.90920],
-      [18.40100, -33.90945],
-      [18.40060, -33.90950]
-    ],
-    buildingCoords: [
-      [18.40070, -33.90928],
-      [18.40098, -33.90924],
-      [18.40095, -33.90942],
-      [18.40066, -33.90945]
-    ]
+}
+
+// Shrinks a polygon toward its own centroid by `factor` (0-1). Used only
+// to synthesize a cosmetic buildingCoords inset from a real lot boundary
+// -- see the LiveSurroundingParcel comment above.
+function insetPolygon(coords: Array<[number, number]>, factor: number): Array<[number, number]> {
+  if (coords.length < 3) return coords;
+  const cx = coords.reduce((s, c) => s + c[0], 0) / coords.length;
+  const cy = coords.reduce((s, c) => s + c[1], 0) / coords.length;
+  return coords.map(([x, y]) => [cx + (x - cx) * (1 - factor), cy + (y - cy) * (1 - factor)]);
+}
+
+// Flattens a GeoJSON Polygon/MultiPolygon's outer ring(s) into the simple
+// coordinate-array shape this file's SVG renderer expects. Holes and
+// additional MultiPolygon parts are dropped -- the existing render code
+// only ever drew one simple ring per parcel, same limitation the old
+// hand-authored data had.
+function extractOuterRing(geometry: { type: string; coordinates: unknown }): Array<[number, number]> | null {
+  try {
+    if (geometry.type === 'Polygon') {
+      const ring = (geometry.coordinates as number[][][])[0];
+      return ring.map(([lng, lat]) => [lng, lat] as [number, number]);
+    }
+    if (geometry.type === 'MultiPolygon') {
+      const ring = (geometry.coordinates as number[][][][])[0]?.[0];
+      if (!ring) return null;
+      return ring.map(([lng, lat]) => [lng, lat] as [number, number]);
+    }
+  } catch {
+    return null;
   }
-];
+  return null;
+}
+
+function mapParcelFeatureToLiveParcel(feature: CadastralParcelFeature): LiveSurroundingParcel | null {
+  const coords = extractOuterRing(feature.geometry);
+  if (!coords || coords.length < 3) return null;
+  const cx = coords.reduce((s, c) => s + c[0], 0) / coords.length;
+  const cy = coords.reduce((s, c) => s + c[1], 0) / coords.length;
+  const p = feature.properties;
+  const erf = p.erfNumber || p.sgCode || 'Unknown';
+  const streetLabel = [p.addressNumber, p.streetName].filter(Boolean).join(' ') || p.suburb || 'Unregistered';
+  return {
+    erf,
+    street: streetLabel,
+    zoning: p.zoning || 'Unzoned',
+    extentM2: p.extentM2 ?? 0,
+    center: [cx, cy],
+    coords,
+    buildingCoords: insetPolygon(coords, 0.22),
+  };
+}
 
 // Web Mercator conversions for accurate real-world GIS projection
 function latLngToWorld(lat: number, lng: number): { x: number; y: number } {
@@ -322,15 +196,23 @@ export const RealCadastreMap: React.FC<RealCadastreMapProps> = ({
 }) => {
   const canvasRef = useRef<HTMLDivElement>(null);
 
+  // Real parcels for the current viewport, fetched via getCadastralParcels()
+  // -- populated by the effect further down (after projectScreenPixelToGeo
+  // is defined, since computing the fetch bbox needs it). Replaces the old
+  // static SURROUNDING_GEO_PARCELS array entirely.
+  const [liveSurroundingParcels, setLiveSurroundingParcels] = useState<LiveSurroundingParcel[]>([]);
+  const [isLoadingLiveParcels, setIsLoadingLiveParcels] = useState(false);
+  const [liveParcelsError, setLiveParcelsError] = useState<string | null>(null);
+
   // Filter surrounding registered parcels based on street visibility
   const filteredSurroundingGeoParcels = useMemo(() => {
     if (!showSurroundingParcels) return [];
-    if (!visibleStreets || visibleStreets.size === 0) return SURROUNDING_GEO_PARCELS;
-    return SURROUNDING_GEO_PARCELS.filter((parcel) => {
+    if (!visibleStreets || visibleStreets.size === 0) return liveSurroundingParcels;
+    return liveSurroundingParcels.filter((parcel) => {
       const street = extractStreetName(parcel.street);
       return visibleStreets.has(street);
     });
-  }, [showSurroundingParcels, visibleStreets]);
+  }, [showSurroundingParcels, visibleStreets, liveSurroundingParcels]);
   
   // Center coordinates (default: Three Anchor Bay / Green Point erf 1681)
   const defaultCenter = { lat: -33.90876, lng: 18.401027 };
@@ -490,6 +372,58 @@ export const RealCadastreMap: React.FC<RealCadastreMapProps> = ({
     
     return { lat, lng };
   };
+
+  // Live real-parcel fetch for the current viewport. Debounced, and
+  // guarded against very wide bboxes at low zoom (matches the min-zoom
+  // guard the old standalone LiveCadastreMap.tsx used before it was
+  // retired in favour of this merged version -- see chat).
+  const MIN_ZOOM_FOR_LIVE_PARCELS = 15;
+  const liveParcelFetchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (liveParcelFetchDebounceRef.current) clearTimeout(liveParcelFetchDebounceRef.current);
+
+    if (zoomLevel < MIN_ZOOM_FOR_LIVE_PARCELS) {
+      setLiveSurroundingParcels([]);
+      setLiveParcelsError(null);
+      return;
+    }
+
+    liveParcelFetchDebounceRef.current = setTimeout(async () => {
+      const corners = [
+        projectScreenPixelToGeo(0, 0),
+        projectScreenPixelToGeo(dimensions.width, 0),
+        projectScreenPixelToGeo(0, dimensions.height),
+        projectScreenPixelToGeo(dimensions.width, dimensions.height),
+      ];
+      const bbox = {
+        minLng: Math.min(...corners.map((c) => c.lng)),
+        maxLng: Math.max(...corners.map((c) => c.lng)),
+        minLat: Math.min(...corners.map((c) => c.lat)),
+        maxLat: Math.max(...corners.map((c) => c.lat)),
+      };
+
+      setIsLoadingLiveParcels(true);
+      setLiveParcelsError(null);
+      try {
+        const result = await getCadastralParcels(bbox);
+        const mapped = result.features
+          .map(mapParcelFeatureToLiveParcel)
+          .filter((p): p is LiveSurroundingParcel => p !== null);
+        setLiveSurroundingParcels(mapped);
+      } catch (err) {
+        console.error('[RealCadastreMap] Live parcel fetch failed:', err);
+        setLiveParcelsError('Unable to load live cadastral parcels for this area.');
+        setLiveSurroundingParcels([]);
+      } finally {
+        setIsLoadingLiveParcels(false);
+      }
+    }, 400);
+
+    return () => {
+      if (liveParcelFetchDebounceRef.current) clearTimeout(liveParcelFetchDebounceRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [center.lat, center.lng, zoomLevel, dimensions.width, dimensions.height, heading, tilt]);
 
   // Tile calculation for real OpenStreetMap / CartoDB / Esri satellite raster tiles
   const visibleTiles = useMemo(() => {
@@ -1120,6 +1054,31 @@ export const RealCadastreMap: React.FC<RealCadastreMapProps> = ({
           </button>
         )}
       </div>
+
+      {/* Live cadastre fetch status -- honest indicator, not decorative:
+          shows while real parcels are loading for the current viewport,
+          or if that fetch failed, or if the user is zoomed out past the
+          point where fetching every parcel in view would be impractical. */}
+      {(isLoadingLiveParcels || liveParcelsError || zoomLevel < MIN_ZOOM_FOR_LIVE_PARCELS) && (
+        <div className="absolute top-3 right-16 z-20 pointer-events-none">
+          {isLoadingLiveParcels && (
+            <div className="flex items-center gap-1.5 bg-slate-900/90 backdrop-blur-md px-2.5 py-1 rounded-lg border border-slate-700 shadow-xl text-[11px] text-cyan-300">
+              <span className="w-2.5 h-2.5 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
+              Loading live cadastral parcels...
+            </div>
+          )}
+          {!isLoadingLiveParcels && liveParcelsError && (
+            <div className="bg-red-950/90 backdrop-blur-md px-2.5 py-1 rounded-lg border border-red-800 shadow-xl text-[11px] text-red-300">
+              {liveParcelsError}
+            </div>
+          )}
+          {!isLoadingLiveParcels && !liveParcelsError && zoomLevel < MIN_ZOOM_FOR_LIVE_PARCELS && (
+            <div className="bg-slate-900/90 backdrop-blur-md px-2.5 py-1 rounded-lg border border-slate-700 shadow-xl text-[11px] text-slate-400">
+              Zoom in to load live parcel boundaries
+            </div>
+          )}
+        </div>
+      )}
 
       {/* 4. QUICK NAVIGATION & RECENTER PRESETS */}
       <div className="absolute bottom-14 right-3 z-20 flex items-center gap-1 bg-slate-900/90 backdrop-blur-md p-1 rounded-lg border border-slate-700 shadow-xl pointer-events-auto">

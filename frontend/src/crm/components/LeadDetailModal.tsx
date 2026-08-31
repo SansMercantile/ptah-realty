@@ -319,7 +319,12 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
 
   // Launch Matterport 3D Digital Twin Tour
   const handleLaunchMatterport = () => {
-    // Standard Matterport Showcase interactive tour 3D viewer
+    // NOTE: this opens a fixed Matterport Showcase demo tour, not a
+    // tour of this lead's specific property -- there is currently no
+    // per-listing tour URL in the data model (PropertyListing has no
+    // matterportTourUrl field, and Lead has no listingId to look one up
+    // by even if it did). The activity log below is worded to reflect
+    // that honestly rather than implying a real personalized tour.
     const matterportUrl = `https://my.matterport.com/show/?m=sB28fLpM891&play=1&qs=1&brand=0`;
     window.open(matterportUrl, '_blank');
 
@@ -327,8 +332,8 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
     const commActivity: ActivityLogItem = {
       id: `act-mp-${Date.now()}`,
       type: 'communication',
-      title: `Matterport 3D Dollhouse Tour Launched`,
-      description: `Opened immersive 3D spatial walkthrough for ${lead.propertyTitle} with ${lead.name}. Interactive floorplan and measurement dollhouse active.`,
+      title: `Matterport 3D Demo Tour Shared`,
+      description: `Opened a sample immersive 3D walkthrough with ${lead.name} to demonstrate the format (not a tour of ${lead.propertyTitle} specifically -- per-listing tours aren't wired up yet).`,
       timestamp: now,
       author: lead.assignedAgent.name || 'Ptah Realty Broker',
       metadata: {
@@ -574,15 +579,18 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
               <span>Google Meet</span>
             </button>
 
-            {/* Matterport 3D Tour */}
+            {/* Matterport 3D Tour -- opens a fixed demo tour, not a
+                tour of this lead's specific property (see
+                handleLaunchMatterport's note). Title/label reflect
+                that honestly. */}
             <button
               type="button"
               onClick={handleLaunchMatterport}
               className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-800 border border-indigo-200 text-xs font-semibold transition cursor-pointer"
-              title="Explore 3D Matterport Dollhouse & Virtual Walkthrough"
+              title="Share a sample 3D Matterport walkthrough (demo tour, not specific to this listing)"
             >
               <Layers className="w-3.5 h-3.5 text-indigo-600" />
-              <span>Matterport 3D</span>
+              <span>Matterport Demo</span>
             </button>
 
             {/* Redundant inline Close button removed here -- the
