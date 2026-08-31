@@ -334,7 +334,7 @@ export const CampaignsHubModal: React.FC<CampaignsHubModalProps> = ({
                   </h2>
                   <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-400 text-slate-950 tracking-wider">
                     <Sparkles className="w-3 h-3" />
-                    <span>GEMINI 3.7 AI</span>
+                    <span>AWS BEDROCK AI</span>
                   </span>
                 </div>
                 <p className="text-xs text-slate-400 mt-0.5">
@@ -693,12 +693,12 @@ export const CampaignsHubModal: React.FC<CampaignsHubModalProps> = ({
                     {isGenerating ? (
                       <>
                         <RefreshCw className="w-4 h-4 animate-spin text-slate-950" />
-                        <span>Generating Omnichannel Campaign with Gemini 3.7...</span>
+                        <span>Generating Omnichannel Campaign with AWS Bedrock...</span>
                       </>
                     ) : (
                       <>
                         <Sparkles className="w-4 h-4 text-slate-950" />
-                        <span>Generate Campaign with Gemini AI</span>
+                        <span>Generate Campaign with AWS Bedrock AI</span>
                       </>
                     )}
                   </button>
@@ -1072,7 +1072,7 @@ export const CampaignsHubModal: React.FC<CampaignsHubModalProps> = ({
                       AI Campaign Studio
                     </h3>
                     <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mt-1.5 leading-relaxed">
-                      Select your campaign objective and property on the left, then click <strong>"Generate Campaign with Gemini AI"</strong> to create ready-to-dispatch marketing assets for Canva, Mailchimp, and Zapier.
+                      Select your campaign objective and property on the left, then click <strong>"Generate Campaign with AWS Bedrock AI"</strong> to create ready-to-dispatch marketing assets for Canva, Mailchimp, and Zapier.
                     </p>
 
                     <div className="mt-6 flex items-center space-x-2 text-xs text-slate-400">

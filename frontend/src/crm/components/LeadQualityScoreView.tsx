@@ -47,7 +47,8 @@ export const LeadQualityScoreView: React.FC<LeadQualityScoreViewProps> = ({
 
   const displayScore = Math.min(100, qualityData.score + activeSimulationBoost);
 
-  // Recalculate with Gemini API
+  // Recalculate with AWS Bedrock (endpoint path is /api/gemini/* -- see
+  // api/crm_ai.py's own comment on why that legacy naming was kept)
   const handleRecalculateAiScore = async () => {
     setIsRecalculating(true);
     try {
@@ -85,7 +86,7 @@ export const LeadQualityScoreView: React.FC<LeadQualityScoreViewProps> = ({
         qualityScoreData: updatedData,
       });
 
-      setBoostAppliedMessage('AI Lead Quality Score successfully recalibrated with Gemini 3.7 Flash!');
+      setBoostAppliedMessage('AI Lead Quality Score successfully recalibrated with AWS Bedrock!');
       setTimeout(() => setBoostAppliedMessage(null), 3500);
     } catch (err) {
       console.error('Error recalibrating AI score:', err);
@@ -275,7 +276,7 @@ export const LeadQualityScoreView: React.FC<LeadQualityScoreViewProps> = ({
             </div>
           </div>
 
-          {/* Quick Metrics & Gemini Recalculate Button */}
+          {/* Quick Metrics & AWS Bedrock Recalculate Button */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
             <div className="bg-slate-800/80 border border-slate-700/80 p-3 rounded-xl flex items-center space-x-4">
               <div>

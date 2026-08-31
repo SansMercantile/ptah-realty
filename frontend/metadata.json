@@ -1,6 +1,6 @@
 {
   "name": "Ptah-Realty",
-  "description": "Unified real estate intelligence dashboard integrating comparative market analysis (CMA), Google Maps cadastral intelligence, AI copywriting, media asset management, automated PDF report generation, and multi-portal listing distribution.",
+  "description": "Unified real estate intelligence dashboard integrating comparative market analysis (CMA), Carto cadastral intelligence, AWS Bedrock AI copywriting, media asset management, automated PDF report generation, and multi-portal listing distribution.",
   "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "majorCapabilities": []
 }

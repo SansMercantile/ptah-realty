@@ -148,7 +148,7 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
         id: 'action-campaigns-hub',
         category: 'actions',
         title: 'Open Marketing & AI Campaigns Hub',
-        subtitle: 'Canva, Mailchimp, Zapier & Meta Ads connectors with Gemini AI studio',
+        subtitle: 'Canva, Mailchimp, Zapier & Meta Ads connectors with AWS Bedrock AI studio',
         tag: 'Marketing',
         badge: 'AI Hub',
         badgeColor: 'bg-indigo-50 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800',
