@@ -181,6 +181,8 @@ export interface UserSettingsModalProps {
   currentProvinceId?: string;
   currentCityId?: string;
   onJurisdictionChange?: (countryId: string, provinceId: string, cityId: string) => void;
+  theme?: string;
+  onThemeChange?: (theme: string) => void;
 }
 
 interface InvoiceRecord {
@@ -267,7 +269,9 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
   currentCountryId = 'ZA',
   currentProvinceId = 'WC',
   currentCityId = 'CPT',
-  onJurisdictionChange
+  onJurisdictionChange,
+  theme = 'emerald',
+  onThemeChange
 }) => {
   const [activeTab, setActiveTab] = useState<SettingsTabType>(initialTab);
 
@@ -842,30 +846,6 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
             </button>
           </div>
 
-          {activeTab === 'profile' && (
-            <div className="flex items-center gap-3 py-1.5 shrink-0">
-              {/* Profile Completeness Bar */}
-              <div className="hidden sm:flex items-center gap-2">
-                <div className="w-36 h-5 bg-slate-200 rounded-full overflow-hidden relative shadow-inner">
-                  <div 
-                    className="h-full bg-cyan-600 transition-all duration-500 flex items-center justify-center text-[10px] text-white font-bold"
-                    style={{ width: `${completeness}%` }}
-                  >
-                    {completeness}% Complete
-                  </div>
-                </div>
-              </div>
-
-              <button
-                id="btn-generate-brochure"
-                onClick={() => setShowBrochureModal(true)}
-                className="bg-[#00bcd4] hover:bg-[#00acc1] text-white font-bold text-xs px-3 py-1.5 rounded flex items-center gap-1.5 shadow-xs transition-colors uppercase tracking-wider cursor-pointer"
-              >
-                <FileText className="w-3.5 h-3.5" />
-                <span>Agent Card</span>
-              </button>
-            </div>
-          )}
         </div>
 
         {/* Tab Body */}
@@ -876,6 +856,33 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
           {/* ============================================================ */}
           {activeTab === 'profile' && (
             <div className="space-y-6">
+              {/* Profile Completeness + Agent Card (moved out of the shared tab
+                  strip above -- it only rendered on this one tab, which made
+                  that strip overflow/clip on narrower widths while the other
+                  4 tabs stayed clean; belongs here as this tab's own content) */}
+              <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">Profile Completeness</span>
+                  <div className="w-36 h-5 bg-slate-200 rounded-full overflow-hidden relative shadow-inner">
+                    <div
+                      className="h-full bg-cyan-600 transition-all duration-500 flex items-center justify-center text-[10px] text-white font-bold"
+                      style={{ width: `${completeness}%` }}
+                    >
+                      {completeness}% Complete
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  id="btn-generate-brochure"
+                  onClick={() => setShowBrochureModal(true)}
+                  className="bg-[#00bcd4] hover:bg-[#00acc1] text-white font-bold text-xs px-3 py-1.5 rounded flex items-center gap-1.5 shadow-xs transition-colors uppercase tracking-wider cursor-pointer"
+                >
+                  <FileText className="w-3.5 h-3.5" />
+                  <span>Agent Card</span>
+                </button>
+              </div>
+
               {/* Toast Notifications */}
               {jurisdictionAppliedToast && (
                 <div className="bg-emerald-50 border-2 border-emerald-500 p-4 rounded-lg flex items-center justify-between gap-3 text-emerald-900 animate-in fade-in slide-in-from-top-2">
@@ -2703,6 +2710,70 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
                 >
                   Edit Jurisdiction →
                 </button>
+              </div>
+
+              {/* Appearance & Theme Card -- luxury theme options. Each
+                  swatch's two dots are the accent pair that theme
+                  actually applies app-wide (see index.css); applied
+                  immediately on click, not gated behind Save. */}
+              <div className="bg-white p-6 rounded-lg border border-slate-200 shadow-xs space-y-4">
+                <div className="border-b border-slate-100 pb-2.5">
+                  <h2 className="font-bold text-sm text-slate-800 flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-cyan-700" />
+                    <span>Appearance & Theme</span>
+                  </h2>
+                  <p className="text-[11px] text-slate-500 mt-0.5">
+                    Choose the accent palette used for buttons, active tabs, and calls to action
+                    throughout the app and CRM. Every option is designed to keep the app looking
+                    high-end -- pick whichever suits your brand.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                  {[
+                    { id: 'emerald', name: 'Emerald', subtitle: 'Signature', dot1: '#059669', dot2: '#f59e0b' },
+                    { id: 'sapphire', name: 'Sapphire', subtitle: 'Platinum', dot1: '#2563eb', dot2: '#f59e0b' },
+                    { id: 'ruby', name: 'Ruby', subtitle: 'Rose Gold', dot1: '#dc2626', dot2: '#f59e0b' },
+                    { id: 'amethyst', name: 'Amethyst', subtitle: 'Royal', dot1: '#7c3aed', dot2: '#f59e0b' },
+                    { id: 'onyx', name: 'Onyx', subtitle: 'Monochrome', dot1: '#52525b', dot2: '#f59e0b' },
+                  ].map((opt) => (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => onThemeChange?.(opt.id)}
+                      className={`relative flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all cursor-pointer ${
+                        theme === opt.id
+                          ? 'border-cyan-500 bg-cyan-50/60 shadow-xs'
+                          : 'border-slate-200 hover:border-slate-300 bg-white'
+                      }`}
+                    >
+                      {theme === opt.id && (
+                        <span className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-cyan-500 text-white flex items-center justify-center">
+                          <Check className="w-2.5 h-2.5" />
+                        </span>
+                      )}
+                      <span className="flex items-center -space-x-1.5">
+                        <span
+                          className="w-6 h-6 rounded-full border-2 border-white shadow-xs"
+                          style={{ backgroundColor: opt.dot1 }}
+                        />
+                        <span
+                          className="w-6 h-6 rounded-full border-2 border-white shadow-xs"
+                          style={{ backgroundColor: opt.dot2 }}
+                        />
+                      </span>
+                      <span className="text-center">
+                        <span className="block font-bold text-xs text-slate-800">{opt.name}</span>
+                        <span className="block text-[10px] text-slate-400">{opt.subtitle}</span>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+
+                <p className="text-[10px] text-slate-400 pt-1">
+                  More granular customization (per-module accents, custom brand colors) is planned
+                  for a future update.
+                </p>
               </div>
 
               {/* Preferences Configuration Card */}

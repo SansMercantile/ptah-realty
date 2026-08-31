@@ -13,6 +13,17 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      // Apply the saved luxury theme (Settings > Preferences > Appearance)
+      // before React mounts/paints, so there's no flash of the default
+      // "emerald" palette before the user's actual choice kicks in.
+      try {
+        var savedTheme = localStorage.getItem('ptah_theme');
+        if (savedTheme && savedTheme !== 'emerald') {
+          document.documentElement.setAttribute('data-theme', savedTheme);
+        }
+      } catch (e) {}
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

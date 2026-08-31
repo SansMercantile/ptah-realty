@@ -12,6 +12,76 @@
    bundles. */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* ---------------------------------------------------------------------
+   Luxury theme options (Settings > Profile & Account > Preferences >
+   Appearance). The app's brand/primary accent color -- emerald-*,
+   used for primary buttons, active nav states, and CTAs throughout
+   both the main app and the CRM -- is remapped per theme to reference
+   a different built-in Tailwind color scale. amber-* (the secondary
+   "gold" luxury accent, e.g. the Quick Listing CTA, AI Copilot icon)
+   stays the same across every theme, tying them together as one
+   coherent family rather than five unrelated palettes. Applied via a
+   data-theme attribute on <html> -- see App.tsx's theme state and
+   ThemeSelector in UserSettingsModal.tsx. The default "emerald" theme
+   needs no override block below since it already IS Tailwind's own
+   emerald scale; these four are the alternates.
+   --------------------------------------------------------------------- */
+[data-theme="sapphire"] {
+  --color-emerald-50: var(--color-blue-50);
+  --color-emerald-100: var(--color-blue-100);
+  --color-emerald-200: var(--color-blue-200);
+  --color-emerald-300: var(--color-blue-300);
+  --color-emerald-400: var(--color-blue-400);
+  --color-emerald-500: var(--color-blue-500);
+  --color-emerald-600: var(--color-blue-600);
+  --color-emerald-700: var(--color-blue-700);
+  --color-emerald-800: var(--color-blue-800);
+  --color-emerald-900: var(--color-blue-900);
+  --color-emerald-950: var(--color-blue-950);
+}
+
+[data-theme="ruby"] {
+  --color-emerald-50: var(--color-red-50);
+  --color-emerald-100: var(--color-red-100);
+  --color-emerald-200: var(--color-red-200);
+  --color-emerald-300: var(--color-red-300);
+  --color-emerald-400: var(--color-red-400);
+  --color-emerald-500: var(--color-red-500);
+  --color-emerald-600: var(--color-red-600);
+  --color-emerald-700: var(--color-red-700);
+  --color-emerald-800: var(--color-red-800);
+  --color-emerald-900: var(--color-red-900);
+  --color-emerald-950: var(--color-red-950);
+}
+
+[data-theme="amethyst"] {
+  --color-emerald-50: var(--color-violet-50);
+  --color-emerald-100: var(--color-violet-100);
+  --color-emerald-200: var(--color-violet-200);
+  --color-emerald-300: var(--color-violet-300);
+  --color-emerald-400: var(--color-violet-400);
+  --color-emerald-500: var(--color-violet-500);
+  --color-emerald-600: var(--color-violet-600);
+  --color-emerald-700: var(--color-violet-700);
+  --color-emerald-800: var(--color-violet-800);
+  --color-emerald-900: var(--color-violet-900);
+  --color-emerald-950: var(--color-violet-950);
+}
+
+[data-theme="onyx"] {
+  --color-emerald-50: var(--color-zinc-50);
+  --color-emerald-100: var(--color-zinc-100);
+  --color-emerald-200: var(--color-zinc-200);
+  --color-emerald-300: var(--color-zinc-300);
+  --color-emerald-400: var(--color-zinc-400);
+  --color-emerald-500: var(--color-zinc-500);
+  --color-emerald-600: var(--color-zinc-600);
+  --color-emerald-700: var(--color-zinc-700);
+  --color-emerald-800: var(--color-zinc-800);
+  --color-emerald-900: var(--color-zinc-900);
+  --color-emerald-950: var(--color-zinc-950);
+}
+
 @layer base {
   html.dark {
     color-scheme: dark;

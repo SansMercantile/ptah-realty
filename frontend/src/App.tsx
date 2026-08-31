@@ -41,6 +41,22 @@ export function App() {
   const [provinceId, setProvinceId] = useState('WC');
   const [cityId, setCityId] = useState('CPT');
 
+  // Luxury theme (Settings > Preferences > Appearance) -- remaps the
+  // app's brand accent color app-wide via a data-theme attribute on
+  // <html> (see index.css for the actual color overrides). index.html
+  // applies whatever was last saved before React even paints, so this
+  // just needs to keep localStorage and the attribute in sync from here
+  // on for changes made during the session.
+  const [theme, setTheme] = useState<string>(() => localStorage.getItem('ptah_theme') || 'emerald');
+  useEffect(() => {
+    if (theme === 'emerald') {
+      document.documentElement.removeAttribute('data-theme');
+    } else {
+      document.documentElement.setAttribute('data-theme', theme);
+    }
+    localStorage.setItem('ptah_theme', theme);
+  }, [theme]);
+
   const [properties, setProperties] = useState<PropertyRecord[]>(PROPERTIES_DATA);
   const [selectedProperty, setSelectedProperty] = useState<PropertyRecord | null>(PROPERTIES_DATA[0]); // Default 5 Richmond Road
   const [isLoadingProperties, setIsLoadingProperties] = useState(false);
@@ -526,6 +542,8 @@ export function App() {
         currentProvinceId={provinceId}
         currentCityId={cityId}
         onJurisdictionChange={handleJurisdictionChange}
+        theme={theme}
+        onThemeChange={setTheme}
       />
 
       {/* 17. Balance & Available Funds Details Modal */}
