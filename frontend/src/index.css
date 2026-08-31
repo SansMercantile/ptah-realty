@@ -107,4 +107,19 @@
   ::-webkit-scrollbar-thumb:hover {
     background: #64748b;
   }
+
+  /* Google Maps Street View "Pegman" control fix -- @vis.gl/react-google-maps
+     has a known bug (visgl/react-google-maps#722) where the Pegman icon
+     fails to render/drag correctly because its own drag-preview images
+     lose their positioning context. .gm-svpc is Google's own stable,
+     documented class name for the Street View Pegman control container;
+     forcing position: relative here (and on its images) is the confirmed
+     community fix -- it's what "the div enclosing the images" in that
+     issue refers to. */
+  .gm-svpc {
+    position: relative !important;
+  }
+  .gm-svpc img {
+    position: relative !important;
+  }
 }

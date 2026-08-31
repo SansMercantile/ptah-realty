@@ -260,17 +260,13 @@ export const CadastralMap: React.FC<CadastralMapProps> = ({
 
         {/* Engine Switcher */}
         <div className="flex items-center bg-slate-900/90 backdrop-blur-md p-1 rounded-lg border border-slate-700 shadow-lg text-xs">
-          <button
-            onClick={() => setMapEngine('google')}
-            className={`px-3 py-1 rounded font-bold transition-all flex items-center gap-1.5 ${
-              mapEngine === 'google'
-                ? 'bg-[#006980] text-white shadow-xs'
-                : 'text-slate-300 hover:text-white'
-            }`}
-          >
-            <MapIcon className="w-3.5 h-3.5 text-cyan-300" />
-            <span>Google Maps</span>
-          </button>
+          {/* "Google Maps" button removed from the switcher per explicit
+              request -- the engine itself, its rendering branch below,
+              and all its functionality (satellite/hybrid/terrain, Pegman
+              Street View, polygons, radius ring) are untouched and still
+              fully working code; it's just no longer a user-selectable
+              tab. mapEngine can still be programmatically set to
+              'google' elsewhere if a future need calls for it. */}
 
           <button
             onClick={() => setMapEngine('vector')}
@@ -499,6 +495,7 @@ export const CadastralMap: React.FC<CadastralMapProps> = ({
                 mapTypeId={googleMapType}
                 gestureHandling="greedy"
                 disableDefaultUI={false}
+                streetViewControl={true}
                 className="w-full h-full"
               >
                 {/* Interactive Google Map Cadastral Polygons */}
