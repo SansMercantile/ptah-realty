@@ -213,6 +213,22 @@ export const RealCadastreMap: React.FC<RealCadastreMapProps> = ({
       return visibleStreets.has(street);
     });
   }, [showSurroundingParcels, visibleStreets, liveSurroundingParcels]);
+
+  // Real-erf lookup for the mock/demo properties layer below -- when a
+  // property's erfNo matches a real parcel actually fetched for the
+  // current viewport, its polygon uses the REAL surveyed boundary here
+  // instead of getArchitecturalBuilding()'s synthetic approximation, per
+  // explicit request ("mock data attached to the specific/correct ERF").
+  // Keyed off the unfiltered liveSurroundingParcels (not
+  // filteredSurroundingGeoParcels) so a street-visibility filter doesn't
+  // also suppress this alignment.
+  const liveParcelByErf = useMemo(() => {
+    const map = new Map<string, LiveSurroundingParcel>();
+    for (const parcel of liveSurroundingParcels) {
+      map.set(parcel.erf.trim().toLowerCase(), parcel);
+    }
+    return map;
+  }, [liveSurroundingParcels]);
   
   // Center coordinates (default: Three Anchor Bay / Green Point erf 1681)
   const defaultCenter = { lat: -33.90876, lng: 18.401027 };
@@ -710,9 +726,7 @@ export const RealCadastreMap: React.FC<RealCadastreMapProps> = ({
 
         {/* 2B. SURROUNDING REGISTERED CADASTRAL ERVEN (UNREGISTERED MLS PARCELS) */}
         {filteredSurroundingGeoParcels.map((parcel) => {
-          const isHovered = hoveredErfNo === parcel.erf;
           const lotPoints = formatPointsString(parcel.coords);
-          const centerPt = getCentroid(parcel.coords);
 
           return (
             <g
@@ -731,42 +745,16 @@ export const RealCadastreMap: React.FC<RealCadastreMapProps> = ({
                 onHoverProperty(null, null);
               }}
             >
-              {/* Cadastral Lot Boundary */}
-              {(buildingRenderMode === 'cadastre_lots' || buildingRenderMode === 'hybrid') && (
-                <polygon
-                  points={lotPoints}
-                  fill={isHovered ? 'rgba(56, 189, 248, 0.18)' : 'rgba(30, 41, 59, 0.28)'}
-                  stroke={isHovered ? '#38bdf8' : '#475569'}
-                  strokeWidth={isHovered ? 1.8 : 1.2}
-                  strokeDasharray="3 3"
-                />
-              )}
-
-              {/* Building Footprint Box for surrounding parcels */}
-              {(buildingRenderMode === 'building_boxes' || buildingRenderMode === 'hybrid') && parcel.buildingCoords && (
-                <polygon
-                  points={formatPointsString(parcel.buildingCoords, 4)}
-                  fill={isHovered ? 'rgba(56, 189, 248, 0.45)' : 'rgba(71, 85, 105, 0.35)'}
-                  stroke={isHovered ? '#7dd3fc' : '#64748b'}
-                  strokeWidth={1.4}
-                  filter="url(#buildingBoxShadow)"
-                />
-              )}
-
-              {/* Surrounding Erf Badge */}
-              {showHouseNumbers && (
-                <text
-                  x={centerPt.x}
-                  y={centerPt.y + 3}
-                  fill={isHovered ? '#38bdf8' : '#94a3b8'}
-                  fontSize="9"
-                  fontWeight="600"
-                  textAnchor="middle"
-                  className="font-mono select-none"
-                >
-                  Erf {parcel.erf}
-                </text>
-              )}
+              {/* Real live parcels (from getCadastralParcels) are kept as
+                  invisible hit-areas only, per explicit request -- the
+                  visible boxes + "Erf ####" labels for every surrounding
+                  parcel were cluttering the basemap and making it not
+                  look like a normal map. This <g> and its hover handlers
+                  above stay (so hover/erf-matching still works for the
+                  mock properties layer below), but nothing here is drawn.
+                  A single invisible polygon keeps the hover/click hit-area
+                  working without rendering anything visible. */}
+              <polygon points={lotPoints} fill="transparent" stroke="none" />
             </g>
           );
         })}
@@ -778,8 +766,18 @@ export const RealCadastreMap: React.FC<RealCadastreMapProps> = ({
           const houseNum = extractHouseNumber(prop.address, prop.erfNo);
           
           const building = getArchitecturalBuilding(prop);
-          const lotPoints = formatPointsString(building.cadastralLotGeo);
-          const centerPt = getCentroid(building.cadastralLotGeo);
+          // If a real fetched parcel matches this property's erfNo, use its
+          // actual surveyed boundary for the lot outline instead of
+          // getArchitecturalBuilding()'s synthetic approximation -- keeps
+          // the listing's shown boundary attached to the correct real ERF
+          // rather than a guessed shape (see liveParcelByErf above). The
+          // 3D building extrusion below still uses the synthetic geometry
+          // since real cadastre data has no building-footprint/height
+          // information (see LiveSurroundingParcel's own comment).
+          const matchedLiveParcel = prop.erfNo ? liveParcelByErf.get(prop.erfNo.trim().toLowerCase()) : undefined;
+          const lotGeo = matchedLiveParcel ? matchedLiveParcel.coords : building.cadastralLotGeo;
+          const lotPoints = formatPointsString(lotGeo);
+          const centerPt = getCentroid(lotGeo);
 
           // 3D Building extrusion geometry points
           const groundBldgPoints = formatPointsString(building.mainBuildingGeo, 0);
