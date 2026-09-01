@@ -40,7 +40,7 @@ import {
   ConnectorCategory,
 } from './types';
 import { formatCurrency, triggerDealWonConfetti } from './utils/formatters';
-import { getCrmState, saveCrmState } from '../services/api';
+import { getCrmState, saveCrmState, authHeaders } from '../services/api';
 import { Bell, CheckCircle2, Flame, Radio, X, Calendar as CalendarIcon, Sliders, RefreshCw } from 'lucide-react';
 
 export default function App({
@@ -587,32 +587,38 @@ export default function App({
     );
   };
 
-  const handleTriggerTestEmail = () => {
-    const testLog: EmailNotificationLog = {
-      id: `test-em-${Date.now()}`,
-      recipientType: 'agent',
-      recipientEmail: 'privjapan@gmail.com',
-      subject: '[TEST ALERT] Property 24 Webhook Ingestion Check - Ptah Realty',
-      triggerReason: 'Manual Notification Test',
-      timestamp: new Date().toISOString(),
-      status: 'delivered',
-      previewSnippet: 'Automated notification test dispatch verified for Ptah Realty CRM.',
-      propertyTitle: 'Camps Bay Sunset Villa',
-    };
+  // Previously entirely fake -- fabricated a local log entry with a
+  // hardcoded 'delivered' status and never made a real network call.
+  // Now calls the real backend send (api/crm.py's /automations/send-test,
+  // genuine AWS SES), and reflects whatever it actually reports --
+  // success or a real failure -- rather than always claiming delivery.
+  const handleTriggerTestEmail = async () => {
+    const recipientEmail = 'privjapan@gmail.com';
+    try {
+      const response = await fetch('/api/v1/realty/crm/automations/send-test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        body: JSON.stringify({ recipientType: 'agent', recipientEmail }),
+      });
+      const result: { ok: boolean; error: string | null; logEntry: EmailNotificationLog } = await response.json();
 
-    if (leads.length > 0) {
-      const updatedFirstLead = {
-        ...leads[0],
-        emailLogs: [testLog, ...leads[0].emailLogs],
-      };
-      setLeads((prev) => [updatedFirstLead, ...prev.slice(1)]);
+      if (leads.length > 0) {
+        const updatedFirstLead = {
+          ...leads[0],
+          emailLogs: [result.logEntry, ...leads[0].emailLogs],
+        };
+        setLeads((prev) => [updatedFirstLead, ...prev.slice(1)]);
+      }
+
+      setToastAlert(
+        result.ok
+          ? { title: 'Email Notification Test Dispatched', message: `Broker alert sent to ${recipientEmail}`, type: 'email' }
+          : { title: 'Test Email Failed', message: result.error || 'SES rejected the send -- check sender/recipient verification.', type: 'email' }
+      );
+    } catch (e) {
+      console.error('Test email send failed:', e);
+      setToastAlert({ title: 'Test Email Failed', message: 'Could not reach the backend.', type: 'email' });
     }
-
-    setToastAlert({
-      title: 'Email Notification Test Dispatched',
-      message: 'Broker alert sent to privjapan@gmail.com',
-      type: 'email',
-    });
   };
 
   const handleQuickWhatsApp = (lead: Lead) => {

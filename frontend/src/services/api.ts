@@ -742,6 +742,27 @@ export async function saveCrmState(state: {
 }
 
 // ---------------------------------------------------------------------
+// Lead ingestion webhook (Property24 & other portals -- see chat: no
+// public self-serve portal API exists, so the real integration path is
+// an email-parsing service like Parseur/Mailparser.io forwarding the
+// portal's own lead-notification emails to this URL).
+// ---------------------------------------------------------------------
+
+export interface WebhookConfig {
+  webhookUrl: string;
+  secret: string;
+  authHeader: string;
+}
+
+export async function getLeadWebhookConfig(): Promise<WebhookConfig> {
+  return authJson<WebhookConfig>('/crm/leads/webhook-config', { method: 'GET' });
+}
+
+export async function rotateLeadWebhookSecret(): Promise<WebhookConfig> {
+  return authJson<WebhookConfig>('/crm/leads/webhook-config/rotate', { method: 'POST' });
+}
+
+// ---------------------------------------------------------------------
 // KYC / FICA verification (real backend round trip, provider-neutral
 // mock findings behind it -- see services/kyc.py's own docstring. Mounted
 // under /api/v1/intelligence, not /api/v1/realty, hence authJsonAbs.)

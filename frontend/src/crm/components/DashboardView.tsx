@@ -7,6 +7,7 @@ import {
   Smartphone,
   Megaphone,
   Share2,
+  Zap,
   FileSpreadsheet,
   Info,
   Calendar,
@@ -37,6 +38,7 @@ import {
 } from 'lucide-react';
 import { Lead, PropertyListing, ShowHouseRecord, TaskItem } from '../types';
 import { formatCurrency, useDateFormatPreference, formatDateWithPreference } from '../utils/formatters';
+import { LeadWebhookModal } from './LeadWebhookModal';
 import { TopStatsOverview } from './TopStatsOverview';
 
 // High-End Luxury Editorial Assets -- ported over from the AI Studio demo
@@ -335,6 +337,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [verificationCardTab, setVerificationCardTab] = useState<'verification' | 'status'>('verification');
   const [isPortfolioShareOpen, setIsPortfolioShareOpen] = useState(false);
+  const [isLeadWebhookOpen, setIsLeadWebhookOpen] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
 
   // Chart view-mode toggles (View as Table, from the chart menu) and the
@@ -524,6 +527,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           >
             <Share2 className="w-3.5 h-3.5 text-blue-500" />
             <span>PORTFOLIO SHARING</span>
+          </button>
+
+          <button
+            onClick={() => setIsLeadWebhookOpen(true)}
+            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold border border-slate-200 dark:border-slate-700 transition cursor-pointer"
+            title="Connect Property24 / competitor portal lead emails into this CRM"
+          >
+            <Zap className="w-3.5 h-3.5 text-cyan-500" />
+            <span>LEAD WEBHOOK</span>
           </button>
 
           <button
@@ -1633,6 +1645,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         leads={leads}
         onClose={() => setSelectedAgeBracket(null)}
         onSelectLead={onSelectLead}
+      />
+
+      {/* Property24 / competitor portal lead ingestion webhook */}
+      <LeadWebhookModal
+        isOpen={isLeadWebhookOpen}
+        onClose={() => setIsLeadWebhookOpen(false)}
       />
     </div>
   );

@@ -13,7 +13,8 @@ import {
   Building,
   UserCheck,
   Send,
-  Radio
+  Radio,
+  AlertCircle
 } from 'lucide-react';
 import { AutomationRule, EmailNotificationLog, Lead } from '../types';
 import { formatDate } from '../utils/formatters';
@@ -49,7 +50,7 @@ export const EmailAutomationsView: React.FC<EmailAutomationsViewProps> = ({
           </div>
           <h2 className="text-xl font-bold text-slate-900">Email Notifications & Workflows</h2>
           <p className="text-xs text-slate-500 mt-1 max-w-2xl">
-            Automatically sends instantaneous broker email alerts to <span className="text-emerald-700 font-semibold font-mono">privjapan@gmail.com</span> and personalized client auto-responders whenever a lead arrives from Property 24, Private Property, or the Ptah Realty website.
+            Automatically sends real broker email alerts to a new lead's assigned agent and client auto-responders whenever a lead arrives -- for each active rule below matching that lead's source. Real AWS SES sends: a rule with no matching source, or turned off, genuinely won't fire.
           </p>
         </div>
 
@@ -337,13 +338,21 @@ export const EmailAutomationsView: React.FC<EmailAutomationsViewProps> = ({
                     <span className="text-[11px] text-slate-400 font-mono">{formatDate(log.timestamp)}</span>
                   </div>
 
-                  <p className="text-xs text-slate-600 line-clamp-1">{log.previewSnippet}</p>
+                  <p className="text-xs text-slate-600 line-clamp-1">
+                    {log.status === 'failed' && log.error ? log.error : log.previewSnippet}
+                  </p>
 
                   <div className="flex items-center justify-between text-[11px] text-slate-400 mt-2 font-mono">
                     <span>Recipient: {log.recipientEmail}</span>
-                    <span className="text-emerald-700 flex items-center gap-1 font-sans font-semibold">
-                      <CheckCircle2 className="w-3 h-3" /> {log.status.toUpperCase()}
-                    </span>
+                    {log.status === 'failed' ? (
+                      <span className="text-rose-700 flex items-center gap-1 font-sans font-semibold">
+                        <AlertCircle className="w-3 h-3" /> FAILED
+                      </span>
+                    ) : (
+                      <span className="text-emerald-700 flex items-center gap-1 font-sans font-semibold">
+                        <CheckCircle2 className="w-3 h-3" /> {log.status.toUpperCase()}
+                      </span>
+                    )}
                   </div>
                 </div>
               ))
