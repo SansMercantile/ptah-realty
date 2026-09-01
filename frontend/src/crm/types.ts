@@ -142,9 +142,12 @@ export interface EmailNotificationLog {
   subject: string;
   triggerReason: string;
   timestamp: string;
-  status: 'delivered' | 'opened' | 'clicked' | 'sent';
+  status: 'delivered' | 'opened' | 'clicked' | 'sent' | 'failed';
   previewSnippet: string;
   propertyTitle?: string;
+  // Real SES failure reason, only present when status === 'failed' --
+  // see api/crm.py's save_crm_state / send_test_email.
+  error?: string;
 }
 
 export interface Lead {
