@@ -61,7 +61,7 @@ import {
   FileCheck,
   Copy
 } from 'lucide-react';
-import { uploadAvatar, removeAvatar, uploadCompanyLogo, removeCompanyLogo, changePassword, getMyProfile, getTotpStatus, setupTotp, enableTotp, disableTotp, listPasskeys, getPasskeyRegistrationOptions, verifyPasskeyRegistration, deletePasskey, PasskeySummary } from '../../services/api';
+import { uploadAvatar, removeAvatar, uploadCompanyLogo, removeCompanyLogo, changePassword, getMyProfile, getTotpStatus, setupTotp, enableTotp, disableTotp, listPasskeys, getPasskeyRegistrationOptions, verifyPasskeyRegistration, deletePasskey, PasskeySummary, getVerificationStatus, sendEmailVerification, confirmEmailVerification, sendMobileVerification, confirmMobileVerification } from '../../services/api';
 import { isWebAuthnSupported, createPasskeyCredential, describeWebAuthnError } from '../../services/webauthnClient';
 
 import { 
@@ -428,8 +428,10 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
   const [newSocialUrl, setNewSocialUrl] = useState('');
   const [showAddSocial, setShowAddSocial] = useState(false);
 
-  // Residency & Mobile OTP Verification state
-  const [isPhoneOtpVerified, setIsPhoneOtpVerified] = useState(true);
+  // Residency & Mobile OTP Verification state -- real backend
+  // (api/user_verification.py), loaded on open alongside 2FA status below.
+  const [isPhoneOtpVerified, setIsPhoneOtpVerified] = useState(false);
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
   const [showOtpModal, setShowOtpModal] = useState(false);
   const [otpCode, setOtpCode] = useState('');
   const [isOtpSending, setIsOtpSending] = useState(false);
@@ -437,28 +439,86 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
   const [otpError, setOtpError] = useState<string | null>(null);
   const [otpSuccessToast, setOtpSuccessToast] = useState<string | null>(null);
 
-  const handleSendOtp = () => {
+  const handleSendOtp = async () => {
+    const fullNumber = `+${activeCountry.phoneDialCode}${(profile.cellPhone || '').replace(/\D/g, '')}`;
     setIsOtpSending(true);
     setOtpError(null);
-    setTimeout(() => {
-      setIsOtpSending(false);
+    try {
+      await sendMobileVerification(fullNumber);
       setShowOtpModal(true);
       setOtpCountdown(60);
       setOtpCode('');
-    }, 600);
+    } catch (err: any) {
+      setOtpError(err?.message || 'Failed to send verification SMS.');
+    } finally {
+      setIsOtpSending(false);
+    }
   };
 
-  const handleVerifyOtp = () => {
+  const handleVerifyOtp = async () => {
     if (!otpCode || otpCode.length < 4) {
       setOtpError('Please enter a valid verification code.');
       return;
     }
-    setIsPhoneOtpVerified(true);
-    setShowOtpModal(false);
     setOtpError(null);
-    setOtpSuccessToast(`Mobile number verified for ${activeCountry.name} residency.`);
-    setTimeout(() => setOtpSuccessToast(null), 4000);
+    try {
+      await confirmMobileVerification(otpCode);
+      setIsPhoneOtpVerified(true);
+      setShowOtpModal(false);
+      setOtpSuccessToast(`Mobile number verified for ${activeCountry.name} residency.`);
+      setTimeout(() => setOtpSuccessToast(null), 4000);
+    } catch (err: any) {
+      setOtpError(err?.message || 'Incorrect or expired code.');
+    }
   };
+
+  // Real email verification
+  const [isEmailVerifySending, setIsEmailVerifySending] = useState(false);
+  const [showEmailVerifyPrompt, setShowEmailVerifyPrompt] = useState(false);
+  const [emailVerifyCode, setEmailVerifyCode] = useState('');
+  const [emailVerifyError, setEmailVerifyError] = useState<string | null>(null);
+
+  const handleSendEmailVerification = async () => {
+    setIsEmailVerifySending(true);
+    setEmailVerifyError(null);
+    try {
+      const res = await sendEmailVerification();
+      if (res.alreadyVerified) {
+        setIsEmailVerified(true);
+      } else {
+        setShowEmailVerifyPrompt(true);
+        setEmailVerifyCode('');
+      }
+    } catch (err: any) {
+      setEmailVerifyError(err?.message || 'Failed to send verification email.');
+    } finally {
+      setIsEmailVerifySending(false);
+    }
+  };
+
+  const handleConfirmEmailVerification = async () => {
+    setEmailVerifyError(null);
+    try {
+      await confirmEmailVerification(emailVerifyCode.trim());
+      setIsEmailVerified(true);
+      setShowEmailVerifyPrompt(false);
+      setOtpSuccessToast('Email address verified.');
+      setTimeout(() => setOtpSuccessToast(null), 4000);
+    } catch (err: any) {
+      setEmailVerifyError(err?.message || 'Incorrect or expired code.');
+    }
+  };
+
+  useEffect(() => {
+    if (!isOpen) return;
+    getVerificationStatus()
+      .then((r) => {
+        setIsPhoneOtpVerified(r.phoneVerified);
+        setIsEmailVerified(r.emailVerified);
+      })
+      .catch(() => {});
+  }, [isOpen]);
+
 
   // Password state
   const [currentPassword, setCurrentPassword] = useState('');
@@ -2036,6 +2096,74 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
                     </button>
                   </div>
                 </form>
+              </div>
+
+              {/* Email Verification */}
+              <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-xs space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isEmailVerified ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-500'}`}>
+                      <Mail className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="font-bold text-xs text-slate-900">Email Address</div>
+                      <div className="text-[11px] text-slate-500">{profile.email}</div>
+                    </div>
+                  </div>
+
+                  {isEmailVerified ? (
+                    <span className="px-3 py-1.5 rounded text-xs font-bold bg-emerald-100 text-emerald-800 flex items-center gap-1.5">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span>Verified</span>
+                    </span>
+                  ) : showEmailVerifyPrompt ? null : (
+                    <button
+                      type="button"
+                      onClick={handleSendEmailVerification}
+                      disabled={isEmailVerifySending}
+                      className="px-3 py-1.5 rounded text-xs font-bold bg-slate-800 text-white hover:bg-slate-700 disabled:opacity-60 transition-colors cursor-pointer flex items-center gap-1.5"
+                    >
+                      {isEmailVerifySending && <RefreshCw className="w-3 h-3 animate-spin" />}
+                      <span>Send Verification Code</span>
+                    </button>
+                  )}
+                </div>
+
+                {emailVerifyError && (
+                  <div className="bg-rose-50 border-2 border-rose-400 text-rose-800 px-3 py-2 rounded text-[11px] font-bold flex items-center gap-2">
+                    <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                    <span>{emailVerifyError}</span>
+                  </div>
+                )}
+
+                {showEmailVerifyPrompt && (
+                  <div className="border-t border-slate-100 pt-3 flex items-center gap-2">
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={6}
+                      value={emailVerifyCode}
+                      onChange={(e) => setEmailVerifyCode(e.target.value.replace(/\D/g, ''))}
+                      placeholder="000000"
+                      className="w-28 px-3 py-2 border border-slate-300 rounded text-sm font-mono tracking-widest text-center focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleConfirmEmailVerification}
+                      disabled={emailVerifyCode.length !== 6}
+                      className="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold text-xs px-4 py-2 rounded transition-colors cursor-pointer"
+                    >
+                      Confirm
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setShowEmailVerifyPrompt(false); setEmailVerifyCode(''); setEmailVerifyError(null); }}
+                      className="text-xs text-slate-400 hover:text-slate-600 cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Two-Factor Authentication -- Authenticator App (TOTP) */}
@@ -3681,7 +3809,7 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
                 className="w-full text-center tracking-[0.4em] font-mono text-xl font-extrabold py-2.5 bg-slate-50 border-2 border-cyan-400 focus:border-cyan-600 rounded-lg text-slate-900 shadow-inner"
               />
               <div className="text-[10px] text-slate-400 text-center">
-                Demo helper: enter <strong>123456</strong> or any 6-digit code.
+                Enter the 6-digit code sent to your phone.
               </div>
             </div>
 

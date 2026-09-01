@@ -719,6 +719,12 @@ export interface CrmState {
   listings: any[];
   showHouses: any[];
   campaigns: any[];
+  // Server-authored only -- new entries appear here when a lead is
+  // created (frontend-entered or via the /crm/leads/webhook ingestion
+  // endpoint) and an AutomationRule's real agent-alert/client-
+  // autoresponder fires. The client never writes this back (see
+  // saveCrmState below); it's read-only from the frontend's perspective.
+  emailLogs: any[];
 }
 
 export async function getCrmState(): Promise<CrmState> {
@@ -734,8 +740,8 @@ export async function saveCrmState(state: {
   listings?: any[];
   showHouses?: any[];
   campaigns?: any[];
-}): Promise<{ saved: boolean }> {
-  return authJson<{ saved: boolean }>('/crm/state', {
+}): Promise<{ saved: boolean; emailsSent: number }> {
+  return authJson<{ saved: boolean; emailsSent: number }>('/crm/state', {
     method: 'PUT',
     body: JSON.stringify(state),
   });
@@ -989,5 +995,44 @@ export async function deletePasskey(credentialId: string): Promise<{ removed: bo
   return authJson<{ removed: boolean }>('/users/me/security/passkeys/delete', {
     method: 'POST',
     body: JSON.stringify({ credentialId }),
+  });
+}
+
+// ---------------------------------------------------------------------
+// Real email & mobile verification -- api/user_verification.py
+// ---------------------------------------------------------------------
+
+export interface VerificationStatus {
+  emailVerified: boolean;
+  phoneVerified: boolean;
+  phoneNumber: string | null;
+}
+
+export async function getVerificationStatus(): Promise<VerificationStatus> {
+  return authJson<VerificationStatus>('/users/me/verification/status');
+}
+
+export async function sendEmailVerification(): Promise<{ sent: boolean; alreadyVerified?: boolean }> {
+  return authJson('/users/me/verification/email/send', { method: 'POST' });
+}
+
+export async function confirmEmailVerification(code: string): Promise<{ verified: boolean }> {
+  return authJson<{ verified: boolean }>('/users/me/verification/email/confirm', {
+    method: 'POST',
+    body: JSON.stringify({ code }),
+  });
+}
+
+export async function sendMobileVerification(phoneNumber: string): Promise<{ sent: boolean }> {
+  return authJson<{ sent: boolean }>('/users/me/verification/mobile/send', {
+    method: 'POST',
+    body: JSON.stringify({ phoneNumber }),
+  });
+}
+
+export async function confirmMobileVerification(code: string): Promise<{ verified: boolean }> {
+  return authJson<{ verified: boolean }>('/users/me/verification/mobile/confirm', {
+    method: 'POST',
+    body: JSON.stringify({ code }),
   });
 }
