@@ -5,7 +5,7 @@ dotenv.config({ path: ".env.local", override: true });
 import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
-import { BedrockRuntimeClient, ConverseCommand } from "@aws-sdk/client-bedrock-runtime";
+import { BedrockRuntimeClient as PtahAiRuntimeClient, ConverseCommand } from "@aws-sdk/client-bedrock-runtime";
 import { 
   PROPERTIES_DATA, 
   SUBURBS_LIST, 
@@ -34,44 +34,44 @@ let propertyMediaStore: Record<string, PropertyMediaAsset[]> = JSON.parse(JSON.s
 let structuralAssessmentsStore: Record<string, StructuralConditionAssessment> = JSON.parse(JSON.stringify(STRUCTURAL_ASSESSMENTS_STORE));
 let portalListingsStore: Record<string, PortalListingPayload[]> = JSON.parse(JSON.stringify(INITIAL_PORTAL_PAYLOADS));
 
-// AWS Bedrock text generation, mirroring the real backend's model-chain
+// Ptah AI text generation, mirroring the real backend's model-chain
 // fallback (see constellation/ptah-realty-backend/services/bedrock.py) so
 // local dev behaves consistently with production rather than inventing a
 // separate AI provider. Credentials come from the standard AWS SDK
 // credential chain (e.g. `aws configure` / shared credentials file) --
 // no API key is stored in this repo.
-const BEDROCK_MODEL_CHAIN = [
+const PTAH_AI_MODEL_CHAIN = [
   "moonshotai.kimi-k2.5",
   "deepseek.v3.2",
   "qwen.qwen3-32b-v1:0",
   "amazon.nova-lite-v1:0",
 ];
 
-const RETRYABLE_BEDROCK_ERRORS = new Set([
+const RETRYABLE_PTAH_AI_ERRORS = new Set([
   "ThrottlingException",
   "ServiceUnavailableException",
   "ModelTimeoutException",
   "ModelNotReadyException",
 ]);
 
-let bedrockClient: BedrockRuntimeClient | null = null;
-function getBedrockClient(): BedrockRuntimeClient {
-  if (!bedrockClient) {
-    bedrockClient = new BedrockRuntimeClient({ region: process.env.AWS_REGION || "us-east-1" });
+let ptahAiClient: PtahAiRuntimeClient | null = null;
+function getPtahAiClient(): PtahAiRuntimeClient {
+  if (!ptahAiClient) {
+    ptahAiClient = new PtahAiRuntimeClient({ region: process.env.AWS_REGION || "us-east-1" });
   }
-  return bedrockClient;
+  return ptahAiClient;
 }
 
 /** Returns null (rather than throwing) when AWS credentials aren't
  * configured on this machine, so callers can fall back to the
  * clearly-labelled template copy, same pattern as the routes below. */
-async function generateBedrockJson(prompt: string, systemPrompt: string, maxTokens = 700): Promise<any | null> {
-  const client = getBedrockClient();
+async function generatePtahAiJson(prompt: string, systemPrompt: string, maxTokens = 700): Promise<any | null> {
+  const client = getPtahAiClient();
   const messages = [{ role: "user" as const, content: [{ text: prompt }] }];
   let lastError: unknown;
 
-  for (let i = 0; i < BEDROCK_MODEL_CHAIN.length; i++) {
-    const modelId = BEDROCK_MODEL_CHAIN[i];
+  for (let i = 0; i < PTAH_AI_MODEL_CHAIN.length; i++) {
+    const modelId = PTAH_AI_MODEL_CHAIN[i];
     try {
       const response = await client.send(new ConverseCommand({
         modelId,
@@ -85,15 +85,15 @@ async function generateBedrockJson(prompt: string, systemPrompt: string, maxToke
     } catch (err: any) {
       lastError = err;
       const code = err?.name || err?.Code || "";
-      const isLast = i === BEDROCK_MODEL_CHAIN.length - 1;
-      if (!RETRYABLE_BEDROCK_ERRORS.has(code) || isLast) {
-        console.error(`Bedrock generation error (${modelId}):`, err?.message || err);
+      const isLast = i === PTAH_AI_MODEL_CHAIN.length - 1;
+      if (!RETRYABLE_PTAH_AI_ERRORS.has(code) || isLast) {
+        console.error(`AI generation error (${modelId}):`, err?.message || err);
         return null;
       }
-      console.warn(`Bedrock model ${modelId} failed (${code}); trying next candidate`);
+      console.warn(`AI model ${modelId} failed (${code}); trying next candidate`);
     }
   }
-  console.error("Bedrock generation error (all models exhausted):", lastError);
+  console.error("AI generation error (all models exhausted):", lastError);
   return null;
 }
 
@@ -110,8 +110,8 @@ async function startServer() {
       app: "Ptah-Realty", 
       version: "2.5.0",
       // AWS credentials are resolved lazily via the SDK's default chain (see
-      // getBedrockClient above); a real failure only surfaces per-request as
-      // a null result from generateBedrockJson, which each route already
+      // getPtahAiClient above); a real failure only surfaces per-request as
+      // a null result from generatePtahAiJson, which each route already
       // falls back on. This flag reflects that a region is configured, not
       // that credentials/model access are verified -- that's inherent to
       // the SDK's chain and matches how the old key-presence check worked.
@@ -458,7 +458,7 @@ async function startServer() {
   });
 
   // ========================================================
-  // 4. AWS BEDROCK AI REAL ESTATE INTELLIGENCE & COPYWRITING
+  // 4. PTAH AI REAL ESTATE INTELLIGENCE & COPYWRITING
   // ========================================================
   app.post("/api/ai/cma-summary", async (req, res) => {
     const { property, valuation, comparableSales } = req.body;
@@ -504,7 +504,7 @@ Return a strict JSON object with these keys:
   "pricingRecommendationText": "Clear actionable advice on list price vs expected closing price"
 }`;
 
-    const parsed = await generateBedrockJson(
+    const parsed = await generatePtahAiJson(
       prompt,
       "You are a careful, factual South African real-estate CMA analyst. Return JSON only.",
       900
@@ -515,7 +515,7 @@ Return a strict JSON object with these keys:
     return res.json({
       ...parsed,
       generatedAt: new Date().toISOString(),
-      modelUsed: "AWS Bedrock (moonshotai.kimi-k2.5 chain)"
+      modelUsed: "Ptah AI"
     });
   });
 
@@ -556,7 +556,7 @@ Output a strict JSON object with:
   "socialMediaPost": "Engaging Instagram/Facebook caption with emojis and hashtags"
 }`;
 
-    const parsed = await generateBedrockJson(
+    const parsed = await generatePtahAiJson(
       prompt,
       "You are a compliant, high-end South African property copywriter. Return JSON only.",
       900

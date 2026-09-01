@@ -201,7 +201,7 @@ export const PDFReportModal: React.FC<PDFReportModalProps> = ({
           <div className="flex items-center gap-2">
             {isGeneratingAi && (
               <span className="text-[11px] text-cyan-300 animate-pulse font-medium flex items-center gap-1">
-                <RefreshCw className="w-3 h-3 animate-spin" /> Synthesizing Bedrock Market Copy...
+                <RefreshCw className="w-3 h-3 animate-spin" /> Synthesizing AI Market Copy...
               </span>
             )}
           </div>
@@ -296,7 +296,7 @@ export const PDFReportModal: React.FC<PDFReportModalProps> = ({
               </div>
             )}
 
-            {/* 3. AWS BEDROCK AI MARKET COMMENTARY & STRATEGY */}
+            {/* 3. AI MARKET COMMENTARY & STRATEGY */}
             {sections.aiNarrative && (
               <div className="space-y-2 border-t border-slate-200 pt-4">
                 <div className="flex items-center gap-2">

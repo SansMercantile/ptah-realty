@@ -159,7 +159,7 @@ export const PortalSyncModal: React.FC<PortalSyncModalProps> = ({
               <div className="flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-cyan-400" />
                 <span className="font-bold text-slate-100 text-xs uppercase tracking-wide">
-                  Amazon Bedrock Listing Copywriting Assistant
+                  Ptah AI Listing Copywriting Assistant
                 </span>
               </div>
               <button
