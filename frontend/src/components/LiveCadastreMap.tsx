@@ -39,7 +39,7 @@ interface LiveCadastreMapProps {
 // Cape Town-wide default (roughly the CBD/Atlantic Seaboard) -- callers
 // pass a real center once a subject property is selected.
 const DEFAULT_CENTER: [number, number] = [-33.9249, 18.4241];
-const DEFAULT_ZOOM = 17;
+const DEFAULT_ZOOM = 18;
 // Below this zoom, a bbox query would pull far too many parcels (and
 // exceed the backend's 0.2-degree bbox cap) -- the layer just doesn't
 // render until the user zooms in, with a hint explaining why.
