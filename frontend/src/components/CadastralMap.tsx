@@ -14,7 +14,6 @@ import { PropertyRecord } from '../types';
 import { CadastralTooltip } from './CadastralTooltip';
 import { GoogleMapPolygons } from './GoogleMapPolygons';
 import { RealCadastreMap, extractHouseNumber } from './RealCadastreMap';
-import { LiveCadastreMap } from './LiveCadastreMap';
 import { PropertyPopupCard } from './PropertyPopupCard';
 import { StreetFilterControls } from './StreetFilterControls';
 import { CompassTool } from './CompassTool';
@@ -54,10 +53,15 @@ export const CadastralMap: React.FC<CadastralMapProps> = ({
   // and gates AdvancedMarker usage below (no arbitrary DEMO_MAP_ID fallback).
   const configuredMapId = import.meta.env.VITE_GOOGLE_MAPS_MAP_ID || undefined;
 
-  // AWS/GIS-first default: vector cadastral mode has no third-party map key
-  // requirement. Google Maps Platform remains available as a clean,
-  // explicit switch when a valid API key (and optionally Map ID) is supplied.
-  const [mapEngine, setMapEngine] = useState<'google' | 'vector' | 'live'>('vector');
+  // AWS/GIS-first default: the merged vector+live cadastral engine (see
+  // RealCadastreMap.tsx -- now backed by real getCadastralParcels() data,
+  // not hand-drawn demo lots) has no third-party map key requirement and
+  // is the sole map experience; the old separate "Vector Cadastre (SG
+  // Diagram)" / "Live Cadastre (Every Parcel)" engine picker is gone
+  // (per explicit request) since there's only one option now. Google
+  // Maps Platform remains reachable programmatically (see
+  // handleGmAuthFailure's fallback) but isn't user-selectable in the UI.
+  const [mapEngine, setMapEngine] = useState<'google' | 'vector'>('vector');
   const [googleMapsError, setGoogleMapsError] = useState<string | null>(null);
   const [googleMapType, setGoogleMapType] = useState<'roadmap' | 'satellite' | 'hybrid' | 'terrain'>('hybrid');
   const [showRadiusRing, setShowRadiusRing] = useState(true);
@@ -279,41 +283,13 @@ export const CadastralMap: React.FC<CadastralMapProps> = ({
       {/* Top Map Engine Bar & Controls */}
       <div className="absolute top-3 left-3 z-20 flex flex-wrap items-center gap-2 pointer-events-auto">
 
-        {/* Engine Switcher */}
-        <div className="flex items-center bg-slate-900/90 backdrop-blur-md p-1 rounded-lg border border-slate-700 shadow-lg text-xs">
-          {/* "Google Maps" button removed from the switcher per explicit
-              request -- the engine itself, its rendering branch below,
-              and all its functionality (satellite/hybrid/terrain, Pegman
-              Street View, polygons, radius ring) are untouched and still
-              fully working code; it's just no longer a user-selectable
-              tab. mapEngine can still be programmatically set to
-              'google' elsewhere if a future need calls for it. */}
-
-          <button
-            onClick={() => setMapEngine('vector')}
-            className={`px-3 py-1 rounded font-bold transition-all flex items-center gap-1.5 ${
-              mapEngine === 'vector'
-                ? 'bg-[#006980] text-white shadow-xs'
-                : 'text-slate-300 hover:text-white'
-            }`}
-          >
-            <Layers className="w-3.5 h-3.5 text-cyan-300" />
-            <span>Vector Cadastre (SG Diagram)</span>
-          </button>
-
-          <button
-            onClick={() => setMapEngine('live')}
-            className={`px-3 py-1 rounded font-bold transition-all flex items-center gap-1.5 ${
-              mapEngine === 'live'
-                ? 'bg-[#006980] text-white shadow-xs'
-                : 'text-slate-300 hover:text-white'
-            }`}
-            title="Real, live cadastral parcels from the City of Cape Town's Open Data cadastre -- every parcel in view is clickable, not just hand-drawn demo lots"
-          >
-            <Layers className="w-3.5 h-3.5 text-emerald-300" />
-            <span>Live Cadastre (Every Parcel)</span>
-          </button>
-        </div>
+        {/* Engine Switcher removed entirely per explicit request -- with
+            Google Maps already hidden from the UI (see mapEngine's own
+            comment above) and "Vector Cadastre (SG Diagram)" / "Live
+            Cadastre (Every Parcel)" now merged into one real-data engine
+            (RealCadastreMap.tsx), there was only ever one selectable
+            option left, so the picker itself is gone rather than kept
+            around showing a single button. */}
 
         {/* Google Map Type Switcher (When Google Maps Active) */}
         {mapEngine === 'google' && (
@@ -633,14 +609,17 @@ export const CadastralMap: React.FC<CadastralMapProps> = ({
             </div>
           </div>
         )
-      ) : mapEngine === 'live' ? (
-        /* LIVE CADASTRE ENGINE -- real, per-parcel boundaries from the
-           City of Cape Town's Open Data cadastre; every parcel in view
-           is clickable, not just hand-drawn demo lots. See
-           LiveCadastreMap.tsx's module docstring. */
-        <LiveCadastreMap centerLat={currentCenter.lat} centerLng={currentCenter.lng} />
       ) : (
-        /* VECTOR CADASTRAL ENGINE WITH REAL-WORLD MAP BASEMAP (SG DIAGRAM ACCURACY) */
+        /* VECTOR CADASTRAL ENGINE WITH REAL-WORLD MAP BASEMAP (SG DIAGRAM
+           ACCURACY) -- now backed by real, live per-parcel boundaries
+           from the City of Cape Town's Open Data cadastre (see
+           RealCadastreMap.tsx's own liveSurroundingParcels fetch), not
+           hand-drawn demo lots. This used to be a separate "Live
+           Cadastre (Every Parcel)" engine (LiveCadastreMap.tsx); that
+           component has been retired and merged in here so the one
+           remaining map keeps every bit of UI this file already built
+           (basemap switching, CMA radius, popup card, etc.) while also
+           being real data. */
         <RealCadastreMap
           properties={filteredProperties}
           selectedProperty={selectedProperty}

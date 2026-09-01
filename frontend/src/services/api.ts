@@ -912,3 +912,61 @@ export async function changePassword(currentPassword: string, newPassword: strin
     body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }),
   });
 }
+
+// ---------------------------------------------------------------------
+// 2FA: TOTP (authenticator app) + passkeys (WebAuthn) -- api/user_security.py
+// ---------------------------------------------------------------------
+
+export async function getTotpStatus(): Promise<{ enabled: boolean }> {
+  return authJson<{ enabled: boolean }>('/users/me/security/totp/status');
+}
+
+export async function setupTotp(): Promise<{ secret: string; otpauthUri: string; qrCodeDataUri: string }> {
+  return authJson('/users/me/security/totp/setup', { method: 'POST' });
+}
+
+export async function enableTotp(code: string): Promise<{ enabled: boolean }> {
+  return authJson<{ enabled: boolean }>('/users/me/security/totp/enable', {
+    method: 'POST',
+    body: JSON.stringify({ code }),
+  });
+}
+
+export async function disableTotp(password: string): Promise<{ enabled: boolean }> {
+  return authJson<{ enabled: boolean }>('/users/me/security/totp/disable', {
+    method: 'POST',
+    body: JSON.stringify({ password }),
+  });
+}
+
+export interface PasskeySummary {
+  id: string;
+  nickname: string;
+  createdAt: string | null;
+}
+
+export async function listPasskeys(): Promise<{ passkeys: PasskeySummary[] }> {
+  return authJson<{ passkeys: PasskeySummary[] }>('/users/me/security/passkeys');
+}
+
+export async function getPasskeyRegistrationOptions(): Promise<{ options: any; challengeToken: string }> {
+  return authJson('/users/me/security/passkeys/register/options', { method: 'POST' });
+}
+
+export async function verifyPasskeyRegistration(
+  credential: any,
+  challengeToken: string,
+  nickname?: string
+): Promise<{ added: boolean; id: string; nickname: string }> {
+  return authJson('/users/me/security/passkeys/register/verify', {
+    method: 'POST',
+    body: JSON.stringify({ credential, challengeToken, nickname }),
+  });
+}
+
+export async function deletePasskey(credentialId: string): Promise<{ removed: boolean }> {
+  return authJson<{ removed: boolean }>('/users/me/security/passkeys/delete', {
+    method: 'POST',
+    body: JSON.stringify({ credentialId }),
+  });
+}

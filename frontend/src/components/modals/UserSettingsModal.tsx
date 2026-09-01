@@ -61,7 +61,8 @@ import {
   FileCheck,
   Copy
 } from 'lucide-react';
-import { uploadAvatar, removeAvatar, uploadCompanyLogo, removeCompanyLogo, changePassword, getMyProfile } from '../../services/api';
+import { uploadAvatar, removeAvatar, uploadCompanyLogo, removeCompanyLogo, changePassword, getMyProfile, getTotpStatus, setupTotp, enableTotp, disableTotp, listPasskeys, getPasskeyRegistrationOptions, verifyPasskeyRegistration, deletePasskey, PasskeySummary } from '../../services/api';
+import { isWebAuthnSupported, createPasskeyCredential, describeWebAuthnError } from '../../services/webauthnClient';
 
 import { 
   GLOBAL_COUNTRIES_DATA, 
@@ -467,7 +468,100 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
   const [passwordSaved, setPasswordSaved] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
-  const [twoFactorEnabled, setTwoFactorEnabled] = useState(true);
+
+  // Real 2FA (api/user_security.py): TOTP authenticator app + WebAuthn
+  // passkeys. Loaded from the backend on open, see the effect below.
+  const [totpEnabled, setTotpEnabled] = useState(false);
+  const [totpSetupData, setTotpSetupData] = useState<{ secret: string; otpauthUri: string; qrCodeDataUri: string } | null>(null);
+  const [totpConfirmCode, setTotpConfirmCode] = useState('');
+  const [totpError, setTotpError] = useState<string | null>(null);
+  const [isTotpBusy, setIsTotpBusy] = useState(false);
+  const [showDisableTotpPrompt, setShowDisableTotpPrompt] = useState(false);
+  const [disableTotpPassword, setDisableTotpPassword] = useState('');
+
+  const [passkeys, setPasskeys] = useState<PasskeySummary[]>([]);
+  const [isRegisteringPasskey, setIsRegisteringPasskey] = useState(false);
+  const [passkeyError, setPasskeyError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    getTotpStatus().then((r) => setTotpEnabled(r.enabled)).catch(() => {});
+    listPasskeys().then((r) => setPasskeys(r.passkeys)).catch(() => {});
+  }, [isOpen]);
+
+  const handleStartTotpSetup = async () => {
+    setTotpError(null);
+    setIsTotpBusy(true);
+    try {
+      const data = await setupTotp();
+      setTotpSetupData(data);
+    } catch (err: any) {
+      setTotpError(err?.message || 'Failed to start authenticator setup.');
+    } finally {
+      setIsTotpBusy(false);
+    }
+  };
+
+  const handleConfirmTotpSetup = async () => {
+    setTotpError(null);
+    setIsTotpBusy(true);
+    try {
+      await enableTotp(totpConfirmCode.trim());
+      setTotpEnabled(true);
+      setTotpSetupData(null);
+      setTotpConfirmCode('');
+    } catch (err: any) {
+      setTotpError(err?.message || 'Failed to confirm authenticator code.');
+    } finally {
+      setIsTotpBusy(false);
+    }
+  };
+
+  const handleDisableTotp = async () => {
+    setTotpError(null);
+    setIsTotpBusy(true);
+    try {
+      await disableTotp(disableTotpPassword);
+      setTotpEnabled(false);
+      setShowDisableTotpPrompt(false);
+      setDisableTotpPassword('');
+    } catch (err: any) {
+      setTotpError(err?.message || 'Failed to disable authenticator.');
+    } finally {
+      setIsTotpBusy(false);
+    }
+  };
+
+  const handleAddPasskey = async () => {
+    setPasskeyError(null);
+    if (!isWebAuthnSupported()) {
+      setPasskeyError('Passkeys are not supported in this browser.');
+      return;
+    }
+    setIsRegisteringPasskey(true);
+    try {
+      const { options, challengeToken } = await getPasskeyRegistrationOptions();
+      const credential = await createPasskeyCredential(options);
+      const nickname = `${navigator.platform || 'Device'} passkey`;
+      await verifyPasskeyRegistration(credential, challengeToken, nickname);
+      const refreshed = await listPasskeys();
+      setPasskeys(refreshed.passkeys);
+    } catch (err: any) {
+      setPasskeyError(describeWebAuthnError(err));
+    } finally {
+      setIsRegisteringPasskey(false);
+    }
+  };
+
+  const handleRemovePasskey = async (id: string) => {
+    setPasskeyError(null);
+    try {
+      await deletePasskey(id);
+      setPasskeys((prev) => prev.filter((p) => p.id !== id));
+    } catch (err: any) {
+      setPasskeyError(err?.message || 'Failed to remove passkey.');
+    }
+  };
 
   // Billing & Credits State
   const [billingSubTab, setBillingSubTab] = useState<'credits' | 'plans' | 'payment' | 'invoices' | 'tax'>('credits');
