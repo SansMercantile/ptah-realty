@@ -21,7 +21,8 @@ import {
   CreditCard,
   Zap,
   Check,
-  ChevronRight
+  ChevronRight,
+  MessageCircle
 } from 'lucide-react';
 import { LANGUAGES_DATA } from './modals/UserSettingsModal';
 
@@ -522,6 +523,26 @@ export const Header: React.FC<HeaderProps> = ({
                       <div className="text-[10px] text-slate-500 font-normal">72-Hour NCA & POPIA records</div>
                     </div>
                   </button>
+
+                  {/* 5. Support -- opens WhatsApp Business (Sans
+                      Mercantile's Meta-provisioned support number) with a
+                      pre-filled message, same channel pattern already
+                      used for contacting property owners elsewhere in
+                      the app. */}
+                  <a
+                    id="dropdown-item-support"
+                    href={`https://wa.me/15553544425?text=${encodeURIComponent('Hi Sans Mercantile, I need help with Ptah Realty.')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setIsUserDropdownOpen(false)}
+                    className="w-full text-left px-4 py-2 hover:bg-cyan-50 flex items-center gap-2.5 text-slate-700 hover:text-cyan-900 transition-colors"
+                  >
+                    <MessageCircle className="w-4 h-4 text-emerald-600" />
+                    <div>
+                      <div className="font-semibold text-xs text-slate-800">Support</div>
+                      <div className="text-[10px] text-slate-500 font-normal">Chat with us on WhatsApp</div>
+                    </div>
+                  </a>
                 </div>
 
                 {/* Divider */}
