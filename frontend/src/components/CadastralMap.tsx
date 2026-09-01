@@ -74,7 +74,7 @@ export const CadastralMap: React.FC<CadastralMapProps> = ({
   const [mapHeading, setMapHeading] = useState(0);
   const [mapTilt, setMapTilt] = useState(0);
   const [buildingRenderMode, setBuildingRenderMode] = useState<'building_boxes' | 'cadastre_lots' | 'hybrid'>('hybrid');
-  const [show3DExtrusions, setShow3DExtrusions] = useState(true);
+  const [show3DExtrusions, setShow3DExtrusions] = useState(false);
 
   // Dynamic WGS84 cursor tracking -- updated by RealCadastreMap's mouse
   // move handler via inverse Web Mercator projection; falls back to the
@@ -242,6 +242,27 @@ export const CadastralMap: React.FC<CadastralMapProps> = ({
     }
   };
 
+  // Auto-pull real Property24 data once on load, instead of only ever
+  // showing the small hand-authored PROPERTIES_DATA mock set until
+  // someone finds and clicks "Pull Live Property24 Data" -- per explicit
+  // request, whatever's already been pulled/cached for this area should
+  // just be there by default. Cache-first on the backend (see
+  // fetch_full_listings_near / property24_listings_cache), so this is
+  // cheap when data already exists for the area and only spends Apify
+  // credits on a genuine cache miss. Guarded to fire once (not on every
+  // re-render, and not twice under React 18 StrictMode's dev double-
+  // invoke) and only for the initial default view -- panning/selecting a
+  // different property still goes through the manual button, same as
+  // before, rather than silently re-pulling (and potentially re-spending
+  // credits) on every map interaction.
+  const hasAutoPulledRef = useRef(false);
+  useEffect(() => {
+    if (hasAutoPulledRef.current) return;
+    hasAutoPulledRef.current = true;
+    handlePullRadiusListings();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <div
       ref={containerRef}
@@ -387,7 +408,11 @@ export const CadastralMap: React.FC<CadastralMapProps> = ({
           props, which the Google Maps engine has no equivalent for) and
           Fullscreen toggle, mirroring the top-left engine bar. */}
       <div className="absolute top-3 right-3 z-20 flex items-start gap-1.5 pointer-events-auto">
-        {mapEngine === 'vector' && (
+        {/* CompassTool (heading/tilt/3D building controls) hidden for
+            now -- keeping things simple. Re-enable by uncommenting this
+            block; heading/tilt/buildingRenderMode/show3DExtrusions state
+            and the props wired into RealCadastreMap below are untouched. */}
+        {false && mapEngine === 'vector' && (
           <CompassTool
             heading={mapHeading}
             onHeadingChange={setMapHeading}
@@ -491,7 +516,7 @@ export const CadastralMap: React.FC<CadastralMapProps> = ({
               <Map
                 mapId={configuredMapId}
                 defaultCenter={currentCenter}
-                defaultZoom={16}
+                defaultZoom={17}
                 mapTypeId={googleMapType}
                 gestureHandling="greedy"
                 disableDefaultUI={false}

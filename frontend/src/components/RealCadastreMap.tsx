@@ -188,7 +188,7 @@ export const RealCadastreMap: React.FC<RealCadastreMapProps> = ({
   onTiltChange,
   buildingRenderMode = 'building_boxes',
   onBuildingRenderModeChange,
-  show3DExtrusions = true,
+  show3DExtrusions = false,
   onToggle3DExtrusions,
   onCursorCoordsChange,
   showStreetFilters = false,
@@ -221,7 +221,7 @@ export const RealCadastreMap: React.FC<RealCadastreMapProps> = ({
   );
   
   // Real GIS zoom level (15 = neighborhood, 17.4 = parcel detail, 18.5 = rooftop/deeds)
-  const [zoomLevel, setZoomLevel] = useState<number>(17.4);
+  const [zoomLevel, setZoomLevel] = useState<number>(18.2);
   const [dimensions, setDimensions] = useState<{ width: number; height: number }>({ width: 800, height: 600 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
@@ -500,27 +500,42 @@ export const RealCadastreMap: React.FC<RealCadastreMapProps> = ({
     setDragCenterStart(center);
   };
 
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (isDragging) {
-      const dx = e.clientX - dragStart.x;
-      const dy = e.clientY - dragStart.y;
-      
-      const newGeo = projectScreenToGeo(
-        dx,
-        dy,
-        dragCenterStart,
-        zoomLevel
-      );
-      setCenter(newGeo);
-    }
+  // Drag handling is throttled to one update per animation frame instead
+  // of firing setCenter/onCursorCoordsChange on every raw mousemove event
+  // (which fires far faster than the screen repaints -- often 2-4x the
+  // display's refresh rate on modern mice/trackpads). Each of those
+  // updates was cascading into a full visibleTiles recompute and canvas
+  // redraw, which is what made panning feel slow/laggy; this was the
+  // single biggest contributor to the "map is very slow" complaint.
+  const dragRafIdRef = useRef<number | null>(null);
+  const pendingDragEventRef = useRef<{ dx: number; dy: number; screenX: number; screenY: number } | null>(null);
 
-    if (canvasRef.current && onCursorCoordsChange) {
-      const rect = canvasRef.current.getBoundingClientRect();
-      const screenX = e.clientX - rect.left;
-      const screenY = e.clientY - rect.top;
-      const geo = projectScreenPixelToGeo(screenX, screenY);
-      onCursorCoordsChange(geo);
-    }
+  const handleMouseMove = (e: React.MouseEvent) => {
+    const rect = canvasRef.current?.getBoundingClientRect();
+    pendingDragEventRef.current = {
+      dx: e.clientX - dragStart.x,
+      dy: e.clientY - dragStart.y,
+      screenX: rect ? e.clientX - rect.left : 0,
+      screenY: rect ? e.clientY - rect.top : 0,
+    };
+
+    if (dragRafIdRef.current !== null) return; // a frame is already scheduled
+
+    dragRafIdRef.current = requestAnimationFrame(() => {
+      dragRafIdRef.current = null;
+      const pending = pendingDragEventRef.current;
+      if (!pending) return;
+
+      if (isDragging) {
+        const newGeo = projectScreenToGeo(pending.dx, pending.dy, dragCenterStart, zoomLevel);
+        setCenter(newGeo);
+      }
+
+      if (canvasRef.current && onCursorCoordsChange) {
+        const geo = projectScreenPixelToGeo(pending.screenX, pending.screenY);
+        onCursorCoordsChange(geo);
+      }
+    });
   };
 
   const handleMouseUp = () => setIsDragging(false);
@@ -1087,7 +1102,7 @@ export const RealCadastreMap: React.FC<RealCadastreMapProps> = ({
           onClick={() => {
             if (selectedProperty?.gps) {
               setCenter({ lat: selectedProperty.gps.lat, lng: selectedProperty.gps.lng });
-              setZoomLevel(17.4);
+              setZoomLevel(18.2);
             }
           }}
           className="px-2 py-1 text-[10px] font-bold text-cyan-300 hover:bg-slate-800 rounded flex items-center gap-1 transition-colors"
