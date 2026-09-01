@@ -2038,27 +2038,186 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
                 </form>
               </div>
 
-              {/* Two-Factor Authentication Box */}
-              <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-xs flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center">
-                    <ShieldCheck className="w-5 h-5" />
+              {/* Two-Factor Authentication -- Authenticator App (TOTP) */}
+              <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-xs space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${totpEnabled ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-500'}`}>
+                      <Smartphone className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="font-bold text-xs text-slate-900">Authenticator App</div>
+                      <div className="text-[11px] text-slate-500">Google Authenticator, Authy, or any TOTP-compatible app</div>
+                    </div>
                   </div>
-                  <div>
-                    <div className="font-bold text-xs text-slate-900">Two-Factor Authentication (2FA)</div>
-                    <div className="text-[11px] text-slate-500">Require an SMS / Authenticator verification code for high-risk Deeds Office queries</div>
-                  </div>
+
+                  {totpEnabled ? (
+                    <button
+                      type="button"
+                      onClick={() => setShowDisableTotpPrompt(true)}
+                      className="px-3 py-1.5 rounded text-xs font-bold bg-emerald-600 text-white hover:bg-rose-600 transition-colors cursor-pointer"
+                    >
+                      Enabled — Disable
+                    </button>
+                  ) : totpSetupData ? null : (
+                    <button
+                      type="button"
+                      onClick={handleStartTotpSetup}
+                      disabled={isTotpBusy}
+                      className="px-3 py-1.5 rounded text-xs font-bold bg-slate-800 text-white hover:bg-slate-700 disabled:opacity-60 transition-colors cursor-pointer flex items-center gap-1.5"
+                    >
+                      {isTotpBusy && <RefreshCw className="w-3 h-3 animate-spin" />}
+                      <span>Set Up</span>
+                    </button>
+                  )}
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => setTwoFactorEnabled(!twoFactorEnabled)}
-                  className={`px-3 py-1.5 rounded text-xs font-bold transition-colors ${
-                    twoFactorEnabled ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-700'
-                  }`}
-                >
-                  {twoFactorEnabled ? 'Enabled' : 'Disabled'}
-                </button>
+                {totpError && (
+                  <div className="bg-rose-50 border-2 border-rose-400 text-rose-800 px-3 py-2 rounded text-[11px] font-bold flex items-center gap-2">
+                    <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                    <span>{totpError}</span>
+                  </div>
+                )}
+
+                {totpSetupData && (
+                  <div className="border-t border-slate-100 pt-4 flex flex-col sm:flex-row gap-4">
+                    <img
+                      src={totpSetupData.qrCodeDataUri}
+                      alt="Scan with your authenticator app"
+                      className="w-36 h-36 border border-slate-200 rounded-lg p-1 shrink-0 mx-auto sm:mx-0"
+                    />
+                    <div className="flex-1 space-y-2.5">
+                      <p className="text-[11px] text-slate-600">
+                        Scan this QR code with your authenticator app, then enter the 6-digit code it shows.
+                      </p>
+                      <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded px-2 py-1.5">
+                        <code className="text-[10px] font-mono text-slate-600 truncate flex-1">{totpSetupData.secret}</code>
+                        <button
+                          type="button"
+                          onClick={() => navigator.clipboard.writeText(totpSetupData.secret)}
+                          className="text-slate-400 hover:text-slate-700 cursor-pointer shrink-0"
+                          title="Copy secret (for manual entry)"
+                        >
+                          <Copy className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          maxLength={6}
+                          value={totpConfirmCode}
+                          onChange={(e) => setTotpConfirmCode(e.target.value.replace(/\D/g, ''))}
+                          placeholder="000000"
+                          className="w-28 px-3 py-2 border border-slate-300 rounded text-sm font-mono tracking-widest text-center focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 outline-none"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleConfirmTotpSetup}
+                          disabled={isTotpBusy || totpConfirmCode.length !== 6}
+                          className="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-xs px-4 py-2 rounded transition-colors cursor-pointer flex items-center gap-1.5"
+                        >
+                          {isTotpBusy && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
+                          <span>Confirm & Enable</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => { setTotpSetupData(null); setTotpConfirmCode(''); setTotpError(null); }}
+                          className="text-xs text-slate-400 hover:text-slate-600 cursor-pointer"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {showDisableTotpPrompt && (
+                  <div className="border-t border-slate-100 pt-4 flex items-center gap-2">
+                    <input
+                      type="password"
+                      value={disableTotpPassword}
+                      onChange={(e) => setDisableTotpPassword(e.target.value)}
+                      placeholder="Enter your password to confirm"
+                      className="flex-1 px-3 py-2 border border-slate-300 rounded text-xs focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleDisableTotp}
+                      disabled={isTotpBusy || !disableTotpPassword}
+                      className="bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white font-bold text-xs px-4 py-2 rounded transition-colors cursor-pointer whitespace-nowrap"
+                    >
+                      Disable 2FA
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setShowDisableTotpPrompt(false); setDisableTotpPassword(''); setTotpError(null); }}
+                      className="text-xs text-slate-400 hover:text-slate-600 cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Two-Factor Authentication -- Passkeys (WebAuthn) */}
+              <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-xs space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${passkeys.length > 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-500'}`}>
+                      <KeyRound className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="font-bold text-xs text-slate-900">Passkeys</div>
+                      <div className="text-[11px] text-slate-500">Face ID, Windows Hello, or a hardware security key</div>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleAddPasskey}
+                    disabled={isRegisteringPasskey}
+                    className="px-3 py-1.5 rounded text-xs font-bold bg-slate-800 text-white hover:bg-slate-700 disabled:opacity-60 transition-colors cursor-pointer flex items-center gap-1.5"
+                  >
+                    {isRegisteringPasskey && <RefreshCw className="w-3 h-3 animate-spin" />}
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Add Passkey</span>
+                  </button>
+                </div>
+
+                {passkeyError && (
+                  <div className="bg-rose-50 border-2 border-rose-400 text-rose-800 px-3 py-2 rounded text-[11px] font-bold flex items-center gap-2">
+                    <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                    <span>{passkeyError}</span>
+                  </div>
+                )}
+
+                {passkeys.length > 0 && (
+                  <div className="divide-y divide-slate-100 border-t border-slate-100">
+                    {passkeys.map((pk) => (
+                      <div key={pk.id} className="flex items-center justify-between py-2.5">
+                        <div className="flex items-center gap-2.5">
+                          <Key className="w-4 h-4 text-slate-400" />
+                          <div>
+                            <div className="text-xs font-bold text-slate-800">{pk.nickname}</div>
+                            {pk.createdAt && (
+                              <div className="text-[10px] text-slate-400">
+                                Added {new Date(pk.createdAt).toLocaleDateString()}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleRemovePasskey(pk.id)}
+                          className="text-slate-400 hover:text-rose-600 cursor-pointer"
+                          title="Remove this passkey"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           )}
