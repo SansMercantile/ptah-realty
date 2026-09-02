@@ -67,6 +67,13 @@ export default function App({
     return INITIAL_LEADS;
   });
 
+  // Server-authored notification log -- see services/api.ts's CrmState
+  // docstring. Populated from GET /crm/state and refreshed after any
+  // save that reports emailsSent > 0 (the PUT response doesn't include
+  // the entries themselves, just a count, since those are written
+  // server-side by AutomationRule dispatch during that same request).
+  const [emailLogs, setEmailLogs] = useState<EmailNotificationLog[]>([]);
+
   const [automationRules, setAutomationRules] = useState<AutomationRule[]>(() => {
     const saved = localStorage.getItem('ptah_crm_rules');
     if (saved) {
@@ -248,6 +255,7 @@ export default function App({
           if (state.listings?.length) setListings(state.listings);
           if (state.showHouses?.length) setShowHouses(state.showHouses);
           if (state.campaigns?.length) setCampaigns(state.campaigns);
+          if (state.emailLogs?.length) setEmailLogs(state.emailLogs);
         }
         setCrmSyncStatus('synced');
       } catch (err) {
@@ -270,7 +278,19 @@ export default function App({
       setCrmSyncStatus('saving');
       flashSyncBadge();
       saveCrmState({ leads, automationRules, connectors, connectorSyncEvents, sprint, listings, showHouses, campaigns })
-        .then(() => setCrmSyncStatus('synced'))
+        .then((result) => {
+          setCrmSyncStatus('synced');
+          // New leads saved in this batch may have triggered real
+          // AutomationRule email dispatch server-side -- the PUT
+          // response only reports a count, not the entries themselves
+          // (those are server-authored), so refresh from GET to pick
+          // them up for the notification bell / Email Automations view.
+          if (result.emailsSent > 0) {
+            getCrmState()
+              .then((state) => { if (state.emailLogs) setEmailLogs(state.emailLogs); })
+              .catch((err) => console.error('CRM: failed to refresh email logs after save:', err));
+          }
+        })
         .catch((err) => {
           console.error('CRM: failed to save state to backend (kept in localStorage only):', err);
           setCrmSyncStatus('offline');
@@ -383,15 +403,13 @@ export default function App({
     }
   }, [toastAlert]);
 
-  // Flattened active notifications
+  // Real server-authored notification log, newest first -- was
+  // previously flattened from a per-lead `emailLogs` field that no real
+  // backend write ever populated (the backend logs live on the
+  // top-level crm_state document, not nested per-lead).
   const allNotifications = useMemo(() => {
-    const list: EmailNotificationLog[] = [];
-    leads.forEach((l) => {
-      l.emailLogs.forEach((log) => list.push(log));
-    });
-    // sort newest first
-    return list.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-  }, [leads]);
+    return [...emailLogs].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  }, [emailLogs]);
 
   // Pending tasks count
   const pendingTasksCount = useMemo(() => {
@@ -602,13 +620,13 @@ export default function App({
       });
       const result: { ok: boolean; error: string | null; logEntry: EmailNotificationLog } = await response.json();
 
-      if (leads.length > 0) {
-        const updatedFirstLead = {
-          ...leads[0],
-          emailLogs: [result.logEntry, ...leads[0].emailLogs],
-        };
-        setLeads((prev) => [updatedFirstLead, ...prev.slice(1)]);
-      }
+      // Appends to the real top-level emailLogs state (see chat: this
+      // used to mutate leads[0].emailLogs, a field no real backend write
+      // ever populated). The backend also pushed this same entry onto
+      // crm_state.emailLogs server-side, so this is just an optimistic
+      // local update for immediate feedback -- next load/refresh will
+      // agree with it either way.
+      setEmailLogs((prev) => [result.logEntry, ...prev]);
 
       setToastAlert(
         result.ok
@@ -834,6 +852,7 @@ export default function App({
         <LeadDetailModal
           lead={selectedLead}
           allLeads={leads}
+          emailLogs={allNotifications}
           onClose={() => setSelectedLead(null)}
           onUpdateLead={handleUpdateLead}
         />
@@ -859,7 +878,12 @@ export default function App({
         notifications={allNotifications}
         leads={leads}
         onClearAllNotifications={() => {
-          setLeads((prev) => prev.map((l) => ({ ...l, emailLogs: [] })));
+          // Clears the local view only -- crm_state.emailLogs is
+          // server-authored (see save_crm_state's docstring: the client
+          // can't overwrite it), so this is a per-session dismiss, not a
+          // deletion of the real send audit trail. Reloading will bring
+          // the real history back, same as any "clear" on a synced inbox.
+          setEmailLogs([]);
         }}
         onToggleTask={handleToggleTask}
         onSelectLead={(lead) => setSelectedLead(lead)}

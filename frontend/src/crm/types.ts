@@ -145,6 +145,12 @@ export interface EmailNotificationLog {
   status: 'delivered' | 'opened' | 'clicked' | 'sent' | 'failed';
   previewSnippet: string;
   propertyTitle?: string;
+  // Which lead this notification was about -- absent on test sends
+  // (api/crm.py's send_test_email isn't tied to a real lead). Lets
+  // LeadActivityFeed/LeadDetailModal show a lead's own email history by
+  // filtering the real top-level log instead of a per-lead field no
+  // real backend write ever populated.
+  leadId?: string;
   // Real SES failure reason, only present when status === 'failed' --
   // see api/crm.py's save_crm_state / send_test_email.
   error?: string;

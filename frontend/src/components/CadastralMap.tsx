@@ -409,9 +409,15 @@ export const CadastralMap: React.FC<CadastralMapProps> = ({
         </button>
       </div>
 
-      {/* Street & Precinct Filter Panel */}
+      {/* Street & Precinct Filter Panel -- fixed (viewport-relative, not
+          anchored to this map canvas) and offset to match the property
+          detail sidebar's own responsive width exactly (see
+          PropertyPanel.tsx's w-80 sm:w-96 lg:w-[410px]), so the panel's
+          right edge always sits flush against the sidebar's left edge
+          regardless of map width, and a high z-index so it can never be
+          rendered underneath the sidebar, map controls, or anything else. */}
       {showStreetFilters && (
-        <div className="absolute top-14 right-3 z-30 pointer-events-auto animate-fade-in">
+        <div className="fixed top-32 right-80 sm:right-96 lg:right-[410px] z-[90] pointer-events-auto animate-fade-in">
           <StreetFilterControls
             properties={properties}
             visibleStreets={visibleStreets}
@@ -425,6 +431,7 @@ export const CadastralMap: React.FC<CadastralMapProps> = ({
             onToggleHouseNumbers={setShowHouseNumbers}
             categoryFilter={categoryFilter}
             onSetCategoryFilter={setCategoryFilter}
+            onClose={() => setShowStreetFilters(false)}
           />
         </div>
       )}

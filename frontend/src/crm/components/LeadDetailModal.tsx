@@ -32,7 +32,7 @@ import {
   Video,
   Layers
 } from 'lucide-react';
-import { Lead, LeadStatus, CommunicationItem, TaskItem, UrgencyLevel, CommunicationType, ActivityLogItem } from '../types';
+import { Lead, LeadStatus, CommunicationItem, TaskItem, UrgencyLevel, CommunicationType, ActivityLogItem, EmailNotificationLog } from '../types';
 import { formatCurrency, formatDate, formatRelativeTime, triggerDealWonConfetti, computeAgeBracket } from '../utils/formatters';
 import { LeadQualityScoreView } from './LeadQualityScoreView';
 import { LeadActivityFeed } from './LeadActivityFeed';
@@ -41,6 +41,12 @@ import { calculateLeadQualityScore } from '../utils/qualityScore';
 interface LeadDetailModalProps {
   lead: Lead;
   allLeads?: Lead[];
+  // Real top-level notification log (see chat: was previously read from
+  // lead.emailLogs, a per-lead field no real backend write populates --
+  // the backend logs live on the whole crm_state document, correlated
+  // back to a lead via EmailNotificationLog.leadId). Filtered to this
+  // lead's own entries below.
+  emailLogs?: EmailNotificationLog[];
   onClose: () => void;
   onUpdateLead: (updatedLead: Lead) => void;
 }
@@ -48,9 +54,11 @@ interface LeadDetailModalProps {
 export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
   lead,
   allLeads = [],
+  emailLogs = [],
   onClose,
   onUpdateLead,
 }) => {
+  const leadEmailLogs = emailLogs.filter((log) => log.leadId === lead.id);
   const [activeTab, setActiveTab] = useState<'score' | 'activity' | 'comms' | 'ai' | 'tasks' | 'emails' | 'details'>('activity');
   const tabNavRef = useRef<HTMLDivElement>(null);
 
@@ -670,7 +678,7 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
             }`}
           >
             <Mail className="w-4 h-4 text-emerald-600" />
-            <span>Email Automations ({lead.emailLogs.length})</span>
+            <span>Email Automations ({leadEmailLogs.length})</span>
           </button>
 
           <button
@@ -693,6 +701,7 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
             <LeadActivityFeed
               lead={lead}
               onUpdateLead={onUpdateLead}
+              emailLogs={leadEmailLogs}
             />
           )}
 
@@ -1195,12 +1204,12 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
               </div>
 
               <div className="space-y-3">
-                {lead.emailLogs.length === 0 ? (
+                {leadEmailLogs.length === 0 ? (
                   <div className="text-center p-8 bg-slate-50 rounded-xl border border-slate-200 text-slate-400 text-xs italic">
                     No automated notifications recorded for this lead yet.
                   </div>
                 ) : (
-                  lead.emailLogs.map((log) => (
+                  leadEmailLogs.map((log) => (
                     <div key={log.id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center space-x-2">

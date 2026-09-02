@@ -22,15 +22,19 @@ import {
   Building,
   RotateCcw
 } from 'lucide-react';
-import { Lead, ActivityLogItem, ActivityEventType, LeadStatus, CommunicationType } from '../types';
+import { Lead, ActivityLogItem, ActivityEventType, LeadStatus, CommunicationType, EmailNotificationLog } from '../types';
 import { formatDate, formatRelativeTime, formatCurrency } from '../utils/formatters';
 
 interface LeadActivityFeedProps {
   lead: Lead;
   onUpdateLead: (updatedLead: Lead) => void;
+  // Real top-level notification log, pre-filtered to this lead's own
+  // entries by the caller (see LeadDetailModal.tsx) -- lead.emailLogs
+  // itself is never populated by a real backend write.
+  emailLogs?: EmailNotificationLog[];
 }
 
-export const LeadActivityFeed: React.FC<LeadActivityFeedProps> = ({ lead, onUpdateLead }) => {
+export const LeadActivityFeed: React.FC<LeadActivityFeedProps> = ({ lead, onUpdateLead, emailLogs = [] }) => {
   const [filterType, setFilterType] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [newNote, setNewNote] = useState<string>('');
@@ -122,7 +126,7 @@ export const LeadActivityFeed: React.FC<LeadActivityFeedProps> = ({ lead, onUpda
     });
 
     // 5. Automated Email Notifications
-    lead.emailLogs.forEach((emailLog) => {
+    emailLogs.forEach((emailLog) => {
       if (!items.some((i) => i.id === `email-act-${emailLog.id}` || i.id === emailLog.id)) {
         items.push({
           id: `email-act-${emailLog.id}`,
@@ -167,7 +171,7 @@ export const LeadActivityFeed: React.FC<LeadActivityFeedProps> = ({ lead, onUpda
     return Array.from(uniqueMap.values()).sort((a, b) => {
       return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
     });
-  }, [lead]);
+  }, [lead, emailLogs]);
 
   // Filtered list based on search and tab selection
   const filteredActivities = useMemo(() => {

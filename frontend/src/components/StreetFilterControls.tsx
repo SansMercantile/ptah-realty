@@ -1,17 +1,9 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { 
-  Filter, 
-  Eye, 
-  EyeOff, 
-  Layers, 
-  MapPin, 
-  Sparkles, 
   Check, 
   CheckSquare, 
   Square, 
   RotateCcw, 
-  ChevronDown, 
-  ChevronUp,
   Building2,
   Home,
   SlidersHorizontal,
@@ -39,8 +31,16 @@ interface StreetFilterControlsProps {
   onToggleHouseNumbers: (show: boolean) => void;
   categoryFilter: 'ALL' | 'FREEHOLD' | 'SECTIONAL';
   onSetCategoryFilter: (filter: 'ALL' | 'FREEHOLD' | 'SECTIONAL') => void;
+  onClose: () => void;
 }
 
+// Pure controlled panel -- no trigger button of its own. This used to
+// render its own "Street & Cluster Filter" button plus manage its own
+// open/closed state internally, which duplicated the real trigger (the
+// "Streets" button in RealCadastreMap.tsx's basemap bar) and meant two
+// clicks were needed to actually see the panel. The parent (CadastralMap)
+// now owns visibility entirely via isOpen/onClose, matching how every
+// other popover in this app works.
 export const StreetFilterControls: React.FC<StreetFilterControlsProps> = ({
   properties,
   visibleStreets,
@@ -53,23 +53,29 @@ export const StreetFilterControls: React.FC<StreetFilterControlsProps> = ({
   showHouseNumbers,
   onToggleHouseNumbers,
   categoryFilter,
-  onSetCategoryFilter
+  onSetCategoryFilter,
+  onClose
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
 
-  // Close when clicking outside
+  // Close on outside click or Escape -- same standard used throughout
+  // the app's modals/popovers.
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (panelRef.current && !panelRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
+        onClose();
       }
     };
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isOpen]);
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [onClose]);
 
   // Compute counts per street
   const streetCounts = React.useMemo(() => {
@@ -112,51 +118,29 @@ export const StreetFilterControls: React.FC<StreetFilterControlsProps> = ({
 
   return (
     <div ref={panelRef} className="relative z-20 pointer-events-auto">
-      {/* Trigger Button */}
-      <button
-        id="btn-cadastral-street-filter"
-        onClick={() => setIsOpen(!isOpen)}
-        className={`px-3 py-1.5 rounded-lg border text-xs font-semibold flex items-center gap-2 shadow-lg transition-all ${
-          isFilteringActive
-            ? 'bg-cyan-950/90 border-cyan-400/80 text-cyan-200 ring-1 ring-cyan-500/50'
-            : 'bg-slate-900/90 border-slate-700 text-slate-300 hover:text-white hover:border-slate-600'
-        }`}
-        title="Toggle Street-Level Cadastral Filters"
+      {/* Filter Popover Panel -- mounting/unmounting is entirely
+          controlled by the parent (CadastralMap) via isOpen/onClose;
+          this component never renders its own trigger. */}
+      <div
+        id="cadastral-street-filter-panel"
+        className="w-80 sm:w-96 bg-slate-900/95 backdrop-blur-xl border border-slate-700/80 rounded-xl shadow-2xl p-4 text-slate-200 space-y-3.5 animate-fade-in"
       >
-        <Filter className={`w-3.5 h-3.5 ${isFilteringActive ? 'text-cyan-400 animate-pulse' : 'text-slate-400'}`} />
-        <span>
-          {isFilteringActive 
-            ? `Filtered: ${visibleStreets.size}/${CADASTRAL_STREETS.length} Streets` 
-            : 'Street & Cluster Filter'}
-        </span>
-        {isFilteringActive && (
-          <span className="w-2 h-2 rounded-full bg-cyan-400"></span>
-        )}
-        <ChevronDown className={`w-3 h-3 text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-      </button>
-
-      {/* Filter Popover Dropdown Panel */}
-      {isOpen && (
-        <div 
-          id="cadastral-street-filter-panel"
-          className="absolute top-10 left-0 w-80 sm:w-96 bg-slate-900/95 backdrop-blur-xl border border-slate-700/80 rounded-xl shadow-2xl p-4 text-slate-200 z-50 space-y-3.5 animate-fade-in"
-        >
-          {/* Header */}
-          <div className="flex items-center justify-between pb-2 border-b border-slate-800">
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 bg-cyan-950/80 border border-cyan-500/30 rounded-lg text-cyan-400">
-                <SlidersHorizontal className="w-4 h-4" />
-              </div>
-              <div>
-                <h4 className="text-xs font-bold text-white tracking-wide">Cadastral Street Visibility</h4>
-                <p className="text-[10px] text-slate-400">Toggle streets or clusters to reduce map clutter</p>
-              </div>
+        {/* Header */}
+        <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 bg-cyan-950/80 border border-cyan-500/30 rounded-lg text-cyan-400">
+              <SlidersHorizontal className="w-4 h-4" />
             </div>
-            <button
-              onClick={() => setIsOpen(false)}
-              className="p-1 text-slate-400 hover:text-white hover:bg-slate-800 rounded-md transition-colors"
-            >
-              <X className="w-4 h-4" />
+            <div>
+              <h4 className="text-xs font-bold text-white tracking-wide">Cadastral Street Visibility</h4>
+              <p className="text-[10px] text-slate-400">Toggle streets or clusters to reduce map clutter</p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1 text-slate-400 hover:text-white hover:bg-slate-800 rounded-md transition-colors"
+          >
+            <X className="w-4 h-4" />
             </button>
           </div>
 
@@ -313,7 +297,6 @@ export const StreetFilterControls: React.FC<StreetFilterControlsProps> = ({
             </button>
           </div>
         </div>
-      )}
     </div>
   );
 };
