@@ -1238,6 +1238,34 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
               )}
 
 
+              {/* Profile Sub-Tabs -- mirrors the Billing & Credits sub-tab
+                  pattern so each screen only renders one section at a time
+                  instead of stacking all 4 sections, which was overflowing
+                  the modal and forcing a scrollbar unlike the other tabs. */}
+              <div className="flex items-center border-b border-slate-200 bg-slate-50 px-3 text-xs overflow-x-auto">
+                {([
+                  { id: 'identity', label: 'Identity & Regulatory', icon: User },
+                  { id: 'bio', label: 'Bio & Jurisdiction', icon: Globe },
+                  { id: 'farming', label: 'Farming Territories', icon: MapPin },
+                  { id: 'language', label: 'Language & Reports', icon: BookOpen },
+                ] as const).map((t) => (
+                  <button
+                    key={t.id}
+                    onClick={() => setProfileSubTab(t.id)}
+                    className={`flex items-center gap-1.5 px-3 py-2.5 font-bold whitespace-nowrap border-b-2 transition-colors ${
+                      profileSubTab === t.id
+                        ? 'border-[#00bcd4] text-[#006980]'
+                        : 'border-transparent text-slate-500 hover:text-slate-700'
+                    }`}
+                  >
+                    <t.icon className="w-3.5 h-3.5" />
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+
+              {profileSubTab === 'identity' && (
+              <>
               {/* ============================================================ */}
               {/* SECTION 1: IDENTITY & RESIDENCY (Right above Country & Area / Bio) */}
               {/* ============================================================ */}
@@ -1585,6 +1613,11 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
                 </div>
               </div>
 
+              </>
+              )}
+
+              {profileSubTab === 'bio' && (
+              <>
               {/* ============================================================ */}
               {/* SECTION 2: AGENT BIO & SPECIALTY (Followed by Bio) */}
               {/* ============================================================ */}
@@ -1746,6 +1779,11 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
                 </div>
               </div>
 
+              </>
+              )}
+
+              {profileSubTab === 'farming' && (
+              <>
               {/* ============================================================ */}
               {/* SECTION 4: ASSIGNED FARMING SUBURBS & TERRITORIES (Matches Country & Area) */}
               {/* ============================================================ */}
@@ -1889,6 +1927,11 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
                 </div>
               </div>
 
+              </>
+              )}
+
+              {profileSubTab === 'language' && (
+              <>
               {/* ============================================================ */}
               {/* SECTION 5: APPLICATION & REPORT LANGUAGE (Single Dropdown) */}
               {/* ============================================================ */}
@@ -1991,6 +2034,9 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
                   </div>
                 </div>
               </div>
+
+              </>
+              )}
             </div>
           )}
 
@@ -3223,6 +3269,31 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
                 </button>
               </div>
 
+              {/* Preferences Sub-Tabs -- same pattern as Profile/Billing, so
+                  the taller Appearance & Theme swatch grid doesn't force a
+                  scrollbar the other tabs don't have. */}
+              <div className="flex items-center border-b border-slate-200 bg-slate-50 px-3 text-xs overflow-x-auto">
+                {([
+                  { id: 'regional', label: 'Regional & Formatting', icon: Sliders },
+                  { id: 'appearance', label: 'Appearance & Theme', icon: Layers },
+                ] as const).map((t) => (
+                  <button
+                    key={t.id}
+                    onClick={() => setPreferencesSubTab(t.id)}
+                    className={`flex items-center gap-1.5 px-3 py-2.5 font-bold whitespace-nowrap border-b-2 transition-colors ${
+                      preferencesSubTab === t.id
+                        ? 'border-[#00bcd4] text-[#006980]'
+                        : 'border-transparent text-slate-500 hover:text-slate-700'
+                    }`}
+                  >
+                    <t.icon className="w-3.5 h-3.5" />
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+
+              {preferencesSubTab === 'appearance' && (
+              <>
               {/* Appearance & Theme Card -- luxury theme options. Each
                   swatch's two dots are the accent pair that theme
                   actually applies app-wide (see index.css); applied
@@ -3287,6 +3358,11 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
                 </p>
               </div>
 
+              </>
+              )}
+
+              {preferencesSubTab === 'regional' && (
+              <>
               {/* Preferences Configuration Card */}
               <div className="bg-white p-6 rounded-lg border border-slate-200 shadow-xs space-y-5">
                 <div className="border-b border-slate-100 pb-2.5 flex items-center justify-between">
@@ -3407,6 +3483,9 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
                   </button>
                 </div>
               </div>
+
+              </>
+              )}
             </div>
           )}
 
