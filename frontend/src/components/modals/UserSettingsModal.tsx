@@ -61,7 +61,7 @@ import {
   FileCheck,
   Copy
 } from 'lucide-react';
-import { uploadAvatar, removeAvatar, uploadCompanyLogo, removeCompanyLogo, changePassword, getMyProfile, getTotpStatus, setupTotp, enableTotp, disableTotp, listPasskeys, getPasskeyRegistrationOptions, verifyPasskeyRegistration, deletePasskey, PasskeySummary, getVerificationStatus, sendEmailVerification, confirmEmailVerification, sendMobileVerification, confirmMobileVerification } from '../../services/api';
+import { uploadAvatar, removeAvatar, uploadCompanyLogo, removeCompanyLogo, changePassword, getMyProfile, getTotpStatus, setupTotp, enableTotp, disableTotp, listPasskeys, getPasskeyRegistrationOptions, verifyPasskeyRegistration, deletePasskey, PasskeySummary, getVerificationStatus, sendEmailVerification, confirmEmailVerification, sendMobileVerification, confirmMobileVerification, getPayfastAddCardUrl, listPaymentMethods, removePaymentMethod, PaymentMethodRecord } from '../../services/api';
 import { isWebAuthnSupported, createPasskeyCredential, describeWebAuthnError } from '../../services/webauthnClient';
 
 import { 
@@ -440,7 +440,7 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
   const [otpSuccessToast, setOtpSuccessToast] = useState<string | null>(null);
 
   const handleSendOtp = async () => {
-    const fullNumber = `+${activeCountry.phoneDialCode}${(profile.cellPhone || '').replace(/\D/g, '')}`;
+    const fullNumber = `${activeCountry.phoneDialCode}${(profile.cellPhone || '').replace(/\D/g, '')}`;
     setIsOtpSending(true);
     setOtpError(null);
     try {
@@ -639,21 +639,34 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
   const [autoRechargeThreshold, setAutoRechargeThreshold] = useState('20');
   const [autoRechargeAmount, setAutoRechargeAmount] = useState('500');
 
-  // New Payment Method Form State
-  const [newCardNumber, setNewCardNumber] = useState('');
-  const [newCardExpiry, setNewCardExpiry] = useState('');
-  const [newCardCvv, setNewCardCvv] = useState('');
-  const [newCardHolder, setNewCardHolder] = useState('');
-  const [paymentMethodsList, setPaymentMethodsList] = useState([
-    { id: 'pm-1', type: 'Visa', last4: '4242', exp: '09/28', isDefault: true, holder: 'Ronald Read' },
-    { id: 'pm-2', type: 'Mastercard', last4: '8831', exp: '11/27', isDefault: false, holder: 'LAW Real Estate' }
-  ]);
+  // New Payment Method: PayFast's hosted page collects the actual card
+  // -- there is no real form here for card number/expiry/CVV to submit,
+  // since that data should never touch this frontend at all. Clicking
+  // "Add Payment Method" navigates the browser to a real PayFast
+  // sandbox checkout (see handleAddNewPaymentMethod below).
+  const [isStartingAddCard, setIsStartingAddCard] = useState(false);
+  const [paymentMethodsList, setPaymentMethodsList] = useState<PaymentMethodRecord[]>([]);
+  const [isLoadingPaymentMethods, setIsLoadingPaymentMethods] = useState(false);
+  const [paymentMethodsError, setPaymentMethodsError] = useState<string | null>(null);
 
-  // Company Tax info state
-  const [taxVatNumber, setTaxVatNumber] = useState('4920194821');
-  const [taxCompanyName, setTaxCompanyName] = useState('LAW Real Estate (Pty) Ltd t/a PTAH Realty');
-  const [taxBillingEmail, setTaxBillingEmail] = useState('accounts@lawrealestate.co.za');
-  const [taxAddress, setTaxAddress] = useState('Suite 402, The Equinox, 154 Main Road, Sea Point, Cape Town, 8005');
+  useEffect(() => {
+    if (activeTab !== 'billing' || billingSubTab !== 'payment') return;
+    setIsLoadingPaymentMethods(true);
+    setPaymentMethodsError(null);
+    listPaymentMethods()
+      .then(setPaymentMethodsList)
+      .catch((err) => setPaymentMethodsError(err?.message || 'Could not load payment methods.'))
+      .finally(() => setIsLoadingPaymentMethods(false));
+  }, [activeTab, billingSubTab]);
+
+  // Company Tax info state -- no backend persistence exists for this
+  // yet (see handleSaveTax's toast-only behavior below), so these
+  // start empty rather than pre-filled with a fictional company. Real
+  // users should never see someone else's VAT number / address here.
+  const [taxVatNumber, setTaxVatNumber] = useState('');
+  const [taxCompanyName, setTaxCompanyName] = useState('');
+  const [taxBillingEmail, setTaxBillingEmail] = useState('');
+  const [taxAddress, setTaxAddress] = useState('');
   const [taxSaved, setTaxSaved] = useState(false);
 
   // Language state (under Profile)
@@ -718,7 +731,7 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
     }
     setIsPhoneOtpVerified(true);
     setShowOtpModal(false);
-    setOtpSuccessToast(`Mobile verification successful (+${activeCountry.phoneDialCode} ${profile.cellPhone}). Verified in ${activeCountry.name}!`);
+      setOtpSuccessToast(`Mobile verification successful (${activeCountry.phoneDialCode} ${profile.cellPhone}). Verified in ${activeCountry.name}!`);
     setTimeout(() => setOtpSuccessToast(null), 4000);
   };
 
@@ -883,25 +896,34 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
     }, 850);
   };
 
-  const handleAddNewPaymentMethod = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newCardNumber || !newCardExpiry || !newCardCvv) {
-      alert('Please fill in all card details.');
-      return;
+  // Previously fake: fabricated a local card entry from raw
+  // number/expiry/CVV typed into this modal, which is also just wrong
+  // practice for card data generally. Now sends the browser to a real
+  // PayFast sandbox checkout (api/billing.py) -- the actual card never
+  // touches this app at all, and the saved method only appears once
+  // PayFast's own ITN callback confirms it (see listPaymentMethods,
+  // reloaded when the person returns to this tab).
+  const handleAddNewPaymentMethod = async () => {
+    setIsStartingAddCard(true);
+    setPaymentMethodsError(null);
+    try {
+      const redirectUrl = await getPayfastAddCardUrl();
+      window.location.href = redirectUrl;
+    } catch (err: any) {
+      setPaymentMethodsError(err?.message || 'Could not start the PayFast checkout.');
+      setIsStartingAddCard(false);
     }
-    const last4 = newCardNumber.slice(-4) || '7890';
-    const cardType = newCardNumber.startsWith('5') ? 'Mastercard' : 'Visa';
-    setPaymentMethodsList(prev => [
-      ...prev.map(p => ({ ...p, isDefault: false })),
-      { id: `pm-${Date.now()}`, type: cardType, last4, exp: newCardExpiry, isDefault: true, holder: newCardHolder || 'Ronald Read' }
-    ]);
-    setShowAddPaymentModal(false);
-    setNewCardNumber('');
-    setNewCardExpiry('');
-    setNewCardCvv('');
-    setNewCardHolder('');
-    setBillingToast('New payment method added & set as default.');
-    setTimeout(() => setBillingToast(null), 3000);
+  };
+
+  const handleRemovePaymentMethod = async (methodId: string) => {
+    try {
+      await removePaymentMethod(methodId);
+      setPaymentMethodsList((prev) => prev.filter((p) => p.id !== methodId));
+      setBillingToast('Payment method removed.');
+      setTimeout(() => setBillingToast(null), 3000);
+    } catch (err: any) {
+      setPaymentMethodsError(err?.message || 'Could not remove that payment method.');
+    }
   };
 
   const handleSaveTaxInfo = (e: React.FormEvent) => {
@@ -1355,7 +1377,7 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
                     
                     <div className="flex rounded shadow-2xs">
                       <span className="inline-flex items-center px-2.5 rounded-l border border-r-0 border-slate-300 bg-slate-100 text-slate-700 font-mono font-bold text-xs">
-                        +{activeCountry.phoneDialCode}
+                        {activeCountry.phoneDialCode}
                       </span>
                       <input 
                         type="text" 
@@ -2921,87 +2943,63 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
                       <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                         <div>
                           <h4 className="font-bold text-slate-900">Stored Cards & Payment Methods</h4>
-                          <span className="text-[10px] text-slate-500">Managed via Peach Payments / PayGate 3D Secure Vault</span>
+                          <span className="text-[10px] text-slate-500">Managed via PayFast Secure Checkout (3D Secure)</span>
                         </div>
 
                         <button
-                          onClick={() => setShowAddPaymentModal(true)}
-                          className="bg-[#00bcd4] hover:bg-[#00acc1] text-white font-bold px-3 py-1.5 rounded text-xs flex items-center gap-1 shadow-xs"
+                          onClick={handleAddNewPaymentMethod}
+                          disabled={isStartingAddCard}
+                          className="bg-[#00bcd4] hover:bg-[#00acc1] disabled:opacity-60 text-white font-bold px-3 py-1.5 rounded text-xs flex items-center gap-1 shadow-xs"
                         >
-                          <Plus className="w-3.5 h-3.5" />
-                          <span>Add Payment Method</span>
+                          {isStartingAddCard ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
+                          <span>{isStartingAddCard ? 'Redirecting to PayFast…' : 'Add Payment Method'}</span>
                         </button>
                       </div>
 
-                      <div className="space-y-2.5">
-                        {paymentMethodsList.map((pm) => (
-                          <div 
-                            key={pm.id} 
-                            className={`p-3.5 rounded-lg border flex items-center justify-between transition-all ${
-                              pm.isDefault ? 'border-cyan-400 bg-cyan-50/40 ring-1 ring-cyan-200' : 'border-slate-200 bg-white'
-                            }`}
-                          >
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-7 rounded bg-slate-900 text-white flex items-center justify-center font-bold text-[10px] font-mono shadow-xs">
-                                {pm.type}
-                              </div>
+                      {paymentMethodsError && (
+                        <div className="p-2.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-[11px]">
+                          {paymentMethodsError}
+                        </div>
+                      )}
 
-                              <div>
-                                <div className="font-bold text-slate-900 flex items-center gap-2">
-                                  <span>•••• •••• •••• {pm.last4}</span>
-                                  {pm.isDefault && (
-                                    <span className="bg-emerald-100 text-emerald-800 text-[9px] font-bold px-1.5 py-0.2 rounded">
-                                      DEFAULT
-                                    </span>
-                                  )}
+                      {isLoadingPaymentMethods ? (
+                        <div className="text-slate-400 text-center py-6">Loading payment methods…</div>
+                      ) : paymentMethodsList.length === 0 ? (
+                        <div className="text-slate-500 text-center py-6 border border-dashed border-slate-200 rounded-lg">
+                          No payment methods saved yet. Add one via PayFast above.
+                        </div>
+                      ) : (
+                        <div className="space-y-2.5">
+                          {paymentMethodsList.map((pm) => (
+                            <div
+                              key={pm.id}
+                              className="p-3.5 rounded-lg border border-slate-200 bg-white flex items-center justify-between transition-all"
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-7 rounded bg-slate-900 text-white flex items-center justify-center font-bold text-[9px] font-mono shadow-xs uppercase">
+                                  {pm.provider}
                                 </div>
-                                <span className="text-[10px] text-slate-500 font-mono">
-                                  Expires {pm.exp} • {pm.holder}
-                                </span>
-                              </div>
-                            </div>
 
-                            <div className="flex items-center gap-2">
-                              {!pm.isDefault && (
-                                <button
-                                  onClick={() => {
-                                    setPaymentMethodsList(prev => prev.map(p => ({ ...p, isDefault: p.id === pm.id })));
-                                    setBillingToast(`Card ending in ${pm.last4} set as default.`);
-                                    setTimeout(() => setBillingToast(null), 3000);
-                                  }}
-                                  className="text-xs text-cyan-700 hover:text-cyan-900 font-bold hover:underline"
-                                >
-                                  Make Default
-                                </button>
-                              )}
-                              
+                                <div>
+                                  <div className="font-bold text-slate-900">
+                                    {pm.reference ? `Ref •••• ${pm.reference}` : 'PayFast payment method'}
+                                  </div>
+                                  <span className="text-[10px] text-slate-500 font-mono">
+                                    Added {new Date(pm.addedAt).toLocaleDateString()}
+                                  </span>
+                                </div>
+                              </div>
+
                               <button
-                                onClick={() => {
-                                  if (paymentMethodsList.length <= 1) {
-                                    alert('You must keep at least one active payment method.');
-                                    return;
-                                  }
-                                  setPaymentMethodsList(prev => prev.filter(p => p.id !== pm.id));
-                                  setBillingToast('Payment method removed.');
-                                  setTimeout(() => setBillingToast(null), 3000);
-                                }}
+                                onClick={() => handleRemovePaymentMethod(pm.id)}
                                 className="p-1 text-slate-400 hover:text-rose-600 rounded"
                               >
                                 <Trash2 className="w-4 h-4" />
                               </button>
                             </div>
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* Instant EFT / Ozow alternative banner */}
-                      <div className="bg-slate-50 p-3.5 rounded-lg border border-slate-200 flex items-center justify-between text-slate-600 text-[11px]">
-                        <div className="flex items-center gap-2">
-                          <LandmarkIcon className="w-4 h-4 text-indigo-600" />
-                          <span>Instant EFT (Ozow, Capitec Pay, SnapScan) available at checkout for one-off credit top-ups.</span>
+                          ))}
                         </div>
-                        <span className="text-emerald-700 font-bold">Zero Transaction Fees</span>
-                      </div>
+                      )}
                     </div>
                   )}
 
@@ -3672,88 +3670,51 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
             <div className="flex items-center justify-between border-b border-slate-200 pb-2.5 mb-3">
               <h3 className="font-bold text-sm text-slate-900 flex items-center gap-1.5">
                 <CreditCard className="w-4 h-4 text-emerald-600" />
-                <span>Add Stored Payment Card</span>
+                <span>Add a Payment Method</span>
               </h3>
-              <button onClick={() => setShowAddPaymentModal(false)} className="text-slate-400 hover:text-slate-800">
+              <button onClick={() => setShowAddPaymentModal(false)} className="text-slate-400 hover:text-slate-800 cursor-pointer">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <form onSubmit={handleAddNewPaymentMethod} className="space-y-3">
-              <div>
-                <label className="block text-slate-700 font-semibold mb-1">Cardholder Name</label>
-                <input
-                  type="text"
-                  required
-                  value={newCardHolder}
-                  onChange={(e) => setNewCardHolder(e.target.value)}
-                  placeholder="e.g. Ronald Read"
-                  className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded font-semibold text-slate-800 text-xs"
-                />
-              </div>
-
-              <div>
-                <label className="block text-slate-700 font-semibold mb-1">Card Number (16 Digits)</label>
-                <input
-                  type="text"
-                  required
-                  maxLength={19}
-                  value={newCardNumber}
-                  onChange={(e) => setNewCardNumber(e.target.value)}
-                  placeholder="4123 4567 8901 2345"
-                  className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded font-mono font-bold text-slate-800 text-xs"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-slate-700 font-semibold mb-1">Expiry (MM/YY)</label>
-                  <input
-                    type="text"
-                    required
-                    maxLength={5}
-                    value={newCardExpiry}
-                    onChange={(e) => setNewCardExpiry(e.target.value)}
-                    placeholder="12/28"
-                    className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded font-mono text-slate-800 text-xs"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-slate-700 font-semibold mb-1">CVV Security Code</label>
-                  <input
-                    type="password"
-                    required
-                    maxLength={4}
-                    value={newCardCvv}
-                    onChange={(e) => setNewCardCvv(e.target.value)}
-                    placeholder="•••"
-                    className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded font-mono text-slate-800 text-xs"
-                  />
-                </div>
-              </div>
+            <div className="space-y-3">
+              <p className="text-slate-600 leading-relaxed">
+                You'll be taken to PayFast's own secure checkout to enter your card details. Ptah Realty
+                never sees or stores your card number -- PayFast confirms back to us once it's saved,
+                and only then does it appear in your payment methods list.
+              </p>
 
               <div className="bg-slate-50 p-2.5 rounded border border-slate-200 text-[10px] text-slate-500 flex items-center gap-1.5">
                 <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span>Card tokenized and secured via 3D Secure 2.0 (Visa Secure & Mastercard Identity Check).</span>
+                <span>Handled entirely by PayFast -- your card details never pass through this app.</span>
               </div>
+
+              {paymentMethodsError && (
+                <div className="bg-rose-50 border-2 border-rose-400 text-rose-800 px-3 py-2 rounded text-[11px] font-bold flex items-center gap-2">
+                  <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                  <span>{paymentMethodsError}</span>
+                </div>
+              )}
 
               <div className="flex justify-end gap-2 pt-2">
                 <button
                   type="button"
                   onClick={() => setShowAddPaymentModal(false)}
-                  className="px-3.5 py-1.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold"
+                  className="px-3.5 py-1.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
-                  type="submit"
-                  className="px-4 py-1.5 rounded bg-[#00bcd4] hover:bg-[#00acc1] text-white font-bold shadow-xs uppercase tracking-wider"
+                  type="button"
+                  onClick={handleAddNewPaymentMethod}
+                  disabled={isStartingAddCard}
+                  className="px-4 py-1.5 rounded bg-[#00bcd4] hover:bg-[#00acc1] disabled:opacity-60 text-white font-bold shadow-xs uppercase tracking-wider cursor-pointer flex items-center gap-1.5"
                 >
-                  Save Card
+                  {isStartingAddCard && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
+                  <span>Continue to PayFast</span>
                 </button>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       )}
@@ -3868,7 +3829,7 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
               </div>
               <div className="font-mono font-bold text-slate-900 text-xs flex items-center gap-1.5">
                 <Phone className="w-3.5 h-3.5 text-cyan-600" />
-                <span>+{activeCountry.phoneDialCode} {profile.cellPhone || activeCountry.phonePlaceholder}</span>
+                <span>{activeCountry.phoneDialCode} {profile.cellPhone || activeCountry.phonePlaceholder}</span>
               </div>
             </div>
 

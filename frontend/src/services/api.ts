@@ -1012,6 +1012,37 @@ export async function getVerificationStatus(): Promise<VerificationStatus> {
   return authJson<VerificationStatus>('/users/me/verification/status');
 }
 
+// ---------------------------------------------------------------------
+// Billing -- real PayFast integration (api/billing.py). Card details
+// never touch this frontend or the backend directly: add-card returns a
+// PayFast-hosted redirect URL, and the saved-card list only ever shows
+// what PayFast's own ITN callback confirmed was actually tokenized.
+// ---------------------------------------------------------------------
+export interface PaymentMethodRecord {
+  id: string;
+  provider: string;
+  addedAt: string;
+  // PayFast's ITN callback doesn't include a masked card number or
+  // brand -- only an opaque token, the last 6 chars of which is all
+  // that's available to show for recognition. Never invent a fake
+  // "Visa ending in 4242" here; see api/billing.py's list_payment_methods.
+  reference: string | null;
+}
+
+export async function getPayfastAddCardUrl(): Promise<string> {
+  const data = await authJson<{ redirectUrl: string }>('/billing/payfast/add-card', { method: 'POST' });
+  return data.redirectUrl;
+}
+
+export async function listPaymentMethods(): Promise<PaymentMethodRecord[]> {
+  const data = await authJson<{ paymentMethods: PaymentMethodRecord[] }>('/billing/payment-methods');
+  return data.paymentMethods;
+}
+
+export async function removePaymentMethod(methodId: string): Promise<void> {
+  await authJson(`/billing/payment-methods/${methodId}`, { method: 'DELETE' });
+}
+
 export async function sendEmailVerification(): Promise<{ sent: boolean; alreadyVerified?: boolean }> {
   return authJson('/users/me/verification/email/send', { method: 'POST' });
 }
@@ -1237,3 +1268,4 @@ export async function updateProspectingLead(leadId: string, body: { status?: str
     body: JSON.stringify(body),
   });
 }
+
