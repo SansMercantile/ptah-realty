@@ -491,6 +491,11 @@ export const MyListingsModal: React.FC<MyListingsModalProps> = ({
                 {filteredListings.map((item) => (
                   <div
                     key={item.id}
+                    ref={(el) => {
+                      if (el && highlightListingId === item.id) {
+                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      }
+                    }}
                     className={`bg-white rounded-lg border overflow-hidden shadow-xs hover:border-cyan-400 transition-all flex flex-col justify-between ${
                       highlightListingId === item.id ? 'border-cyan-500 ring-2 ring-cyan-400/60' : 'border-slate-200'
                     }`}
