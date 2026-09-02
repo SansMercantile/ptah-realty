@@ -1002,29 +1002,28 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
         </div>
 
         {/* Navigation Tabs Header: 5 Core Tabs */}
-        <div className="bg-slate-100 border-b border-slate-200 px-4 flex items-center justify-between text-xs overflow-x-auto">
-          <div className="flex items-center gap-1 shrink-0">
+        <div className="bg-slate-100 border-b border-slate-200 px-4 flex items-center justify-start text-xs overflow-x-auto select-none pt-1">
+          <div className="flex items-center gap-1 shrink-0 -mb-px">
             <button
               id="tab-settings-profile"
               onClick={() => setActiveTab('profile')}
-              className={`px-3.5 py-2.5 font-bold flex items-center gap-1.5 border-b-2 transition-colors ${
+              className={`px-4 py-2.5 font-bold flex items-center gap-1.5 border-b-2 transition-colors rounded-t cursor-pointer ${
                 activeTab === 'profile'
                   ? 'border-[#00bcd4] text-[#006980] bg-white shadow-2xs'
-                  : 'border-transparent text-slate-600 hover:text-slate-900'
+                  : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
               }`}
             >
               <User className="w-4 h-4 text-[#00bcd4]" />
               <span>PROFILE</span>
-              <span className="text-xs">{activeCountry.flag}</span>
             </button>
 
             <button
               id="tab-settings-password"
               onClick={() => setActiveTab('password')}
-              className={`px-3.5 py-2.5 font-bold flex items-center gap-1.5 border-b-2 transition-colors ${
+              className={`px-4 py-2.5 font-bold flex items-center gap-1.5 border-b-2 transition-colors rounded-t cursor-pointer ${
                 activeTab === 'password'
                   ? 'border-[#00bcd4] text-[#006980] bg-white shadow-2xs'
-                  : 'border-transparent text-slate-600 hover:text-slate-900'
+                  : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
               }`}
             >
               <Lock className="w-4 h-4 text-amber-600" />
@@ -1034,10 +1033,10 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
             <button
               id="tab-settings-billing"
               onClick={() => setActiveTab('billing')}
-              className={`px-3.5 py-2.5 font-bold flex items-center gap-1.5 border-b-2 transition-colors ${
+              className={`px-4 py-2.5 font-bold flex items-center gap-1.5 border-b-2 transition-colors rounded-t cursor-pointer ${
                 activeTab === 'billing'
                   ? 'border-[#00bcd4] text-[#006980] bg-white shadow-2xs'
-                  : 'border-transparent text-slate-600 hover:text-slate-900'
+                  : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
               }`}
             >
               <CreditCard className="w-4 h-4 text-emerald-600" />
@@ -1050,10 +1049,10 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
             <button
               id="tab-settings-apps"
               onClick={() => setActiveTab('apps')}
-              className={`px-3.5 py-2.5 font-bold flex items-center gap-1.5 border-b-2 transition-colors ${
+              className={`px-4 py-2.5 font-bold flex items-center gap-1.5 border-b-2 transition-colors rounded-t cursor-pointer ${
                 activeTab === 'apps'
                   ? 'border-[#00bcd4] text-[#006980] bg-white shadow-2xs'
-                  : 'border-transparent text-slate-600 hover:text-slate-900'
+                  : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
               }`}
             >
               <Layers className="w-4 h-4 text-emerald-600" />
@@ -1063,10 +1062,10 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
             <button
               id="tab-settings-preferences"
               onClick={() => setActiveTab('preferences')}
-              className={`px-3.5 py-2.5 font-bold flex items-center gap-1.5 border-b-2 transition-colors ${
+              className={`px-4 py-2.5 font-bold flex items-center gap-1.5 border-b-2 transition-colors rounded-t cursor-pointer ${
                 activeTab === 'preferences'
                   ? 'border-[#00bcd4] text-[#006980] bg-white shadow-2xs'
-                  : 'border-transparent text-slate-600 hover:text-slate-900'
+                  : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
               }`}
             >
               <Sliders className="w-4 h-4 text-cyan-700" />
