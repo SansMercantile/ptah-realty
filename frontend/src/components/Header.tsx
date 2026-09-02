@@ -56,6 +56,11 @@ interface HeaderProps {
   // real, live value from App.tsx's countryId, kept in sync with
   // UserSettingsModal's country selector via onJurisdictionChange.
   currentCountryCode?: string;
+  // Signs out and returns to the marketing landing page -- explicit
+  // owner-approved addition to this otherwise change-gated header (see
+  // notice below). Used by both the "Marketing Portal" button and the
+  // "Sign Out" dropdown item.
+  onExitToLandingPage?: () => void;
 }
 
 // ---------------------------------------------------------------------
@@ -92,7 +97,8 @@ export const Header: React.FC<HeaderProps> = ({
   userEmail,
   onLogout,
   selectedPropertyAddress,
-  currentCountryCode
+  currentCountryCode,
+  onExitToLandingPage
 }) => {
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
@@ -345,6 +351,21 @@ export const Header: React.FC<HeaderProps> = ({
             )}
           </div>
 
+          {/* Marketing Portal -- signs out and returns to the marketing
+              landing page; explicit owner request (see also the Sign Out
+              dropdown item below, which does the same thing). */}
+          {onExitToLandingPage && (
+            <button
+              id="btn-header-marketing-landing"
+              onClick={onExitToLandingPage}
+              className="hidden md:flex items-center gap-1.5 text-cyan-300 hover:text-white bg-cyan-950/70 hover:bg-cyan-900 border border-cyan-800/80 px-2 py-1 rounded transition-colors text-xs font-semibold"
+              title="Return to Marketing Landing Page & Platform Overview"
+            >
+              <Globe className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Marketing Portal</span>
+            </button>
+          )}
+
           {/* Quick Search trigger -- consolidated entry point: on the CRM
               tab this opens the CRM's own command palette (leads/tasks/
               sync/actions, formerly behind a separate button in the CRM's
@@ -548,12 +569,15 @@ export const Header: React.FC<HeaderProps> = ({
                 {/* Divider */}
                 <div className="border-t border-slate-100 my-1"></div>
 
-                {/* Sign Out */}
+                {/* Sign Out -- locks the real session (onLogout) and, if
+                    wired, returns to the marketing landing page instead
+                    of dropping straight to the bare login screen. */}
                 <button
                   id="dropdown-item-signout"
                   onClick={() => {
                     setIsUserDropdownOpen(false);
                     onLogout();
+                    if (onExitToLandingPage) onExitToLandingPage();
                   }}
                   className="w-full text-left px-4 py-2 hover:bg-rose-50 text-rose-700 flex items-center gap-2.5 transition-colors"
                 >

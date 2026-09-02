@@ -121,6 +121,25 @@ export const ProspectingModal: React.FC<ProspectingModalProps> = ({
             <h2 className="font-bold text-sm tracking-tight">
               Prospecting & Mandate Lead Generation Engine
             </h2>
+            {(activeTab === 'Birthdays & Anniversaries' || activeTab === 'For Sale: DOM') && (
+              isLoadingLive ? (
+                <Loader2 className="w-3 h-3 text-cyan-200 animate-spin ml-1" />
+              ) : (
+                <span
+                  className={`flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded ml-1 ${
+                    ((activeTab === 'Birthdays & Anniversaries' && liveBirthdays?.length) ||
+                     (activeTab === 'For Sale: DOM' && liveDom?.length))
+                      ? 'bg-emerald-500/30 text-emerald-100'
+                      : 'bg-black/20 text-cyan-100'
+                  }`}
+                >
+                  <Wifi className="w-2.5 h-2.5" />
+                  {activeTab === 'Birthdays & Anniversaries'
+                    ? (liveBirthdays?.length ? `LIVE (${liveBirthdays.length})` : 'DEMO DATA')
+                    : (liveDom?.length ? `LIVE (${liveDom.length})` : 'DEMO DATA')}
+                </span>
+              )
+            )}
           </div>
           <button
             onClick={onClose}
@@ -280,7 +299,45 @@ export const ProspectingModal: React.FC<ProspectingModalProps> = ({
                   </span>
                 </div>
 
-                {/* Lead Cards Grid */}
+                {/* Lead Cards Grid -- real data for Birthdays/DOM when
+                    available (see chat: different shape than the demo
+                    ProspectLead cards, so rendered separately rather than
+                    force-fit into the same card layout). */}
+                {activeTab === 'Birthdays & Anniversaries' && liveBirthdays && liveBirthdays.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                    {liveBirthdays.map((item) => (
+                      <div key={item.id} className="bg-white p-3 rounded border border-slate-200 shadow-2xs flex items-center justify-between gap-2.5 text-xs">
+                        <div>
+                          <h4 className="font-bold text-slate-900 text-xs">{item.name}</h4>
+                          <div className="flex items-center gap-2 mt-1 text-[11px] text-slate-600">
+                            {item.phone && <span className="flex items-center gap-1"><Phone className="w-3 h-3 text-cyan-600" />{item.phone}</span>}
+                            {item.email && <span className="flex items-center gap-1"><Mail className="w-3 h-3 text-cyan-600" />{item.email}</span>}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-[9px] bg-amber-50 text-amber-800 px-1.5 py-0.5 rounded border border-amber-200 font-bold uppercase block">
+                            {item.event === 'birthday' ? 'Birthday' : 'Purchase Anniversary'}
+                          </span>
+                          <span className="text-[11px] font-bold text-slate-700 mt-1 block">{item.date}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : activeTab === 'For Sale: DOM' && liveDom && liveDom.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                    {liveDom.map((item) => (
+                      <div key={item.id} className="bg-white p-3 rounded border border-slate-200 shadow-2xs flex items-center justify-between gap-2.5 text-xs">
+                        <div>
+                          <h4 className="font-bold text-slate-900 text-xs">{item.address_line || 'Address on file'}</h4>
+                          <div className="text-[11px] text-slate-600 mt-0.5">{item.suburb}{item.city ? `, ${item.city}` : ''}</div>
+                        </div>
+                        <span className="text-[10px] bg-cyan-50 text-cyan-800 px-1.5 py-0.5 rounded border border-cyan-200 font-bold shrink-0">
+                          {item.days_on_market ?? '?'} days on market
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
                   {leadsList.map(lead => (
                     <div 
@@ -348,6 +405,7 @@ export const ProspectingModal: React.FC<ProspectingModalProps> = ({
                     </div>
                   ))}
                 </div>
+                )}
               </div>
             )}
           </div>

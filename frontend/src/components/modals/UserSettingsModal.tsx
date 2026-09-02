@@ -625,6 +625,8 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
 
   // Billing & Credits State
   const [billingSubTab, setBillingSubTab] = useState<'credits' | 'plans' | 'payment' | 'invoices' | 'tax'>('credits');
+  const [profileSubTab, setProfileSubTab] = useState<'identity' | 'bio' | 'farming' | 'language'>('identity');
+  const [preferencesSubTab, setPreferencesSubTab] = useState<'regional' | 'appearance'>('regional');
   const [selectedPack, setSelectedPack] = useState<string>('fica_50');
   const [isProcessingTopUp, setIsProcessingTopUp] = useState(false);
   const [billingToast, setBillingToast] = useState<string | null>(null);
@@ -1254,7 +1256,7 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 text-xs">
                   {/* Title */}
                   <div>
-                    <label className="block text-slate-600 font-semibold mb-1">Title</label>
+                    <label className="block text-slate-600 font-semibold mb-1.5 min-h-[20px] flex items-center">Title</label>
                     <select 
                       value={profile.title} 
                       onChange={(e) => setProfile({ ...profile, title: e.target.value })}
@@ -1270,7 +1272,7 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
 
                   {/* First Name */}
                   <div>
-                    <label className="block text-slate-600 font-semibold mb-1">First Name</label>
+                    <label className="block text-slate-600 font-semibold mb-1.5 min-h-[20px] flex items-center">First Name</label>
                     <input 
                       type="text" 
                       value={profile.name} 
@@ -1281,7 +1283,7 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
 
                   {/* Surname */}
                   <div>
-                    <label className="block text-slate-600 font-semibold mb-1">Surname</label>
+                    <label className="block text-slate-600 font-semibold mb-1.5 min-h-[20px] flex items-center">Surname</label>
                     <input 
                       type="text" 
                       value={profile.surname} 
@@ -1292,7 +1294,7 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
 
                   {/* Email */}
                   <div>
-                    <label className="block text-slate-600 font-semibold mb-1">Email Address</label>
+                    <label className="block text-slate-600 font-semibold mb-1.5 min-h-[20px] flex items-center">Email Address</label>
                     <input 
                       type="email" 
                       value={profile.email} 
@@ -1561,7 +1563,7 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
 
                   {/* Office Phone */}
                   <div>
-                    <label className="block text-slate-600 font-semibold mb-1">Office Switchboard</label>
+                    <label className="block text-slate-600 font-semibold mb-1.5 min-h-[20px] flex items-center">Office Switchboard</label>
                     <input 
                       type="text" 
                       value={profile.officePhone} 
@@ -1572,7 +1574,7 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
 
                   {/* Company / Agency Name */}
                   <div className="sm:col-span-2">
-                    <label className="block text-slate-600 font-semibold mb-1">Company / Agency Name</label>
+                    <label className="block text-slate-600 font-semibold mb-1.5 min-h-[20px] flex items-center">Company / Agency Name</label>
                     <input 
                       type="text" 
                       value={profile.companyName} 
@@ -2683,7 +2685,7 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
                         {autoRechargeEnabled && (
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 text-[11px]">
                             <div>
-                              <label className="block text-slate-600 font-semibold mb-1">When credits drop below:</label>
+                              <label className="block text-slate-600 font-semibold mb-1.5 min-h-[20px] flex items-center">When credits drop below:</label>
                               <select
                                 value={autoRechargeThreshold}
                                 onChange={(e) => setAutoRechargeThreshold(e.target.value)}
@@ -2696,7 +2698,7 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
                             </div>
 
                             <div>
-                              <label className="block text-slate-600 font-semibold mb-1">Automatically purchase:</label>
+                              <label className="block text-slate-600 font-semibold mb-1.5 min-h-[20px] flex items-center">Automatically purchase:</label>
                               <select
                                 value={autoRechargeAmount}
                                 onChange={(e) => setAutoRechargeAmount(e.target.value)}

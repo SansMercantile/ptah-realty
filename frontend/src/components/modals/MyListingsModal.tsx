@@ -20,6 +20,7 @@ import {
   Image as ImageIcon,
   Eye,
   Send,
+  Users,
   Sparkles,
   ChevronDown,
   ChevronUp,
@@ -60,6 +61,12 @@ interface MyListingsModalProps {
   listings: ListingDealRecord[];
   setListings: React.Dispatch<React.SetStateAction<ListingDealRecord[]>>;
   onOpenQuickListing?: () => void;
+  // Cross-link with the CRM tab: App.tsx sets highlightListingId when
+  // jumping here from a CRM lead's linked listing, and calls
+  // onViewLeadsForListing when the reverse jump is made from a listing
+  // card here.
+  highlightListingId?: string | null;
+  onViewLeadsForListing?: (listingId: string) => void;
 }
 
 export interface ListingDealRecord {
@@ -188,7 +195,9 @@ export const MyListingsModal: React.FC<MyListingsModalProps> = ({
   onSelectProperty,
   listings,
   setListings,
-  onOpenQuickListing
+  onOpenQuickListing,
+  highlightListingId,
+  onViewLeadsForListing
 }) => {
   // Modal View: 'LISTINGS_GRID' or 'SYNDICATION_WIZARD'
   const [currentView, setCurrentView] = useState<'LISTINGS_GRID' | 'SYNDICATION_WIZARD'>('LISTINGS_GRID');
@@ -482,7 +491,9 @@ export const MyListingsModal: React.FC<MyListingsModalProps> = ({
                 {filteredListings.map((item) => (
                   <div
                     key={item.id}
-                    className="bg-white rounded-lg border border-slate-200 overflow-hidden shadow-xs hover:border-cyan-400 transition-all flex flex-col justify-between"
+                    className={`bg-white rounded-lg border overflow-hidden shadow-xs hover:border-cyan-400 transition-all flex flex-col justify-between ${
+                      highlightListingId === item.id ? 'border-cyan-500 ring-2 ring-cyan-400/60' : 'border-slate-200'
+                    }`}
                   >
                     <div>
                       {/* Card Image & Badges */}
@@ -583,6 +594,16 @@ export const MyListingsModal: React.FC<MyListingsModalProps> = ({
                       </button>
 
                       <div className="flex items-center gap-1.5">
+                        {onViewLeadsForListing && (
+                          <button
+                            onClick={() => onViewLeadsForListing(item.id)}
+                            className="bg-white hover:bg-slate-200 text-slate-700 p-1.5 rounded border border-slate-300 text-xs flex items-center gap-1"
+                            title="View CRM leads linked to this listing"
+                          >
+                            <Users className="w-3.5 h-3.5 text-cyan-700" />
+                            <span>View Leads</span>
+                          </button>
+                        )}
                         <button
                           onClick={() => alert(`Syndication payload refreshed for ${item.address}`)}
                           className="bg-white hover:bg-slate-200 text-slate-700 p-1.5 rounded border border-slate-300 text-xs flex items-center gap-1"

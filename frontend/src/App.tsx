@@ -24,6 +24,7 @@ import { CreditsTopUpModal } from './components/modals/CreditsTopUpModal';
 import { SearchHistoryModal } from './components/modals/SearchHistoryModal';
 import CRMApp from './crm/CRMApp';
 import { LoginScreen } from './components/LoginScreen';
+import { MarketingLandingPage } from './components/landing/MarketingLandingPage';
 import { PROPERTIES_DATA } from './services/mockData';
 import { getJurisdictionByCode } from './services/jurisdictionsData';
 import { PropertyRecord, AccommodationDetails } from './types';
@@ -31,6 +32,10 @@ import { getCurrentUser, logout, listProperties, createProperty, type AuthUser }
 
 export function App() {
   const [user, setUser] = useState<AuthUser | null>(getCurrentUser());
+  // Shows the marketing landing page before the real login screen (and
+  // again on sign-out, via Header's "Sign Out"/"Marketing Portal") --
+  // purely a pre-auth UI state, never bypasses real authentication.
+  const [showLandingPage, setShowLandingPage] = useState(true);
 
   // Jurisdiction (Country -> Province/State -> City/Town). Defaults to
   // South Africa -> Western Cape -> Cape Town, the real-backend-connected
@@ -204,6 +209,16 @@ export function App() {
   }, [user]);
 
   if (!user) {
+    // Marketing landing page shows first; its CTAs (including the demo
+    // "instant login" buttons, which are purely cosmetic in that file --
+    // no real auth call, see MarketingLandingPage.tsx/LoginModal.tsx)
+    // all funnel through one onEnterApp callback, which here just
+    // reveals the REAL login screen rather than pretending anyone is
+    // authenticated. Nothing about actual authentication changes -- only
+    // LoginScreen's real onLogin can ever set `user`.
+    if (showLandingPage) {
+      return <MarketingLandingPage onEnterApp={() => setShowLandingPage(false)} />;
+    }
     return <LoginScreen onLogin={setUser} />;
   }
 
@@ -345,6 +360,7 @@ export function App() {
         prepaidBalance={prepaidBalance}
         userEmail={user.email}
         onLogout={() => { logout(); setUser(null); }}
+        onExitToLandingPage={() => { logout(); setUser(null); setShowLandingPage(true); }}
         selectedPropertyAddress={selectedProperty?.address}
         onOpenCRMNotifications={handleOpenCRMNotifications}
         onOpenQuickListing={() => setIsQuickListingOpen(true)}

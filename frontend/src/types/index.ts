@@ -68,7 +68,7 @@ export type AccommodationType =
   | 'School / Institution'
   | 'Unknown';
 
-export type ConditionRating = 'EXCELLENT' | 'GOOD' | 'FAIR' | 'POOR' | 'UNDER RENOVATION';
+export type ConditionRating = 'EXCELLENT' | 'GOOD' | 'FAIR' | 'POOR' | 'UNDER RENOVATION' | 'UNKNOWN';
 
 export interface AccommodationDetails {
   type: AccommodationType;
@@ -131,7 +131,11 @@ export interface SaleRecord {
   titleDeed: string;
   bondHolder?: string;
   bondAmount?: number;
-  saleType: 'PRIVATE TREATY' | 'AUCTION' | 'COURT ORDER' | 'ESTATE TRANSFER' | 'COMPANY TRANSFER' | 'AGREEMENT';
+  // Empty string represents "no real deeds/ownership data provider
+  // connected for this property" -- see RealCadastreMap.tsx's synthetic
+  // fallback records, consistent with `owner`'s "Not available" pattern
+  // above rather than fabricating a plausible-sounding sale type.
+  saleType: 'PRIVATE TREATY' | 'AUCTION' | 'COURT ORDER' | 'ESTATE TRANSFER' | 'COMPANY TRANSFER' | 'AGREEMENT' | '';
   contacts?: OwnerContactDetails;
 }
 
