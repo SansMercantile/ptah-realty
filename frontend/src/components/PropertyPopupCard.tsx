@@ -296,9 +296,9 @@ export const PropertyPopupCard: React.FC<PropertyPopupCardProps> = ({
               <Banknote className="w-2.5 h-2.5 text-emerald-400" /> Last Sale
             </span>
             <span className="font-extrabold text-emerald-400 text-xs mt-0.5 font-mono">
-              {formatZar(salePrice)}
+              {salePrice ? formatZar(salePrice) : 'Not available'}
             </span>
-            {pricePerM2 && (
+            {pricePerM2 && salePrice > 0 && (
               <span className="text-[9px] text-slate-400 font-mono truncate mt-0.5">
                 {pricePerM2}
               </span>
@@ -324,10 +324,10 @@ export const PropertyPopupCard: React.FC<PropertyPopupCardProps> = ({
               <Calendar className="w-2.5 h-2.5 text-amber-400" /> Registered
             </span>
             <span className="font-bold text-amber-300 text-xs mt-0.5 truncate font-mono">
-              {formatDate(saleDate)}
+              {saleDate ? formatDate(saleDate) : 'Not available'}
             </span>
             <span className="text-[9px] text-slate-400 font-mono truncate mt-0.5">
-              {property.currentSale?.titleDeed || 'Deed Reg'}
+              {property.currentSale?.titleDeed || 'Not available'}
             </span>
           </div>
         </div>
@@ -335,10 +335,11 @@ export const PropertyPopupCard: React.FC<PropertyPopupCardProps> = ({
         {/* Municipal Valuation Roll */}
         <div className="flex items-center justify-between text-xs bg-slate-950/40 px-2.5 py-1.5 rounded-lg border border-slate-800/80">
           <span className="text-slate-400 text-[11px] flex items-center gap-1">
-            <ShieldCheck className="w-3.5 h-3.5 text-cyan-400" /> Municipal Roll ({munYear}):
+            <ShieldCheck className="w-3.5 h-3.5 text-cyan-400" />
+            {munVal ? `Municipal Roll (${munYear}):` : 'Municipal Roll:'}
           </span>
           <span className="font-bold text-slate-200 font-mono">
-            {formatZar(munVal)}
+            {munVal ? formatZar(munVal) : 'Not available'}
           </span>
         </div>
 

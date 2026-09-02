@@ -815,19 +815,46 @@ export const RealCadastreMap: React.FC<RealCadastreMapProps> = ({
         {/* 2B. SURROUNDING REGISTERED CADASTRAL ERVEN (UNREGISTERED MLS PARCELS) */}
         {filteredSurroundingGeoParcels.map((parcel) => {
           const lotPoints = formatPointsString(parcel.coords);
+          const isHovered = hoveredErfNo === parcel.erf;
+          const matched = propertyByErf.get(parcel.erf.trim().toLowerCase());
+          const isSelected = !!matched && selectedProperty?.id === matched.id;
+
+          // Every real fetched parcel is visible and clickable -- per
+          // explicit request, this replaces both the old invisible-only
+          // treatment here and properties' own separate rendering below
+          // (2C), which stays hit-area-only. Three honest visual states:
+          // selected (the one currently open), matched (has a real
+          // listing behind it, from `properties`), or plain (a real
+          // parcel with no listing -- still clickable, opens the same
+          // popup via buildSyntheticParcelRecord with only real fields
+          // filled in, no fabricated ownership/sale data -- see that
+          // function's own comment).
+          const fill = isSelected
+            ? 'rgba(56, 189, 248, 0.35)'
+            : isHovered
+              ? 'rgba(56, 189, 248, 0.22)'
+              : matched
+                ? 'rgba(16, 185, 129, 0.16)'
+                : 'rgba(100, 116, 139, 0.16)';
+          const stroke = isSelected
+            ? '#38bdf8'
+            : isHovered
+              ? '#7dd3fc'
+              : matched
+                ? '#10b981'
+                : '#64748b';
 
           return (
             <g
               key={`surrounding-${parcel.erf}`}
               className="cursor-pointer pointer-events-auto transition-opacity"
               onClick={() => {
-                const matched = propertyByErf.get(parcel.erf.trim().toLowerCase());
                 onSelectProperty(matched || buildSyntheticParcelRecord(parcel));
               }}
               onMouseEnter={(e) => {
                 setHoveredErfNo(parcel.erf);
                 const rect = canvasRef.current?.getBoundingClientRect();
-                onHoverProperty(null, {
+                onHoverProperty(matched || null, {
                   x: e.clientX - (rect?.left || 0),
                   y: e.clientY - (rect?.top || 0)
                 });
@@ -837,16 +864,12 @@ export const RealCadastreMap: React.FC<RealCadastreMapProps> = ({
                 onHoverProperty(null, null);
               }}
             >
-              {/* Real live parcels (from getCadastralParcels) are kept as
-                  invisible hit-areas only, per explicit request -- the
-                  visible boxes + "Erf ####" labels for every surrounding
-                  parcel were cluttering the basemap and making it not
-                  look like a normal map. This <g> and its hover handlers
-                  above stay (so hover/erf-matching still works for the
-                  mock properties layer below), but nothing here is drawn.
-                  A single invisible polygon keeps the hover/click hit-area
-                  working without rendering anything visible. */}
-              <polygon points={lotPoints} fill="transparent" stroke="none" />
+              <polygon
+                points={lotPoints}
+                fill={fill}
+                stroke={stroke}
+                strokeWidth={isSelected ? 2 : isHovered ? 1.8 : 1.2}
+              />
             </g>
           );
         })}
