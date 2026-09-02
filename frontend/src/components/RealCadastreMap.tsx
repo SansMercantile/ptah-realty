@@ -19,10 +19,11 @@ import {
   Box,
   SlidersHorizontal
 } from 'lucide-react';
-import { PropertyRecord, ZoningCode } from '../types';
+import { PropertyRecord, ZoningCode, AccommodationType, PropertyUsage } from '../types';
 import { extractStreetName, formatWGS84 } from '../utils/cadastralFilters';
 import { ARCHITECTURAL_BUILDINGS_DATABASE, getArchitecturalBuilding, ArchitecturalBuildingBox } from '../utils/buildingGeometry';
 import { getCadastralParcels, CadastralParcelFeature } from '../services/api';
+import { classifyZoning, PROFILES as PARCEL_CATEGORY_PROFILES } from '../utils/parcelMockData';
 
 // CARTO's basemaps.cartocdn.com raster tiles now require a dedicated,
 // free "Basemaps API key" (request one at https://carto.com/basemaps/apikey)
@@ -246,16 +247,29 @@ export const RealCadastreMap: React.FC<RealCadastreMapProps> = ({
     return map;
   }, [properties]);
 
-  // Builds a minimal, honest PropertyRecord for a real cadastral parcel
-  // that has no matching mock/Property24 listing -- deliberately does NOT
-  // fabricate a sale price, valuation, or photos (PropertyPopupCard
-  // already shows 'N/A'/'Unrecorded' for zeroed money fields, and an
-  // honest "No photos uploaded yet" state for any id it doesn't recognize
-  // as one of the baked-in mock ids, since this id is never 'prop-XXXX').
-  // Only real, known fields from the fetched cadastre parcel are used:
-  // erf, street, zoning, extent, and its centroid.
+  // Builds a PropertyRecord for a real cadastral parcel that has no
+  // matching mock/Property24 listing, so every real parcel (private,
+  // corporate, or state-owned; houses, parks, farms, factories,
+  // warehouses, everything) can still be clicked and opened.
+  //
+  // IMPORTANT: these are REAL, identifiable Cape Town parcels (real erf
+  // numbers, real streets, real coordinates from the live City of Cape
+  // Town cadastre) -- not synthetic demo properties. An earlier version
+  // of this function also generated a plausible-looking owner name, sale
+  // price, sale date, and stock photo per parcel; that's been removed.
+  // Inventing specific ownership/sale facts about a real, identifiable
+  // property and presenting them with no "estimated" label anywhere in
+  // the UI is a real risk of someone mistaking fabricated data for fact
+  // about an actual property (see chat). The zoning-derived category
+  // (private/complex/commercial/farm/etc, from classifyZoning()) IS kept
+  // -- that part is honestly derived from the real zoning code the
+  // cadastre returns, not invented. Ownership, valuation, and images
+  // stay honestly blank until a real provider is connected -- see
+  // utils/parcelMockData.ts's module docstring.
   const buildSyntheticParcelRecord = useCallback((parcel: LiveSurroundingParcel): PropertyRecord => {
     const streetName = extractStreetName(parcel.street) || parcel.street;
+    const zoningCategory = classifyZoning(parcel.zoning);
+    const profile = PARCEL_CATEGORY_PROFILES[zoningCategory];
     return {
       id: `cadastre-${parcel.erf}`,
       erfNo: parcel.erf,
@@ -274,19 +288,22 @@ export const RealCadastreMap: React.FC<RealCadastreMapProps> = ({
       extentM2: parcel.extentM2,
       cadastralExtentM2: parcel.extentM2,
       polygonPoints: parcel.coords,
-      category: 'Freehold',
-      usage: 'Residential',
+      category: zoningCategory === 'agricultural_farm' ? 'Farm' : zoningCategory === 'commercial_corporate' || zoningCategory === 'industrial_corporate' ? 'Commercial' : 'Freehold',
+      usage: profile.usage as PropertyUsage,
       zoning: (parcel.zoning as ZoningCode) || 'GR2',
-      zoningDescription: parcel.zoning || 'General Residential',
+      zoningDescription: parcel.zoning || profile.zoningDescription,
       servitudes: false,
+      // No stock photo -- a real photo of a different house presented as
+      // if it's this real address would be more misleading than no
+      // photo at all, not less.
       currentSale: {
-        owner: 'Not on file',
+        owner: 'Not available -- no ownership provider connected',
         ownersId: '',
         salePrice: 0,
         saleDate: '',
         registeredDate: '',
         titleDeed: '',
-        saleType: 'PRIVATE TREATY',
+        saleType: '',
       },
       municipalValuation: {
         totalValue: 0,
@@ -294,9 +311,9 @@ export const RealCadastreMap: React.FC<RealCadastreMapProps> = ({
         ratesEstimateMonthly: 0,
       },
       accommodation: {
-        type: 'House',
-        usage: 'Residential',
-        condition: 'GOOD',
+        type: profile.accommodationType as AccommodationType,
+        usage: profile.usage as PropertyUsage,
+        condition: 'UNKNOWN',
       },
     };
   }, []);
@@ -888,63 +905,73 @@ export const RealCadastreMap: React.FC<RealCadastreMapProps> = ({
         })}
       </svg>
 
-      {/* 3. GIS LAYER CONTROLS (CartoDB Dark / Satellite / OpenStreetMap) */}
-      <div className="absolute top-14 left-3 z-20 flex flex-wrap items-center gap-1.5 bg-slate-900/90 backdrop-blur-md p-1 rounded-lg border border-slate-700 shadow-xl text-xs pointer-events-auto">
-        <span className="text-[10px] text-slate-400 font-semibold px-2 uppercase tracking-wider flex items-center gap-1">
-          <Layers className="w-3 h-3 text-cyan-400" /> Basemap:
-        </span>
-        <button
-          id="layer-osm-standard"
-          onClick={() => setActiveTileSource('osm-standard')}
-          className={`px-2.5 py-1 rounded text-[11px] font-semibold transition-all ${
-            activeTileSource === 'osm-standard' ? 'bg-[#006980] text-white shadow-xs' : 'text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          Street GIS
-        </button>
-        <button
-          id="layer-esri-satellite"
-          onClick={() => setActiveTileSource('esri-satellite')}
-          className={`px-2.5 py-1 rounded text-[11px] font-semibold transition-all ${
-            activeTileSource === 'esri-satellite' ? 'bg-[#006980] text-white shadow-xs' : 'text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          High-Res Satellite
-        </button>
-        <button
-          id="layer-carto-dark"
-          onClick={() => setActiveTileSource('carto-dark')}
-          className={`px-2.5 py-1 rounded text-[11px] font-semibold transition-all ${
-            activeTileSource === 'carto-dark' ? 'bg-[#006980] text-white shadow-xs' : 'text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          Cadastral Dark
-        </button>
-        <button
-          id="layer-carto-light"
-          onClick={() => setActiveTileSource('carto-light')}
-          className={`px-2.5 py-1 rounded text-[11px] font-semibold transition-all ${
-            activeTileSource === 'carto-light' ? 'bg-[#006980] text-white shadow-xs' : 'text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          Deeds Plan Light
-        </button>
+      {/* 3. GIS LAYER CONTROLS (CartoDB Dark / Satellite / OpenStreetMap) --
+          two visually distinct groups (basemap switcher, streets toggle)
+          separated by gap-2 on the outer flex container, matching the
+          gap-2 used between the CMA Radius control and the "Pull Live"
+          button in the row above -- the same reference gap size applied
+          consistently, rather than the old ad-hoc ml-1 that made the
+          Streets toggle look too close to "Deeds Plan Light". */}
+      <div className="absolute top-14 left-3 z-20 flex flex-wrap items-center gap-2 bg-slate-900/90 backdrop-blur-md p-1 rounded-lg border border-slate-700 shadow-xl text-xs pointer-events-auto">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-[10px] text-slate-400 font-semibold px-2 uppercase tracking-wider flex items-center gap-1">
+            <Layers className="w-3 h-3 text-cyan-400" /> Basemap:
+          </span>
+          <button
+            id="layer-osm-standard"
+            onClick={() => setActiveTileSource('osm-standard')}
+            className={`px-2.5 py-1 rounded text-[11px] font-semibold transition-all ${
+              activeTileSource === 'osm-standard' ? 'bg-[#006980] text-white shadow-xs' : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            Street GIS
+          </button>
+          <button
+            id="layer-esri-satellite"
+            onClick={() => setActiveTileSource('esri-satellite')}
+            className={`px-2.5 py-1 rounded text-[11px] font-semibold transition-all ${
+              activeTileSource === 'esri-satellite' ? 'bg-[#006980] text-white shadow-xs' : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            High-Res Satellite
+          </button>
+          <button
+            id="layer-carto-dark"
+            onClick={() => setActiveTileSource('carto-dark')}
+            className={`px-2.5 py-1 rounded text-[11px] font-semibold transition-all ${
+              activeTileSource === 'carto-dark' ? 'bg-[#006980] text-white shadow-xs' : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            Cadastral Dark
+          </button>
+          <button
+            id="layer-carto-light"
+            onClick={() => setActiveTileSource('carto-light')}
+            className={`px-2.5 py-1 rounded text-[11px] font-semibold transition-all ${
+              activeTileSource === 'carto-light' ? 'bg-[#006980] text-white shadow-xs' : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            Deeds Plan Light
+          </button>
+        </div>
 
         {/* Street & Cluster Filter toggle -- moved here, next to the
             basemap switches, per the requested layout. Panel + filter
             state still live in CadastralMap (the parent); this is just
             the trigger button. */}
         {onToggleStreetFilters && (
-          <button
-            id="layer-street-cluster-filter"
-            onClick={onToggleStreetFilters}
-            className={`ml-1 pl-2 border-l border-slate-700 flex items-center gap-1.5 px-2.5 py-1 rounded text-[11px] font-semibold transition-all ${
-              showStreetFilters ? 'text-cyan-300' : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            <SlidersHorizontal className="w-3 h-3" />
-            Streets
-          </button>
+          <div className="flex items-center gap-1.5 pl-2 border-l border-slate-700">
+            <button
+              id="layer-street-cluster-filter"
+              onClick={onToggleStreetFilters}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-[11px] font-semibold transition-all ${
+                showStreetFilters ? 'text-cyan-300' : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <SlidersHorizontal className="w-3 h-3" />
+              Streets
+            </button>
+          </div>
         )}
       </div>
 

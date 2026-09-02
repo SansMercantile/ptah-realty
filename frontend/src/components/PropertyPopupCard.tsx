@@ -157,7 +157,16 @@ export const PropertyPopupCard: React.FC<PropertyPopupCardProps> = ({
   return (
     <div
       id="property-popup-card-modal"
-      className="absolute top-28 left-4 z-40 w-96 max-w-[calc(100vw-32px)] bg-slate-900/95 backdrop-blur-xl border border-cyan-500/50 shadow-2xl rounded-2xl overflow-hidden transition-all duration-200 animate-in fade-in slide-in-from-top-3 flex flex-col max-h-[calc(100vh-236px)]"
+      // top-[102px] clears the map's two stacked toolbar rows (CMA Radius
+      // row at top-3, Basemap row at top-14, each ~30-38px tall) with a
+      // small gap matching the gap-2 used between the CMA Radius control
+      // and the "Pull Live" button above it -- this used to be top-28
+      // (112px) stacked ON TOP of an outer wrapper's OWN top-14 (56px) in
+      // CadastralMap.tsx, an accidental double-offset that pushed the
+      // card much further down than intended. max-h's constant is
+      // adjusted by the same 10px this saved, to keep the same bottom
+      // margin as before.
+      className="absolute top-[102px] left-4 z-40 w-96 max-w-[calc(100vw-32px)] bg-slate-900/95 backdrop-blur-xl border border-cyan-500/50 shadow-2xl rounded-2xl overflow-hidden transition-all duration-200 animate-in fade-in slide-in-from-top-3 flex flex-col max-h-[calc(100vh-226px)] pointer-events-auto"
     >
       {/* 1. TOP IMAGE GALLERY CAROUSEL */}
       <div className="relative w-full h-52 bg-slate-950 overflow-hidden group select-none shrink-0">

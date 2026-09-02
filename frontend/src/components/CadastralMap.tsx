@@ -349,14 +349,16 @@ export const CadastralMap: React.FC<CadastralMapProps> = ({
           onClick={handlePullRadiusListings}
           disabled={isPullingListings}
           className="flex items-center gap-1.5 bg-slate-900/90 backdrop-blur-md px-3 py-1.5 rounded-lg border border-slate-700 shadow-lg text-xs font-bold text-slate-200 hover:text-white disabled:opacity-60 transition-colors"
-          title="Pull live Property24 listings (price, description, photos) within the CMA radius"
+          title="Pull live Property24 & Private Property listings (price, description, photos) within the CMA radius"
         >
           {isPullingListings ? (
             <Loader2 className="w-3.5 h-3.5 animate-spin text-cyan-400" />
           ) : (
             <RefreshCw className="w-3.5 h-3.5 text-cyan-400" />
           )}
-          <span>Pull Live Property24 Data</span>
+          <span>
+            Pull Live <span className="text-blue-400">P24</span> &amp; <span className="text-red-400">PP</span> Data
+          </span>
         </button>
 
         {/* Street / Precinct Filter Toggle -- Google Maps engine only.
@@ -436,18 +438,22 @@ export const CadastralMap: React.FC<CadastralMapProps> = ({
         </div>
       )}
 
-      {/* Property Popup Card with Gallery Carousel & Property24 Details */}
+      {/* Property Popup Card with Gallery Carousel & Property24 Details --
+          no positioning wrapper here: PropertyPopupCard fully positions
+          itself (see its own root className). This div used to ALSO add
+          `absolute top-14 left-3`, which stacked on top of the card's own
+          `absolute top-28 left-4`, compounding into a much bigger gap
+          below the toolbar than intended -- that's the wrapper this
+          replaced. */}
       {selectedProperty && showPopupCard && (
-        <div className="absolute top-14 left-3 z-30 pointer-events-auto animate-fade-in">
-          <PropertyPopupCard
-            property={selectedProperty}
-            onClose={() => setShowPopupCard(false)}
-            onOpenCMA={onOpenCMAEngine}
-            onOpenPDF={onOpenPDFReport}
-            onOpenContact={() => onOpenContactOwner?.(selectedProperty)}
-            onOpenPortalSync={onOpenPortalSync}
-          />
-        </div>
+        <PropertyPopupCard
+          property={selectedProperty}
+          onClose={() => setShowPopupCard(false)}
+          onOpenCMA={onOpenCMAEngine}
+          onOpenPDF={onOpenPDFReport}
+          onOpenContact={() => onOpenContactOwner?.(selectedProperty)}
+          onOpenPortalSync={onOpenPortalSync}
+        />
       )}
 
       {/* Property24 radius pull result / error banner */}
