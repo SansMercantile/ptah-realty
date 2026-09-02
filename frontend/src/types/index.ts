@@ -3,9 +3,27 @@
  * Core Domain Types & Schemas
  */
 
-export type PropertyCategory = 'Freehold' | 'Sectional Title' | 'Estate' | 'Farm' | 'Commercial';
+export type PropertyCategory = 'Freehold' | 'Sectional Title' | 'Estate' | 'Farm' | 'Commercial' | 'Industrial' | 'Public Land';
 
-export type ZoningCode = 'GR1' | 'GR2' | 'GR3' | 'GR4' | 'GR5' | 'GB1' | 'GB2' | 'MU1' | 'MU2' | 'SR1' | 'OS2';
+// Widened to cover Cape Town's real Municipal Planning By-law zoning
+// scheme codes -- these are what the live cadastre (services/cadastre.py)
+// actually returns for a parcel's ZONING field, spanning every real
+// parcel type: residential, business, community, open space, farm,
+// industrial, transport (roads), and utility. See
+// utils/parcelMockData.ts's classifyZoning() for how these map to a
+// parcel category.
+export type ZoningCode =
+  | 'SR1' | 'SR2'
+  | 'GR1' | 'GR2' | 'GR3' | 'GR4' | 'GR5' | 'GR6'
+  | 'LB1' | 'LB2'
+  | 'GB1' | 'GB2' | 'GB3' | 'GB4' | 'GB5' | 'GB6' | 'GB7' | 'GB8'
+  | 'CO1' | 'CO2'
+  | 'OS1' | 'OS2' | 'OS3'
+  | 'AG1' | 'AG2'
+  | 'GI1' | 'GI2' | 'GI3' | 'GI4'
+  | 'TR1' | 'TR2'
+  | 'UT1' | 'UT2' | 'UT3' | 'UT4'
+  | 'MU1' | 'MU2';
 
 export type PropertyUsage = 
   | 'Residential' 
@@ -40,6 +58,14 @@ export type AccommodationType =
   | 'Share block'
   | 'Block of flats'
   | 'Vacant land'
+  | 'Warehouse'
+  | 'Factory'
+  | 'Workshop'
+  | 'Farm Homestead'
+  | 'Public Open Space'
+  | 'Office Block'
+  | 'Shopping Centre'
+  | 'School / Institution'
   | 'Unknown';
 
 export type ConditionRating = 'EXCELLENT' | 'GOOD' | 'FAIR' | 'POOR' | 'UNDER RENOVATION';

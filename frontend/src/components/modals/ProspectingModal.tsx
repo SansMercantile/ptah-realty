@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   X, 
   Sparkles, 
@@ -15,10 +15,13 @@ import {
   Check, 
   Award,
   ChevronRight,
-  TrendingUp
+  TrendingUp,
+  Wifi,
+  Loader2
 } from 'lucide-react';
 import { PROSPECTING_LEADS_DATA, PROSPECTING_SCRIPTS_DATA } from '../../services/mockData';
 import { ProspectLead, ProspectScript } from '../../types';
+import { getUpcomingOwnerDates, filterProspects, UpcomingOwnerDate, ProspectFilterResult } from '../../services/api';
 
 interface ProspectingModalProps {
   isOpen: boolean;
@@ -46,6 +49,34 @@ export const ProspectingModal: React.FC<ProspectingModalProps> = ({
   const [minYears, setMinYears] = useState<number>(5);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [outreachSentId, setOutreachSentId] = useState<string | null>(null);
+
+  // Live data for the two tabs with a clean real-backend equivalent:
+  // Birthdays/Anniversaries -> api/prospecting.py's owner_contacts
+  // (name/phone/email/event/date only -- no address/equity, that's a
+  // different collection); For Sale: DOM -> real days-on-market computed
+  // from this tenant's own properties. "Age of Owner" and "Duration of
+  // Ownership" have no real backend equivalent at all (no owner-age or
+  // transfer-date tracking exists yet), so those stay demo-only.
+  const [liveBirthdays, setLiveBirthdays] = useState<UpcomingOwnerDate[] | null>(null);
+  const [liveDom, setLiveDom] = useState<ProspectFilterResult[] | null>(null);
+  const [isLoadingLive, setIsLoadingLive] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    if (activeTab === 'Birthdays & Anniversaries') {
+      setIsLoadingLive(true);
+      getUpcomingOwnerDates(30)
+        .then((res) => setLiveBirthdays(res.upcoming))
+        .catch((err) => { console.error('Prospecting: live birthdays fetch failed:', err); setLiveBirthdays(null); })
+        .finally(() => setIsLoadingLive(false));
+    } else if (activeTab === 'For Sale: DOM') {
+      setIsLoadingLive(true);
+      filterProspects({ domMinDays: 30, limit: 50 })
+        .then((res) => setLiveDom(res.results))
+        .catch((err) => { console.error('Prospecting: live DOM fetch failed:', err); setLiveDom(null); })
+        .finally(() => setIsLoadingLive(false));
+    }
+  }, [isOpen, activeTab]);
 
   if (!isOpen) return null;
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   X, 
   Search, 
@@ -10,9 +10,11 @@ import {
   FileText, 
   MapPin, 
   CheckCircle2,
-  ExternalLink
+  ExternalLink,
+  Wifi
 } from 'lucide-react';
 import { PropertyRecord } from '../../types';
+import { getRecentlyViewed, recordRecentlyViewed } from '../../services/api';
 
 interface PropertySearchModalProps {
   isOpen: boolean;
@@ -50,12 +52,41 @@ export const PropertySearchModal: React.FC<PropertySearchModalProps> = ({
   const [deedInput, setDeedInput] = useState('');
   const [gpsInput, setGpsInput] = useState('-33.90876, 18.401027');
 
+  // Real recently-viewed history from api/search.py, keyed by this
+  // user's own account -- distinct from the local `properties` prop,
+  // which is App.tsx's real+demo merged list. Falls back to "no history
+  // yet" rather than fabricating recency for properties never actually
+  // opened, since that's the whole point of tracking it for real.
+  const [realRecentlyViewed, setRealRecentlyViewed] = useState<PropertyRecord[] | null>(null);
+  const [isLoadingRecent, setIsLoadingRecent] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen || activeCategory !== 'Recently Viewed') return;
+    setIsLoadingRecent(true);
+    getRecentlyViewed()
+      .then((res) => {
+        const byId = new Map(properties.map((p) => [p.id, p]));
+        const matched = res.properties
+          .map((r) => byId.get(r.id))
+          .filter((p): p is PropertyRecord => !!p);
+        setRealRecentlyViewed(matched);
+      })
+      .catch((err) => {
+        console.error('Property search: recently-viewed fetch failed:', err);
+        setRealRecentlyViewed(null);
+      })
+      .finally(() => setIsLoadingRecent(false));
+  }, [isOpen, activeCategory, properties]);
+
   if (!isOpen) return null;
 
   // Filter properties based on current active category and inputs
   let matchedProperties = [...properties];
+  const hasRealRecentHistory = !!realRecentlyViewed && realRecentlyViewed.length > 0;
 
-  if (activeCategory === 'Erf / Farm') {
+  if (activeCategory === 'Recently Viewed') {
+    matchedProperties = hasRealRecentHistory ? realRecentlyViewed! : [];
+  } else if (activeCategory === 'Erf / Farm') {
     if (erfInput.trim()) {
       matchedProperties = matchedProperties.filter(p => p.erfNo.includes(erfInput.trim()));
     }
@@ -88,6 +119,10 @@ export const PropertySearchModal: React.FC<PropertySearchModalProps> = ({
   }
 
   const handlePickProperty = (prop: PropertyRecord) => {
+    // Best-effort real tracking -- silently ignored if this property's
+    // id doesn't match a real backend document (e.g. still only in the
+    // local demo dataset, not yet created as a real Property record).
+    recordRecentlyViewed(prop.id).catch(() => {});
     onSelectProperty(prop);
     onClose();
   };

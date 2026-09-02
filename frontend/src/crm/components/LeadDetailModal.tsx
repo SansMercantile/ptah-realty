@@ -33,6 +33,7 @@ import {
   Layers
 } from 'lucide-react';
 import { Lead, LeadStatus, CommunicationItem, TaskItem, UrgencyLevel, CommunicationType, ActivityLogItem, EmailNotificationLog } from '../types';
+import type { ListingDealRecord } from '../../components/modals/MyListingsModal';
 import { formatCurrency, formatDate, formatRelativeTime, triggerDealWonConfetti, computeAgeBracket } from '../utils/formatters';
 import { LeadQualityScoreView } from './LeadQualityScoreView';
 import { LeadActivityFeed } from './LeadActivityFeed';
@@ -49,6 +50,11 @@ interface LeadDetailModalProps {
   emailLogs?: EmailNotificationLog[];
   onClose: () => void;
   onUpdateLead: (updatedLead: Lead) => void;
+  // Real listing this lead is linked to (see Lead.listingId), if any --
+  // resolved by the caller (CRMApp) rather than looked up in here, since
+  // it needs the main app's `listings` state, not CRM's own data.
+  linkedListing?: ListingDealRecord;
+  onViewListing?: () => void;
 }
 
 export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
@@ -57,6 +63,8 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
   emailLogs = [],
   onClose,
   onUpdateLead,
+  linkedListing,
+  onViewListing,
 }) => {
   const leadEmailLogs = emailLogs.filter((log) => log.leadId === lead.id);
   const [activeTab, setActiveTab] = useState<'score' | 'activity' | 'comms' | 'ai' | 'tasks' | 'emails' | 'details'>('activity');
@@ -519,6 +527,19 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
               <span className="text-slate-400">•</span>
               <span className="text-emerald-700 font-semibold">{formatCurrency(lead.propertyPrice)}</span>
             </p>
+
+            {linkedListing && (
+              <button
+                type="button"
+                onClick={onViewListing}
+                className="mt-1.5 inline-flex items-center gap-1.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 text-xs font-semibold px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
+                title="Open this listing in My Listings"
+              >
+                <Layers className="w-3.5 h-3.5" />
+                <span>Linked Listing: {linkedListing.mandateStatus}</span>
+                <ExternalLink className="w-3 h-3 opacity-70" />
+              </button>
+            )}
           </div>
 
           {/* Status & Quick Action Buttons */}

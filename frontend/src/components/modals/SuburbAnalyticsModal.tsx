@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   X, 
   MapPin, 
@@ -9,7 +9,9 @@ import {
   BarChart3, 
   Layers, 
   Search,
-  Filter
+  Filter,
+  Wifi,
+  Loader2
 } from 'lucide-react';
 import { 
   LineChart, 
@@ -25,6 +27,7 @@ import {
 } from 'recharts';
 import { SUBURBS_LIST, SUBURB_GROUPS, SUBURB_DEMOGRAPHICS_DATA, PROVINCES_LIST } from '../../services/mockData';
 import { SuburbStatistics } from '../../types';
+import { getSuburbSummary, SuburbSummaryResponse } from '../../services/api';
 
 interface SuburbAnalyticsModalProps {
   isOpen: boolean;
@@ -48,11 +51,36 @@ export const SuburbAnalyticsModal: React.FC<SuburbAnalyticsModalProps> = ({
   const [startYear, setStartYear] = useState<number>(2017);
   const [endYear, setEndYear] = useState<number>(2026);
 
+  // Live data from api/analytics.py's real aggregation over this
+  // tenant's own `properties` collection -- naturally sparse today (just
+  // the seed demo dataset), so it's treated as a supplement/override on
+  // top of the richer local demo stats below, not a replacement: the
+  // backend doesn't compute historical trends or age/ownership
+  // demographics at all, only counts/pricing by property type & tenure.
+  const [liveSummary, setLiveSummary] = useState<SuburbSummaryResponse | null>(null);
+  const [isLoadingLive, setIsLoadingLive] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen || !selectedSuburb) return;
+    const suburbName = selectedSuburb.split(',')[0].trim();
+    setIsLoadingLive(true);
+    getSuburbSummary(suburbName)
+      .then(setLiveSummary)
+      .catch((err) => {
+        console.error('Suburb analytics: live summary fetch failed, showing demo data only:', err);
+        setLiveSummary(null);
+      })
+      .finally(() => setIsLoadingLive(false));
+  }, [isOpen, selectedSuburb]);
+
   if (!isOpen) return null;
 
   const currentStats: SuburbStatistics = 
     SUBURB_DEMOGRAPHICS_DATA[selectedSuburb] || 
     SUBURB_DEMOGRAPHICS_DATA['GREEN POINT, CITY OF CAPE TOWN'];
+
+  const hasLiveData = (liveSummary?.total_count ?? 0) > 0;
+
 
   const filteredSuburbs = SUBURBS_LIST.filter(s => 
     s.toLowerCase().includes(suburbSearchQuery.toLowerCase())
@@ -79,6 +107,19 @@ export const SuburbAnalyticsModal: React.FC<SuburbAnalyticsModalProps> = ({
             <h2 className="font-bold text-sm tracking-tight">
               Suburb & Demographic Analytics
             </h2>
+            {isLoadingLive ? (
+              <Loader2 className="w-3 h-3 text-cyan-200 animate-spin ml-1" />
+            ) : (
+              <span
+                className={`flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded ml-1 ${
+                  hasLiveData ? 'bg-emerald-500/30 text-emerald-100' : 'bg-black/20 text-cyan-100'
+                }`}
+                title={hasLiveData ? `${liveSummary?.total_count} live properties in your database for this suburb` : 'No live properties recorded yet for this suburb -- showing demo dataset'}
+              >
+                <Wifi className="w-2.5 h-2.5" />
+                {hasLiveData ? `LIVE (${liveSummary?.total_count})` : 'DEMO DATA'}
+              </span>
+            )}
           </div>
           <button
             onClick={onClose}

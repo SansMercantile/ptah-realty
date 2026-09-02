@@ -159,6 +159,16 @@ export interface EmailNotificationLog {
 export interface Lead {
   id: string;
   referenceNumber: string; // e.g. PTR-8041
+  // Real link back to the main app's own "My Listings"
+  // (ListingDealRecord.id in components/modals/MyListingsModal.tsx) when
+  // this lead is for one of the agent's own mandates -- undefined for
+  // leads on properties that aren't (e.g. a portal lead on another
+  // agent's stock). propertyTitle/propertyLocation/propertyPrice below
+  // stay as their own fields (a lead can exist without a linked listing,
+  // and this keeps them as a display snapshot at inquiry time) -- when
+  // listingId is set, prefer the live listing record for anything that
+  // can change after the fact (price, mandate status).
+  listingId?: string;
   name: string;
   email: string;
   phone: string;

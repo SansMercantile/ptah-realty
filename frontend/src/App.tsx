@@ -118,6 +118,26 @@ export function App() {
     setCrmOpenNotificationsSignal((n) => n + 1);
   };
 
+  // My Listings <-> CRM bridge: jump from a listing (MyListingsModal) to
+  // the CRM leads for it, and back from a CRM lead to its linked listing.
+  // Same signal+payload pattern as the notifications bridge above (a
+  // plain string payload wouldn't re-fire the CRM-side effect on a
+  // repeat click of the same listing).
+  const [crmViewListingSignal, setCrmViewListingSignal] = useState(0);
+  const [crmViewListingId, setCrmViewListingId] = useState<string | null>(null);
+  const handleViewLeadsForListing = (listingId: string) => {
+    setIsMyListingsOpen(false);
+    setActiveNavTab('crm');
+    setCrmViewListingId(listingId);
+    setCrmViewListingSignal((n) => n + 1);
+  };
+  const [highlightListingId, setHighlightListingId] = useState<string | null>(null);
+  const handleViewListingInMain = (listingId: string) => {
+    setActiveNavTab(null);
+    setHighlightListingId(listingId);
+    setIsMyListingsOpen(true);
+  };
+
   // Consolidated Quick Search: the main header's Quick Search button used
   // to always switch to the cadastre 'search' tab. The CRM had its own
   // separate command palette (leads/tasks/sync/actions) behind its own
@@ -339,6 +359,10 @@ export function App() {
             openCommandPaletteSignal={crmOpenCommandPaletteSignal}
             openNotificationsSignal={crmOpenNotificationsSignal}
             onOpenQuickListing={() => setIsQuickListingOpen(true)}
+            myListings={listings}
+            viewListingSignal={crmViewListingSignal}
+            viewListingId={crmViewListingId}
+            onViewListingInMain={handleViewListingInMain}
           />
         ) : (
           <>
@@ -513,6 +537,8 @@ export function App() {
         onSelectProperty={handleSelectProperty}
         listings={listings}
         setListings={setListings}
+        highlightListingId={highlightListingId}
+        onViewLeadsForListing={handleViewLeadsForListing}
         onOpenQuickListing={() => setIsQuickListingOpen(true)}
       />
 

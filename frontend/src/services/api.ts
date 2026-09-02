@@ -1036,3 +1036,204 @@ export async function confirmMobileVerification(code: string): Promise<{ verifie
     body: JSON.stringify({ code }),
   });
 }
+
+// ---------------------------------------------------------------------
+// Suburb & Demographic Analytics (api/analytics.py) -- real aggregation
+// over this tenant's own `properties` collection. Sparse until real
+// property volume builds up (starts with just the seed demo dataset),
+// so callers should treat a low/zero total_count as "not enough live
+// data yet", not an error, and fall back to the richer local demo
+// dataset for the parts (historical trends, demographics) this
+// endpoint doesn't cover at all.
+// ---------------------------------------------------------------------
+
+export interface SuburbSummaryResponse {
+  suburb: string | null;
+  city: string | null;
+  total_count: number;
+  avg_price: number | null;
+  median_price: number | null;
+  by_property_type: { property_type: string | null; count: number; avg_price: number | null }[];
+  by_tenure: { tenure_type: string | null; count: number }[];
+}
+
+export async function getSuburbSummary(suburb?: string, city?: string): Promise<SuburbSummaryResponse> {
+  const params = new URLSearchParams();
+  if (suburb) params.set('suburb', suburb);
+  if (city) params.set('city', city);
+  return authJson<SuburbSummaryResponse>(`/analytics/suburb-summary?${params.toString()}`, { method: 'GET' });
+}
+
+export async function listAnalyticsSuburbs(city?: string): Promise<{ suburbs: string[] }> {
+  const params = city ? `?city=${encodeURIComponent(city)}` : '';
+  return authJson<{ suburbs: string[] }>(`/analytics/suburbs${params}`, { method: 'GET' });
+}
+
+// ---------------------------------------------------------------------
+// Search & Retrieval (api/search.py) -- real multi-criteria search over
+// this tenant's own properties. Same sparse-data caveat as above.
+// ---------------------------------------------------------------------
+
+export interface RealSearchResult {
+  id: string;
+  address_line?: string;
+  suburb?: string;
+  city?: string;
+  complex_name?: string;
+  erf_number?: string;
+  registered_owner?: string;
+  title_deed_number?: string;
+  match_reason?: string;
+  [key: string]: unknown;
+}
+
+export async function searchRealProperties(params: {
+  q?: string;
+  erfNumber?: string;
+  ownerName?: string;
+  titleDeedNumber?: string;
+  lat?: number;
+  lng?: number;
+  radiusM?: number;
+  limit?: number;
+}): Promise<{ results: RealSearchResult[]; count: number }> {
+  const qs = new URLSearchParams();
+  if (params.q) qs.set('q', params.q);
+  if (params.erfNumber) qs.set('erf_number', params.erfNumber);
+  if (params.ownerName) qs.set('owner_name', params.ownerName);
+  if (params.titleDeedNumber) qs.set('title_deed_number', params.titleDeedNumber);
+  if (params.lat !== undefined) qs.set('lat', String(params.lat));
+  if (params.lng !== undefined) qs.set('lng', String(params.lng));
+  if (params.radiusM !== undefined) qs.set('radius_m', String(params.radiusM));
+  if (params.limit !== undefined) qs.set('limit', String(params.limit));
+  return authJson<{ results: RealSearchResult[]; count: number }>(`/search?${qs.toString()}`, { method: 'GET' });
+}
+
+export async function suggestProperties(q: string, limit: number = 8): Promise<{ suggestions: RealSearchResult[] }> {
+  return authJson<{ suggestions: RealSearchResult[] }>(
+    `/search/suggest?q=${encodeURIComponent(q)}&limit=${limit}`,
+    { method: 'GET' }
+  );
+}
+
+export async function recordRecentlyViewed(propertyId: string): Promise<{ recorded: boolean }> {
+  return authJson<{ recorded: boolean }>('/search/recently-viewed', {
+    method: 'POST',
+    body: JSON.stringify({ property_id: propertyId }),
+  });
+}
+
+export async function getRecentlyViewed(limit: number = 20): Promise<{ properties: RealSearchResult[] }> {
+  return authJson<{ properties: RealSearchResult[] }>(`/search/recently-viewed?limit=${limit}`, { method: 'GET' });
+}
+
+// ---------------------------------------------------------------------
+// Prospecting & Lead Generation (api/prospecting.py)
+// ---------------------------------------------------------------------
+
+export interface ProspectFilterResult extends RealSearchResult {
+  days_on_market?: number | null;
+  property_type?: string;
+  tenure_type?: string;
+}
+
+export async function filterProspects(params: {
+  suburb?: string;
+  propertyType?: string;
+  tenureType?: string;
+  domMinDays?: number;
+  domMaxDays?: number;
+  limit?: number;
+}): Promise<{ results: ProspectFilterResult[]; count: number }> {
+  const qs = new URLSearchParams();
+  if (params.suburb) qs.set('suburb', params.suburb);
+  if (params.propertyType) qs.set('property_type', params.propertyType);
+  if (params.tenureType) qs.set('tenure_type', params.tenureType);
+  if (params.domMinDays !== undefined) qs.set('dom_min_days', String(params.domMinDays));
+  if (params.domMaxDays !== undefined) qs.set('dom_max_days', String(params.domMaxDays));
+  if (params.limit !== undefined) qs.set('limit', String(params.limit));
+  return authJson<{ results: ProspectFilterResult[]; count: number }>(`/prospecting/filter?${qs.toString()}`, { method: 'GET' });
+}
+
+export interface UpcomingOwnerDate {
+  id: string;
+  property_id: string;
+  name: string;
+  phone?: string;
+  email?: string;
+  event: 'birthday' | 'purchase_anniversary';
+  date: string;
+}
+
+export async function getUpcomingOwnerDates(days: number = 30): Promise<{ upcoming: UpcomingOwnerDate[] }> {
+  return authJson<{ upcoming: UpcomingOwnerDate[] }>(`/prospecting/owner-contacts/upcoming?days=${days}`, { method: 'GET' });
+}
+
+export async function createOwnerContact(body: {
+  propertyId: string;
+  name: string;
+  phone?: string;
+  email?: string;
+  birthday?: string;
+  purchaseAnniversary?: string;
+  notes?: string;
+}): Promise<{ id: string }> {
+  return authJson<{ id: string }>('/prospecting/owner-contacts', {
+    method: 'POST',
+    body: JSON.stringify({
+      property_id: body.propertyId,
+      name: body.name,
+      phone: body.phone,
+      email: body.email,
+      birthday: body.birthday,
+      purchase_anniversary: body.purchaseAnniversary,
+      notes: body.notes,
+    }),
+  });
+}
+
+export interface ProspectingLead {
+  id: string;
+  name: string;
+  phone?: string;
+  email?: string;
+  source?: string;
+  property_id?: string;
+  notes?: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export async function createProspectingLead(body: {
+  name: string;
+  phone?: string;
+  email?: string;
+  source?: string;
+  propertyId?: string;
+  notes?: string;
+}): Promise<{ id: string; status: string }> {
+  return authJson<{ id: string; status: string }>('/prospecting/leads', {
+    method: 'POST',
+    body: JSON.stringify({
+      name: body.name,
+      phone: body.phone,
+      email: body.email,
+      source: body.source,
+      property_id: body.propertyId,
+      notes: body.notes,
+    }),
+  });
+}
+
+export async function listProspectingLeads(status?: string): Promise<{ leads: ProspectingLead[] }> {
+  const params = status ? `?status=${encodeURIComponent(status)}` : '';
+  return authJson<{ leads: ProspectingLead[] }>(`/prospecting/leads${params}`, { method: 'GET' });
+}
+
+export async function updateProspectingLead(leadId: string, body: { status?: string; notes?: string }): Promise<{ updated: boolean }> {
+  return authJson<{ updated: boolean }>(`/prospecting/leads/${leadId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(body),
+  });
+}

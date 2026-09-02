@@ -41,6 +41,7 @@ import {
 } from './types';
 import { formatCurrency, triggerDealWonConfetti } from './utils/formatters';
 import { getCrmState, saveCrmState, authHeaders } from '../services/api';
+import type { ListingDealRecord } from '../components/modals/MyListingsModal';
 import { Bell, CheckCircle2, Flame, Radio, X, Calendar as CalendarIcon, Sliders, RefreshCw } from 'lucide-react';
 
 export default function App({
@@ -48,10 +49,18 @@ export default function App({
   openCommandPaletteSignal,
   openNotificationsSignal,
   onOpenQuickListing,
+  myListings,
+  viewListingSignal,
+  viewListingId,
+  onViewListingInMain,
 }: {
   openConnectorsSignal?: number;
   openCommandPaletteSignal?: number;
   openNotificationsSignal?: number;
+  myListings?: ListingDealRecord[];
+  viewListingSignal?: number;
+  viewListingId?: string | null;
+  onViewListingInMain?: (listingId: string) => void;
   onOpenQuickListing?: () => void;
 }) {
   // Load from local storage or mock data
@@ -373,6 +382,22 @@ export default function App({
     }
     if (openNotificationsSignal) setIsNotificationsOpen(true);
   }, [openNotificationsSignal]);
+
+  // Same signal pattern, for "View Leads" on a listing in the main app's
+  // My Listings (see chat) -- jumps into the Pipeline view filtered to
+  // just the leads linked to that listing.
+  const [activeListingFilter, setActiveListingFilter] = useState<string | null>(null);
+  const isInitialViewListingSignalRef = useRef(true);
+  useEffect(() => {
+    if (isInitialViewListingSignalRef.current) {
+      isInitialViewListingSignalRef.current = false;
+      return;
+    }
+    if (viewListingSignal && viewListingId) {
+      setActiveListingFilter(viewListingId);
+      setCurrentView('pipeline');
+    }
+  }, [viewListingSignal]);
 
   // Global Cmd+K / Ctrl+K keyboard shortcut listener
   useEffect(() => {
@@ -745,14 +770,35 @@ export default function App({
         )}
 
         {currentView === 'pipeline' && (
-          <PipelineBoard
-            leads={leads}
-            onSelectLead={(lead) => setSelectedLead(lead)}
-            onUpdateLeadStatus={handleUpdateLeadStatus}
-            onOpenQuickWhatsApp={handleQuickWhatsApp}
-            onBulkReassignAgent={handleBulkReassignAgent}
-            onBulkChangeStatus={handleBulkChangeStatus}
-          />
+          <>
+            {activeListingFilter && (
+              <div className="flex items-center justify-between gap-3 bg-cyan-50 border border-cyan-200 rounded-lg px-4 py-2.5 mb-3 text-sm">
+                <span className="text-cyan-900">
+                  Showing leads for{' '}
+                  <span className="font-bold">
+                    {myListings?.find((l) => l.id === activeListingFilter)?.title
+                      || myListings?.find((l) => l.id === activeListingFilter)?.address
+                      || 'this listing'}
+                  </span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setActiveListingFilter(null)}
+                  className="text-cyan-700 hover:text-cyan-900 font-semibold text-xs underline cursor-pointer shrink-0"
+                >
+                  Clear filter
+                </button>
+              </div>
+            )}
+            <PipelineBoard
+              leads={activeListingFilter ? leads.filter((l) => l.listingId === activeListingFilter) : leads}
+              onSelectLead={(lead) => setSelectedLead(lead)}
+              onUpdateLeadStatus={handleUpdateLeadStatus}
+              onOpenQuickWhatsApp={handleQuickWhatsApp}
+              onBulkReassignAgent={handleBulkReassignAgent}
+              onBulkChangeStatus={handleBulkChangeStatus}
+            />
+          </>
         )}
 
         {/* Task Reminders no longer has its own top-level view/nav tab --
@@ -855,6 +901,12 @@ export default function App({
           emailLogs={allNotifications}
           onClose={() => setSelectedLead(null)}
           onUpdateLead={handleUpdateLead}
+          linkedListing={myListings?.find((l) => l.id === selectedLead.listingId)}
+          onViewListing={
+            selectedLead.listingId
+              ? () => onViewListingInMain?.(selectedLead.listingId!)
+              : undefined
+          }
         />
       )}
 

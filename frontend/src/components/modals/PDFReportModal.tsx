@@ -74,12 +74,14 @@ export const PDFReportModal: React.FC<PDFReportModalProps> = ({
   };
 
 
-  // No real backend AI-narrative endpoint exists yet (server.ts references
-  // an undefined getBedrockProxyClient -- an incomplete integration). The
-  // tone selector stays in the UI for when that lands, but for now it's a
-  // clearly-labelled no-op rather than a fetch to a route that 404s.
+  // The production backend (ptahrealty-api.sansmercantile.com) has no
+  // AI-narrative endpoint yet -- server.ts's own /api/ai/cma-summary is
+  // local-dev-only (Vite/Vercel serves the static build and never runs
+  // server.ts in production). The tone selector stays in the UI for
+  // when that lands, but for now it's a clearly-labelled no-op rather
+  // than a fetch to a route that 404s in production.
   const generateAiMarketCopy = async (_tone: string, _valDataOverride?: any) => {
-    console.info('AI narrative generation is not wired to a real backend yet.');
+    console.info('AI narrative generation is not wired to the production backend yet.');
   };
 
 
