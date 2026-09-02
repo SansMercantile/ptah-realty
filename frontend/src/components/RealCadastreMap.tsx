@@ -19,8 +19,8 @@ import {
   Box,
   SlidersHorizontal
 } from 'lucide-react';
-import { PropertyRecord } from '../types';
-import { extractStreetName } from '../utils/cadastralFilters';
+import { PropertyRecord, ZoningCode } from '../types';
+import { extractStreetName, formatWGS84 } from '../utils/cadastralFilters';
 import { ARCHITECTURAL_BUILDINGS_DATABASE, getArchitecturalBuilding, ArchitecturalBuildingBox } from '../utils/buildingGeometry';
 import { getCadastralParcels, CadastralParcelFeature } from '../services/api';
 
@@ -229,6 +229,77 @@ export const RealCadastreMap: React.FC<RealCadastreMapProps> = ({
     }
     return map;
   }, [liveSurroundingParcels]);
+
+  // Reverse lookup: erf -> known PropertyRecord (mock/live-pulled listing
+  // data), used by the surrounding-parcels click handler below so that
+  // ANY registered erf on the map is clickable and connected to data --
+  // not just the small subset that happens to have a matching
+  // PropertyRecord already rendered by the `properties` layer. Previously
+  // the surrounding layer (every real cadastral parcel) had no onClick at
+  // all, so clicking anywhere except the handful of known listings did
+  // nothing.
+  const propertyByErf = useMemo(() => {
+    const map = new Map<string, PropertyRecord>();
+    for (const p of properties) {
+      if (p.erfNo) map.set(p.erfNo.trim().toLowerCase(), p);
+    }
+    return map;
+  }, [properties]);
+
+  // Builds a minimal, honest PropertyRecord for a real cadastral parcel
+  // that has no matching mock/Property24 listing -- deliberately does NOT
+  // fabricate a sale price, valuation, or photos (PropertyPopupCard
+  // already shows 'N/A'/'Unrecorded' for zeroed money fields, and an
+  // honest "No photos uploaded yet" state for any id it doesn't recognize
+  // as one of the baked-in mock ids, since this id is never 'prop-XXXX').
+  // Only real, known fields from the fetched cadastre parcel are used:
+  // erf, street, zoning, extent, and its centroid.
+  const buildSyntheticParcelRecord = useCallback((parcel: LiveSurroundingParcel): PropertyRecord => {
+    const streetName = extractStreetName(parcel.street) || parcel.street;
+    return {
+      id: `cadastre-${parcel.erf}`,
+      erfNo: parcel.erf,
+      lpiCode: '',
+      deedsOffice: 'Cape Town',
+      township: streetName,
+      address: `${streetName} (Erf ${parcel.erf})`,
+      suburb: streetName,
+      municipality: 'City of Cape Town',
+      province: 'Western Cape',
+      gps: {
+        lat: parcel.center[1],
+        lng: parcel.center[0],
+        formatted: formatWGS84(parcel.center[1], parcel.center[0]),
+      },
+      extentM2: parcel.extentM2,
+      cadastralExtentM2: parcel.extentM2,
+      polygonPoints: parcel.coords,
+      category: 'Freehold',
+      usage: 'Residential',
+      zoning: (parcel.zoning as ZoningCode) || 'GR2',
+      zoningDescription: parcel.zoning || 'General Residential',
+      servitudes: false,
+      currentSale: {
+        owner: 'Not on file',
+        ownersId: '',
+        salePrice: 0,
+        saleDate: '',
+        registeredDate: '',
+        titleDeed: '',
+        saleType: 'PRIVATE TREATY',
+      },
+      municipalValuation: {
+        totalValue: 0,
+        valuationYear: new Date().getFullYear(),
+        ratesEstimateMonthly: 0,
+      },
+      accommodation: {
+        type: 'House',
+        usage: 'Residential',
+        condition: 'GOOD',
+      },
+    };
+  }, []);
   
   // Center coordinates (default: Three Anchor Bay / Green Point erf 1681)
   const defaultCenter = { lat: -33.90876, lng: 18.401027 };
@@ -732,6 +803,10 @@ export const RealCadastreMap: React.FC<RealCadastreMapProps> = ({
             <g
               key={`surrounding-${parcel.erf}`}
               className="cursor-pointer pointer-events-auto transition-opacity"
+              onClick={() => {
+                const matched = propertyByErf.get(parcel.erf.trim().toLowerCase());
+                onSelectProperty(matched || buildSyntheticParcelRecord(parcel));
+              }}
               onMouseEnter={(e) => {
                 setHoveredErfNo(parcel.erf);
                 const rect = canvasRef.current?.getBoundingClientRect();
@@ -759,30 +834,28 @@ export const RealCadastreMap: React.FC<RealCadastreMapProps> = ({
           );
         })}
 
-        {/* 2C. REGISTERED VALUATION & LISTING PROPERTIES (FULL ARCHITECTURAL BUILDING BOXES & CADASTRE) */}
+        {/* 2C. REGISTERED VALUATION & LISTING PROPERTIES -- invisible
+            hit-area only, per explicit request (same treatment as 2B's
+            surrounding parcels above): the architectural building boxes,
+            colored cadastre lot fills, house-number badges, and boundary
+            vertex pegs this used to render for every one of these
+            parcels were the "vectors and numbers" cluttering the map and
+            not scaling well. onClick/hover still resolve the exact same
+            PropertyRecord (`prop`) as before, so clicking one of these
+            known listings behaves identically to before -- only the
+            visible drawing is gone. */}
         {properties.map((prop) => {
-          const isSelected = selectedProperty?.id === prop.id;
           const isHovered = hoveredProperty?.id === prop.id || hoveredErfNo === prop.erfNo;
-          const houseNum = extractHouseNumber(prop.address, prop.erfNo);
-          
+
           const building = getArchitecturalBuilding(prop);
           // If a real fetched parcel matches this property's erfNo, use its
           // actual surveyed boundary for the lot outline instead of
           // getArchitecturalBuilding()'s synthetic approximation -- keeps
-          // the listing's shown boundary attached to the correct real ERF
-          // rather than a guessed shape (see liveParcelByErf above). The
-          // 3D building extrusion below still uses the synthetic geometry
-          // since real cadastre data has no building-footprint/height
-          // information (see LiveSurroundingParcel's own comment).
+          // the listing's hit-area attached to the correct real ERF
+          // rather than a guessed shape (see liveParcelByErf above).
           const matchedLiveParcel = prop.erfNo ? liveParcelByErf.get(prop.erfNo.trim().toLowerCase()) : undefined;
           const lotGeo = matchedLiveParcel ? matchedLiveParcel.coords : building.cadastralLotGeo;
           const lotPoints = formatPointsString(lotGeo);
-          const centerPt = getCentroid(lotGeo);
-
-          // 3D Building extrusion geometry points
-          const groundBldgPoints = formatPointsString(building.mainBuildingGeo, 0);
-          const roofBldgPoints = formatPointsString(building.mainBuildingGeo, building.heightMeters);
-          const bldgCenterPt = getCentroid(building.mainBuildingGeo, building.heightMeters);
 
           return (
             <g
@@ -809,200 +882,7 @@ export const RealCadastreMap: React.FC<RealCadastreMapProps> = ({
                 onHoverProperty(null, null);
               }}
             >
-              {/* Subtle outer pulse halo for selected cadastral parcel */}
-              {isSelected && (
-                <polygon
-                  points={lotPoints}
-                  fill="rgba(0, 229, 255, 0.22)"
-                  stroke="#00e5ff"
-                  strokeWidth="6"
-                  filter="url(#cadastreGlow)"
-                  className="cadastre-halo-pulse"
-                />
-              )}
-
-              {/* LAYER 1: CADASTRAL ERF LOT BOUNDARY (SURVEYOR-GENERAL PEGS) */}
-              {(buildingRenderMode === 'cadastre_lots' || buildingRenderMode === 'hybrid') && (
-                <g>
-                  <polygon
-                    points={lotPoints}
-                    fill={
-                      isSelected 
-                        ? 'rgba(0, 188, 212, 0.28)' 
-                        : isHovered 
-                        ? 'rgba(56, 189, 248, 0.22)' 
-                        : 'rgba(0, 105, 128, 0.16)'
-                    }
-                    stroke={isSelected ? '#00e5ff' : isHovered ? '#38bdf8' : '#00acc1'}
-                    strokeWidth={isSelected ? 3.0 : isHovered ? 2.2 : 1.6}
-                    strokeDasharray={buildingRenderMode === 'hybrid' ? '4 3' : undefined}
-                    filter={isSelected ? 'url(#cadastreGlow)' : undefined}
-                    className={isSelected ? 'cadastre-selected-pulse transition-all duration-300' : 'transition-all duration-150'}
-                  />
-                  
-                  {/* Lot Hatch in Cadastre-Only Mode */}
-                  {buildingRenderMode === 'cadastre_lots' && (
-                    <polygon
-                      points={lotPoints}
-                      fill="url(#surveyHatch)"
-                      stroke="none"
-                    />
-                  )}
-                </g>
-              )}
-
-              {/* LAYER 2: REAL ARCHITECTURAL BUILDING BOX & FOOTPRINT */}
-              {(buildingRenderMode === 'building_boxes' || buildingRenderMode === 'hybrid') && (
-                <g filter="url(#buildingBoxShadow)">
-                  
-                  {/* 2.1 Porch / Veranda Structure */}
-                  {building.porchGeo && (
-                    <polygon
-                      points={formatPointsString(building.porchGeo, Math.min(building.heightMeters * 0.4, 2.5))}
-                      fill={isSelected ? 'rgba(56, 189, 248, 0.70)' : 'rgba(148, 163, 184, 0.60)'}
-                      stroke={isSelected ? '#00e5ff' : '#cbd5e1'}
-                      strokeWidth={1.2}
-                    />
-                  )}
-
-                  {/* 2.2 Garage / Outbuilding Structure */}
-                  {building.garageGeo && (
-                    <polygon
-                      points={formatPointsString(building.garageGeo, Math.min(building.heightMeters * 0.5, 3.2))}
-                      fill={isSelected ? 'rgba(14, 116, 144, 0.85)' : 'rgba(51, 65, 85, 0.80)'}
-                      stroke={isSelected ? '#38bdf8' : '#94a3b8'}
-                      strokeWidth={1.4}
-                    />
-                  )}
-
-                  {/* 2.3 Pool / Courtyard Feature */}
-                  {building.poolGeo && (
-                    <polygon
-                      points={formatPointsString(building.poolGeo, 0)}
-                      fill="#0284c7"
-                      stroke="#38bdf8"
-                      strokeWidth={1.5}
-                    />
-                  )}
-
-                  {/* 2.4 3D Extruded Building Walls (Depth Faces) */}
-                  {(tilt > 0 || show3DExtrusions) && (
-                    <g>
-                      {building.mainBuildingGeo.map(([lng1, lat1], idx) => {
-                        const nextIdx = (idx + 1) % building.mainBuildingGeo.length;
-                        const [lng2, lat2] = building.mainBuildingGeo[nextIdx];
-                        
-                        const gPt1 = projectGeoToScreen(lat1, lng1, 0);
-                        const gPt2 = projectGeoToScreen(lat2, lng2, 0);
-                        const rPt1 = projectGeoToScreen(lat1, lng1, building.heightMeters);
-                        const rPt2 = projectGeoToScreen(lat2, lng2, building.heightMeters);
-                        
-                        const wallFace = `${gPt1.x},${gPt1.y} ${gPt2.x},${gPt2.y} ${rPt2.x},${rPt2.y} ${rPt1.x},${rPt1.y}`;
-                        const faceShade = (idx % 2 === 0) ? 0.85 : 0.65;
-
-                        return (
-                          <polygon
-                            key={`wall-${idx}`}
-                            points={wallFace}
-                            fill={isSelected ? `rgba(0, 188, 212, ${faceShade})` : `rgba(30, 41, 59, ${faceShade})`}
-                            stroke={isSelected ? '#00e5ff' : '#475569'}
-                            strokeWidth={1.0}
-                          />
-                        );
-                      })}
-                    </g>
-                  )}
-
-                  {/* 2.5 Main Elevated Roof Box / Footprint */}
-                  <polygon
-                    points={roofBldgPoints}
-                    fill={
-                      isSelected
-                        ? '#00bcd4'
-                        : isHovered
-                        ? '#0284c7'
-                        : building.roofColor || '#334155'
-                    }
-                    stroke={isSelected ? '#00e5ff' : isHovered ? '#38bdf8' : '#64748b'}
-                    strokeWidth={isSelected ? 3.0 : isHovered ? 2.2 : 1.6}
-                    className={isSelected ? 'cadastre-selected-pulse transition-all duration-300' : 'transition-all duration-150'}
-                  />
-
-                  {/* 2.6 Roof Ridge Line & Pitch Facets */}
-                  {building.roofRidge?.map(([p1, p2], idx) => {
-                    const r1 = projectGeoToScreen(p1[1], p1[0], building.heightMeters * 1.15);
-                    const r2 = projectGeoToScreen(p2[1], p2[0], building.heightMeters * 1.15);
-                    return (
-                      <line
-                        key={`ridge-${idx}`}
-                        x1={r1.x}
-                        y1={r1.y}
-                        x2={r2.x}
-                        y2={r2.y}
-                        stroke={isSelected ? '#ffffff' : '#94a3b8'}
-                        strokeWidth={2.0}
-                      />
-                    );
-                  })}
-
-                </g>
-              )}
-
-              {/* House Number Badge */}
-              {showHouseNumbers && (
-                <g transform={`translate(${bldgCenterPt.x}, ${bldgCenterPt.y})`}>
-                  <circle
-                    cx="0"
-                    cy="0"
-                    r={isSelected ? 14 : isHovered ? 13 : 11}
-                    fill={isSelected ? '#006980' : isHovered ? '#0284c7' : '#0f172a'}
-                    stroke={isSelected ? '#00e5ff' : isHovered ? '#38bdf8' : '#334155'}
-                    strokeWidth={isSelected ? 2.5 : isHovered ? 1.5 : 1.1}
-                    className="shadow-xl transition-all duration-150"
-                    filter={isSelected ? 'url(#cadastreGlow)' : undefined}
-                  />
-                  <text
-                    x="0"
-                    y="3.5"
-                    fill="#ffffff"
-                    fontSize={isSelected ? "11" : isHovered ? "11" : "10"}
-                    fontWeight="800"
-                    textAnchor="middle"
-                    className="font-sans select-none"
-                  >
-                    {houseNum}
-                  </text>
-                </g>
-              )}
-
-              {/* Boundary vertex markers for Deeds Office precision */}
-              {isSelected && building.cadastralLotGeo.map(([lng, lat], idx) => {
-                const cornerPt = projectGeoToScreen(lat, lng, 0);
-                const pegLetters = ['A', 'B', 'C', 'D', 'E', 'F'];
-                return (
-                  <g key={`peg-${idx}`}>
-                    <circle
-                      cx={cornerPt.x}
-                      cy={cornerPt.y}
-                      r="4.5"
-                      fill="#00bcd4"
-                      stroke="#ffffff"
-                      strokeWidth="1.5"
-                    />
-                    <text
-                      x={cornerPt.x + 8}
-                      y={cornerPt.y - 6}
-                      fill="#00e5ff"
-                      fontSize="10"
-                      fontWeight="extrabold"
-                      className="font-mono"
-                    >
-                      {pegLetters[idx] || idx + 1}
-                    </text>
-                  </g>
-                );
-              })}
-
+              <polygon points={lotPoints} fill="transparent" stroke="none" />
             </g>
           );
         })}
