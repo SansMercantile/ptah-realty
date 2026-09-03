@@ -105,7 +105,7 @@ export const MarketingLandingPage: React.FC<MarketingLandingPageProps> = ({ onEn
               className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-slate-950 bg-gradient-to-r from-cyan-400 to-[#00bcd4] hover:from-cyan-300 hover:to-cyan-400 rounded-lg shadow-md hover:shadow-cyan-500/20 transition-all cursor-pointer"
             >
               <KeyRound className="w-3.5 h-3.5" />
-              <span>Launch App / Sign In</span>
+              <span>Sign In</span>
             </button>
           </div>
         </div>
