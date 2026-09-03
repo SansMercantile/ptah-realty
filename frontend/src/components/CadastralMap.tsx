@@ -357,7 +357,7 @@ export const CadastralMap: React.FC<CadastralMapProps> = ({
             <RefreshCw className="w-3.5 h-3.5 text-cyan-400" />
           )}
           <span>
-            Pull Live <span className="text-blue-400">P24</span> &amp; <span className="text-red-400">PP</span> Data
+            Pull Live <span className="text-red-400">P24</span> &amp; <span className="text-blue-400">PP</span> Data
           </span>
         </button>
 
