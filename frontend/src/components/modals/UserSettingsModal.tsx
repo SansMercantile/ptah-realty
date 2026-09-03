@@ -3536,7 +3536,7 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
                 <span className="text-[10px] text-slate-500 font-mono">Issued under Section 20(4) of the Value-Added Tax Act, 1991</span>
               </div>
               <div className="text-right">
-                <span className="font-extrabold text-sm text-cyan-800">PTAH Cadastre & Real Estate Intelligence</span>
+                <span className="font-extrabold text-sm text-cyan-800">PTAH Real Estate Intelligence</span>
                 <span className="text-[10px] text-slate-500 block font-mono">VAT Reg: 4920194821</span>
               </div>
             </div>

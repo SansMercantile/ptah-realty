@@ -90,7 +90,7 @@ export const LeadCaptureModal: React.FC<LeadCaptureModalProps> = ({
             </div>
             <div>
               <div className="text-[10px] font-mono uppercase tracking-widest text-cyan-200 font-bold">PRACTITIONER ONBOARDING</div>
-              <h3 className="text-xl font-bold text-white leading-tight">Get Started with Ptah Cadastre OS</h3>
+              <h3 className="text-xl font-bold text-white leading-tight">Get Started with Ptah Real Estate OS</h3>
             </div>
           </div>
           <p className="text-xs text-cyan-100/90 leading-relaxed">

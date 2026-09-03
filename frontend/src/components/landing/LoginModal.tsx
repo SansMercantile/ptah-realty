@@ -117,7 +117,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
               <Building2 className="w-5 h-5 text-cyan-300" />
             </div>
             <div>
-              <div className="text-xs font-mono uppercase tracking-widest text-cyan-200 font-bold">PTAH CADASTRE OS</div>
+              <div className="text-xs font-mono uppercase tracking-widest text-cyan-200 font-bold">PTAH REAL ESTATE OS</div>
               <h3 className="text-lg font-bold text-white leading-tight">Practitioner Portal Sign In</h3>
             </div>
           </div>
@@ -369,7 +369,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                 <span className="font-bold block mb-1 text-cyan-900 flex items-center gap-1.5">
                   <ShieldCheck className="w-4 h-4 text-cyan-700" /> Statutory Practitioner Onboarding
                 </span>
-                Ptah Cadastre verifies professional licensing status across 196 statutory land & real estate regulatory authorities.
+                Ptah Real Estate verifies professional licensing status across 196 statutory land & real estate regulatory authorities.
               </div>
 
               <div className="space-y-2">

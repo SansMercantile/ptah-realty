@@ -69,7 +69,7 @@ export const MarketingLandingPage: React.FC<MarketingLandingPageProps> = ({ onEn
             </div>
             <div>
               <div className="flex items-center gap-1.5">
-                <span className="font-extrabold text-base tracking-tight text-white font-sans">PTAH CADASTRE</span>
+                <span className="font-extrabold text-base tracking-tight text-white font-sans">PTAH REAL ESTATE</span>
                 <span className="text-[10px] font-bold bg-cyan-950 text-cyan-400 border border-cyan-800/80 px-1.5 py-0.2 rounded font-mono">
                   OS v2.5
                 </span>
@@ -1122,7 +1122,7 @@ export const MarketingLandingPage: React.FC<MarketingLandingPageProps> = ({ onEn
             <div className="space-y-6">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/60 border border-cyan-800 text-cyan-400 text-xs font-semibold">
                 <Building2 className="w-3.5 h-3.5 text-cyan-400" />
-                <span>About Ptah Cadastre Technologies</span>
+                <span>About Ptah Real Estate Technologies</span>
               </div>
               <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight">
                 Empowering Real Estate with Millimeter Spatial Integrity
