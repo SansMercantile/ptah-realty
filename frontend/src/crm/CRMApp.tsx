@@ -61,6 +61,26 @@ function clearFakeConnectorConfig(connectors: ConnectorItem[]): ConnectorItem[] 
   }));
 }
 
+// A genuinely blank sprint (zeroed targets/progress, no blockers, no
+// fabricated goal text) for a real tenant that hasn't set one up yet --
+// NOT INITIAL_SPRINT, which is a fully fictional demo sprint with a
+// specific fake goal, fake R85M target, and fake progress numbers.
+const EMPTY_SPRINT: ScrumSprint = {
+  id: 'sprint-1',
+  name: 'Sprint 1',
+  number: 1,
+  goal: '',
+  startDate: new Date().toISOString(),
+  endDate: new Date(Date.now() + 14 * 86400000).toISOString(),
+  status: 'planning',
+  targetValueZar: 0,
+  targetViewings: 0,
+  targetDeals: 0,
+  totalCommittedPoints: 0,
+  completedPoints: 0,
+  dailyBlockers: [],
+};
+
 export default function App({
   openConnectorsSignal,
   openCommandPaletteSignal,
@@ -231,61 +251,64 @@ export default function App({
       try {
         return JSON.parse(saved);
       } catch {
-        return INITIAL_SPRINT;
+        return EMPTY_SPRINT;
       }
     }
-    return INITIAL_SPRINT;
+    return EMPTY_SPRINT;
   });
 
   useEffect(() => {
     localStorage.setItem('ptah_crm_sprint', JSON.stringify(sprint));
   }, [sprint]);
 
-  // Property Listings State
+  // Property Listings State -- real listings only, see leads state's
+  // comment above.
   const [listings, setListings] = useState<PropertyListing[]>(() => {
     const saved = localStorage.getItem('ptah_crm_listings');
     if (saved) {
       try {
         return JSON.parse(saved);
       } catch {
-        return INITIAL_LISTINGS;
+        return [];
       }
     }
-    return INITIAL_LISTINGS;
+    return [];
   });
 
   useEffect(() => {
     localStorage.setItem('ptah_crm_listings', JSON.stringify(listings));
   }, [listings]);
 
-  // Show Houses State
+  // Show Houses State -- real show houses only, see leads state's
+  // comment above.
   const [showHouses, setShowHouses] = useState<ShowHouseRecord[]>(() => {
     const saved = localStorage.getItem('ptah_crm_show_houses');
     if (saved) {
       try {
         return JSON.parse(saved);
       } catch {
-        return INITIAL_SHOW_HOUSES;
+        return [];
       }
     }
-    return INITIAL_SHOW_HOUSES;
+    return [];
   });
 
   useEffect(() => {
     localStorage.setItem('ptah_crm_show_houses', JSON.stringify(showHouses));
   }, [showHouses]);
 
-  // Campaigns State
+  // Campaigns State -- real campaigns only, see leads state's comment
+  // above.
   const [campaigns, setCampaigns] = useState<MarketingCampaign[]>(() => {
     const saved = localStorage.getItem('ptah_crm_campaigns');
     if (saved) {
       try {
         return JSON.parse(saved);
       } catch {
-        return INITIAL_CAMPAIGNS;
+        return [];
       }
     }
-    return INITIAL_CAMPAIGNS;
+    return [];
   });
 
   useEffect(() => {
