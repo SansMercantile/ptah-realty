@@ -168,7 +168,7 @@ export const LeadCaptureModal: React.FC<LeadCaptureModalProps> = ({
                       required
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
-                      placeholder="e.g. Ronald Read"
+                      placeholder="e.g. John Doe"
                       className="w-full pl-9 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:outline-none"
                     />
                   </div>

@@ -54,7 +54,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
     setTimeout(() => {
       setIsLoading(false);
       onLoginSuccess({
-        name: 'Mr Ronald Read',
+        name: 'Mr John Doe',
         email: email,
         role: 'Principal Property Practitioner (PPRA)',
         countryCode: selectedCountry
@@ -71,7 +71,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
       setIsLoading(false);
       if (demoRole === 'principal') {
         onLoginSuccess({
-          name: 'Mr Ronald Read',
+          name: 'Mr John Doe',
           email: 'ron@lawrealestate.co.za',
           role: 'Principal Property Practitioner (PPRA)',
           countryCode: 'ZA'
@@ -306,7 +306,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                     </div>
                     <div>
                       <div className="font-bold text-xs text-slate-900 group-hover:text-cyan-900 flex items-center gap-1.5">
-                        <span>Mr Ronald Read</span>
+                        <span>Mr John Doe</span>
                         <span className="bg-emerald-100 text-emerald-800 text-[9px] px-1.5 py-0.5 rounded font-bold">FFC Verified</span>
                       </div>
                       <div className="text-[11px] text-slate-500">Principal Property Practitioner (PPRA - South Africa)</div>

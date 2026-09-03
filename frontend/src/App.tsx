@@ -91,10 +91,18 @@ export function App() {
   // Credits/billing balance -- shared between the header's Balance badge,
   // BalanceDetailsModal, CreditsTopUpModal and UserSettingsModal's Billing
   // tab so a top-up in any one of them is reflected everywhere at once.
-  const [dataCredits, setDataCredits] = useState(250);
+  //
+  // These start at 0, not a fake pre-loaded balance -- there is no
+  // backend credits ledger yet (no persisted balance per user, no
+  // deduction tied to real actions, no server-verified top-up). This
+  // state is local-session-only and resets on reload; a "top up"
+  // success handler changing these numbers is cosmetic, not a real
+  // purchase, until that backend exists. See conversation notes on
+  // 2026-09-02 for what a real implementation needs.
+  const [dataCredits, setDataCredits] = useState(0);
   const [ficaCredits, setFicaCredits] = useState(0);
-  const [trustCredits, setTrustCredits] = useState(15);
-  const [prepaidBalance, setPrepaidBalance] = useState(1250);
+  const [trustCredits, setTrustCredits] = useState(0);
+  const [prepaidBalance, setPrepaidBalance] = useState(0);
   const handleTopUpSuccess = (nextData: number, nextFica: number, nextTrust: number, nextPrepaid?: number) => {
     setDataCredits(nextData);
     setFicaCredits(nextFica);

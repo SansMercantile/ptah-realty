@@ -288,7 +288,7 @@ export const KYCModal: React.FC<KYCModalProps> = ({
         reportType: 'FICA_COMPLIANCE' as any,
         targetName: targetName,
         targetIdOrReg: targetId,
-        requestedBy: 'Ronald Read (Agent)',
+        requestedBy: 'John Doe (Agent)',
         timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),
         prescribedPurpose: 'Section 18(4) - Client Identification and Verification (FICA Act 38 of 2001)',
         searchReference: newRecord.id,

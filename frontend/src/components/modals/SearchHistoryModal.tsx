@@ -35,7 +35,7 @@ export const SearchHistoryModal: React.FC<SearchHistoryModalProps> = ({
       target: 'MULLER STEPHAN FRIDOLIN',
       query: '6703065098084',
       date: '2026-08-27 19:45',
-      user: 'Ronald Read',
+      user: 'John Doe',
       status: 'VERIFIED',
       cost: 'R 11.00'
     },
@@ -45,7 +45,7 @@ export const SearchHistoryModal: React.FC<SearchHistoryModalProps> = ({
       target: '5 RICHMOND ROAD, THREE ANCHOR BAY',
       query: 'Erf 1681 Green Point',
       date: '2026-08-27 18:20',
-      user: 'Ronald Read',
+      user: 'John Doe',
       status: 'COMPLETED',
       cost: 'R 0.00 (In Plan)'
     },
@@ -55,7 +55,7 @@ export const SearchHistoryModal: React.FC<SearchHistoryModalProps> = ({
       target: 'PIER MANE TRUST',
       query: 'IT 1895/2007',
       date: '2026-08-27 15:10',
-      user: 'Ronald Read',
+      user: 'John Doe',
       status: 'VERIFIED',
       cost: 'R 25.00'
     },
@@ -65,7 +65,7 @@ export const SearchHistoryModal: React.FC<SearchHistoryModalProps> = ({
       target: 'S B G REAL ESTATE PTY LTD',
       query: '2017/337109/07',
       date: '2026-08-26 11:30',
-      user: 'Ronald Read',
+      user: 'John Doe',
       status: 'VERIFIED',
       cost: 'R 45.00'
     },
@@ -75,7 +75,7 @@ export const SearchHistoryModal: React.FC<SearchHistoryModalProps> = ({
       target: '11 MUTLEY ROAD, THREE ANCHOR BAY',
       query: 'Erf 1679 Green Point',
       date: '2026-08-25 14:05',
-      user: 'Ronald Read',
+      user: 'John Doe',
       status: 'COMPLETED',
       cost: 'R 0.00 (In Plan)'
     }

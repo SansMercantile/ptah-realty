@@ -116,7 +116,7 @@ const INITIAL_PROFILE: UserProfileData = {
   speciality: 'Atlantic Seaboard Luxury & Sectional Schemes',
   province: 'Western Cape',
   agentType: 'Principal Property Practitioner (PPRA)',
-  aboutMe: 'With over 18 years of specialized experience along Cape Town’s premier Atlantic Seaboard, Ronald Read provides unparalleled market intelligence, precision cadastral valuation, and discreet representation for bespoke residential and sectional title investments.',
+  aboutMe: 'With over 18 years of specialized experience along Cape Town’s premier Atlantic Seaboard, John Doe provides unparalleled market intelligence, precision cadastral valuation, and discreet representation for bespoke residential and sectional title investments.',
   farmingAreas: ['Three Anchor Bay', 'Green Point', 'Sea Point', 'Camps Bay', 'Bantry Bay', 'Clifton'],
   socialMedia: [
     { platform: 'LinkedIn', url: 'https://linkedin.com/in/ronald-read-ptah' },
@@ -1182,7 +1182,7 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
                   <div className="relative group">
                     <img 
                       src={profile.profilePhotoUrl} 
-                      alt="Ronald Read" 
+                      alt="John Doe" 
                       className="w-16 h-16 rounded-full object-cover border-2 border-cyan-500 shadow-sm"
                     />
                     <button 
@@ -2947,12 +2947,12 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
                         </div>
 
                         <button
-                          onClick={handleAddNewPaymentMethod}
+                          onClick={() => setShowAddPaymentModal(true)}
                           disabled={isStartingAddCard}
                           className="bg-[#00bcd4] hover:bg-[#00acc1] disabled:opacity-60 text-white font-bold px-3 py-1.5 rounded text-xs flex items-center gap-1 shadow-xs"
                         >
-                          {isStartingAddCard ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
-                          <span>{isStartingAddCard ? 'Redirecting to PayFast…' : 'Add Payment Method'}</span>
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>Add Payment Method</span>
                         </button>
                       </div>
 
@@ -3750,7 +3750,7 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
                 <div className="col-span-1 flex flex-col items-center text-center">
                   <img 
                     src={profile.profilePhotoUrl} 
-                    alt="Ronald Read" 
+                    alt="John Doe" 
                     className="w-28 h-28 rounded-full object-cover border-2 border-cyan-500 shadow-md mb-2" 
                   />
                   <span className="text-xs font-bold text-slate-800">{profile.yearsExperience} Exp</span>

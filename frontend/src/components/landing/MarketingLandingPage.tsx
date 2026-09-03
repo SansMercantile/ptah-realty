@@ -1247,7 +1247,7 @@ export const MarketingLandingPage: React.FC<MarketingLandingPageProps> = ({ onEn
                   <label className="block text-slate-300 font-semibold mb-1">Your Full Name</label>
                   <input
                     type="text"
-                    placeholder="e.g. Ronald Read"
+                    placeholder="e.g. John Doe"
                     className="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-lg text-white focus:ring-2 focus:ring-cyan-500 focus:outline-none"
                   />
                 </div>
@@ -1313,7 +1313,7 @@ export const MarketingLandingPage: React.FC<MarketingLandingPageProps> = ({ onEn
               <div className="w-7 h-7 rounded-lg bg-cyan-950 border border-cyan-700 flex items-center justify-center text-cyan-400 font-bold">
                 P
               </div>
-              <span className="text-white font-bold text-sm">PTAH REAL CADASTRE OS</span>
+              <span className="text-white font-bold text-sm">PTAH REALTY OS</span>
               <span className="text-[10px] text-slate-500 font-mono">196 Sovereign Jurisdictions</span>
             </div>
 
