@@ -142,29 +142,50 @@ export const Header: React.FC<HeaderProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const NOTIFICATIONS_LIST = [
+  // Real state (was a static const, recreated every render -- meant
+  // mark-as-read/open could never actually change anything since there
+  // was nowhere to persist it). Each item's `action` is the same
+  // navigation an agent would use to actually go look at what the
+  // notification is about; opening a notification runs it and marks
+  // that item read.
+  const [notificationsList, setNotificationsList] = useState([
     {
       id: 'notif-1',
       title: 'New Deeds Office Transfer',
       desc: '3 Richmond Road transfer registered at R 7,450,000.',
       time: '12m ago',
-      unread: true
+      unread: true,
+      action: () => onOpenDocuments()
     },
     {
       id: 'notif-2',
       title: 'KYC FICA Pre-Check Completed',
       desc: 'Stephan Fridolin Muller identity & bureau clearance verified.',
       time: '1h ago',
-      unread: true
+      unread: true,
+      action: () => onSelectTab('kyc')
     },
     {
       id: 'notif-3',
       title: 'Property24 Sync Successful',
       desc: '5 Richmond Road listing updated with 3D cadastre tour.',
       time: '3h ago',
-      unread: false
+      unread: false,
+      action: () => onOpenPortalSync()
     }
-  ];
+  ]);
+  const unreadNotificationsCount = notificationsList.filter((n) => n.unread).length;
+
+  const handleOpenNotification = (id: string) => {
+    const target = notificationsList.find((n) => n.id === id);
+    setNotificationsList((prev) => prev.map((n) => (n.id === id ? { ...n, unread: false } : n)));
+    setIsNotificationsOpen(false);
+    target?.action();
+  };
+
+  const handleMarkAllNotificationsRead = () => {
+    setNotificationsList((prev) => prev.map((n) => ({ ...n, unread: false })));
+  };
 
   // On the CRM tab, this bell now IS the CRM's own notifications & task
   // reminders drawer -- CRM's own Navbar used to have a second, redundant
@@ -327,24 +348,42 @@ export const Header: React.FC<HeaderProps> = ({
               title="Notifications & Alerts"
             >
               <Bell className="w-4 h-4" />
-              <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-cyan-400"></span>
+              {unreadNotificationsCount > 0 && (
+                <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-cyan-400"></span>
+              )}
             </button>
 
             {isNotificationsOpen && activeTab !== 'crm' && (
               <div className="absolute right-0 mt-2 w-80 bg-white text-slate-800 rounded-lg shadow-2xl border border-slate-200 py-2 z-50 animate-fade-in text-xs">
                 <div className="px-3 py-1.5 border-b border-slate-100 font-bold text-slate-900 flex items-center justify-between">
                   <span>Notifications & Alerts</span>
-                  <span className="text-[10px] text-cyan-600 font-medium cursor-pointer hover:underline">Mark all read</span>
+                  {unreadNotificationsCount > 0 && (
+                    <button
+                      type="button"
+                      onClick={handleMarkAllNotificationsRead}
+                      className="text-[10px] text-cyan-600 font-medium cursor-pointer hover:underline"
+                    >
+                      Mark all read
+                    </button>
+                  )}
                 </div>
                 <div className="divide-y divide-slate-100 max-h-60 overflow-y-auto">
-                  {NOTIFICATIONS_LIST.map((n) => (
-                    <div key={n.id} className="p-2.5 hover:bg-slate-50 transition-colors">
-                      <div className="flex items-center justify-between font-bold text-slate-800 text-[11px]">
+                  {notificationsList.map((n) => (
+                    <button
+                      type="button"
+                      key={n.id}
+                      onClick={() => handleOpenNotification(n.id)}
+                      className="w-full text-left p-2.5 hover:bg-slate-50 transition-colors relative cursor-pointer"
+                    >
+                      {n.unread && (
+                        <span className="absolute left-1 top-4 w-1.5 h-1.5 rounded-full bg-cyan-500" />
+                      )}
+                      <div className={`flex items-center justify-between text-[11px] pl-2.5 ${n.unread ? 'font-bold text-slate-800' : 'font-semibold text-slate-500'}`}>
                         <span>{n.title}</span>
                         <span className="text-[9px] text-slate-400 font-normal">{n.time}</span>
                       </div>
-                      <p className="text-[11px] text-slate-600 mt-0.5">{n.desc}</p>
-                    </div>
+                      <p className={`text-[11px] mt-0.5 pl-2.5 ${n.unread ? 'text-slate-600' : 'text-slate-400'}`}>{n.desc}</p>
+                    </button>
                   ))}
                 </div>
               </div>

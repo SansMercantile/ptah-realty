@@ -35,6 +35,8 @@ interface NotificationDrawerProps {
   onQuickWhatsApp?: (lead: Lead) => void;
   onAddTask?: (leadId: string, task: TaskItem) => void;
   onOpenFullTasksView?: () => void;
+  onMarkNotificationRead?: (notificationId: string) => void;
+  onMarkAllNotificationsRead?: () => void;
 }
 
 type TabType = 'all' | 'tasks' | 'emails';
@@ -51,6 +53,8 @@ export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({
   onQuickWhatsApp,
   onAddTask,
   onOpenFullTasksView,
+  onMarkNotificationRead,
+  onMarkAllNotificationsRead,
 }) => {
   useEffect(() => {
     if (!isOpen) return;
@@ -143,6 +147,19 @@ export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({
   }, [taskFilter, overdueTasks, dueTodayTasks, upcomingTasks, completedTasks, pendingTasks]);
 
   const totalAlertsCount = pendingTasks.length + notifications.length;
+  const unreadNotificationsCount = notifications.filter((n) => !n.isRead).length;
+
+  // "Opening" an email notification marks it read and, when it's tied
+  // to a real lead (leadId -- absent on test sends), jumps to that
+  // lead's detail, same as the task reminders' existing "View Lead"
+  // button above does.
+  const handleOpenNotification = (notification: EmailNotificationLog) => {
+    onMarkNotificationRead?.(notification.id);
+    if (notification.leadId) {
+      const lead = leads.find((l) => l.id === notification.leadId);
+      if (lead) onSelectLead(lead);
+    }
+  };
 
   const handleCreateTask = (e: React.FormEvent) => {
     e.preventDefault();
@@ -254,6 +271,16 @@ export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({
               <Plus className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Add Reminder</span>
             </button>
+
+            {unreadNotificationsCount > 0 && activeTab !== 'tasks' && onMarkAllNotificationsRead && (
+              <button
+                onClick={onMarkAllNotificationsRead}
+                className="px-2 py-1.5 text-[11px] font-semibold text-blue-700 dark:text-blue-400 hover:text-blue-900 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-950/60 transition cursor-pointer"
+                title="Mark all email notifications read"
+              >
+                Mark all read ({unreadNotificationsCount})
+              </button>
+            )}
 
             {notifications.length > 0 && activeTab !== 'tasks' && (
               <button
@@ -782,11 +809,20 @@ export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({
                 </div>
 
                 {notifications.slice(0, 4).map((n) => (
-                  <div
+                  <button
+                    type="button"
                     key={n.id}
-                    className="bg-white dark:bg-black p-3 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1"
+                    onClick={() => handleOpenNotification(n)}
+                    className={`w-full text-left relative p-3 rounded-xl border space-y-1 cursor-pointer transition ${
+                      n.isRead
+                        ? 'bg-white dark:bg-black border-slate-200 dark:border-slate-800 opacity-70'
+                        : 'bg-white dark:bg-black border-blue-300 dark:border-blue-800 hover:border-blue-400'
+                    }`}
                   >
-                    <div className="flex items-center justify-between">
+                    {!n.isRead && (
+                      <span className="absolute left-1.5 top-4 w-1.5 h-1.5 rounded-full bg-blue-500" />
+                    )}
+                    <div className={`flex items-center justify-between ${!n.isRead ? 'pl-2.5' : ''}`}>
                       <span
                         className={`text-[9px] font-bold px-1.5 py-0.2 rounded border ${
                           n.recipientType === 'agent'
@@ -798,9 +834,9 @@ export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({
                       </span>
                       <span className="text-[10px] text-slate-400 font-mono">{formatDate(n.timestamp)}</span>
                     </div>
-                    <h5 className="font-semibold text-xs text-slate-900 dark:text-white truncate">{n.subject}</h5>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1">{n.previewSnippet}</p>
-                  </div>
+                    <h5 className={`text-xs truncate pl-2.5 ${n.isRead ? 'font-medium text-slate-500 dark:text-slate-400' : 'font-bold text-slate-900 dark:text-white'}`}>{n.subject}</h5>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1 pl-2.5">{n.previewSnippet}</p>
+                  </button>
                 ))}
               </div>
             </div>
@@ -821,11 +857,20 @@ export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({
                 </div>
               ) : (
                 notifications.map((n) => (
-                  <div
+                  <button
+                    type="button"
                     key={n.id}
-                    className="bg-white dark:bg-black p-4 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition space-y-2 shadow-2xs"
+                    onClick={() => handleOpenNotification(n)}
+                    className={`w-full text-left relative p-4 rounded-xl border transition space-y-2 shadow-2xs cursor-pointer ${
+                      n.isRead
+                        ? 'bg-white dark:bg-black border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 opacity-70'
+                        : 'bg-white dark:bg-black border-blue-300 dark:border-blue-800 hover:border-blue-400'
+                    }`}
                   >
-                    <div className="flex items-center justify-between">
+                    {!n.isRead && (
+                      <span className="absolute left-1.5 top-5 w-1.5 h-1.5 rounded-full bg-blue-500" />
+                    )}
+                    <div className={`flex items-center justify-between ${!n.isRead ? 'pl-2.5' : ''}`}>
                       <span
                         className={`text-[10px] font-bold px-2 py-0.5 rounded border ${
                           n.recipientType === 'agent'
@@ -838,16 +883,23 @@ export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({
                       <span className="text-[10px] text-slate-400 font-mono">{formatDate(n.timestamp)}</span>
                     </div>
 
-                    <h4 className="font-semibold text-xs text-slate-900 dark:text-white leading-tight">{n.subject}</h4>
-                    <p className="text-[11px] text-slate-600 dark:text-slate-400 line-clamp-2">{n.previewSnippet}</p>
+                    <h4 className={`text-xs leading-tight pl-2.5 ${n.isRead ? 'font-medium text-slate-600 dark:text-slate-400' : 'font-bold text-slate-900 dark:text-white'}`}>{n.subject}</h4>
+                    <p className="text-[11px] text-slate-600 dark:text-slate-400 line-clamp-2 pl-2.5">{n.previewSnippet}</p>
 
-                    <div className="flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400 pt-1.5 border-t border-slate-100 dark:border-slate-800 font-mono">
+                    <div className="flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400 pt-1.5 border-t border-slate-100 dark:border-slate-800 font-mono pl-2.5">
                       <span>To: {n.recipientEmail}</span>
-                      <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-sans font-semibold">
-                        <CheckCircle2 className="w-3 h-3" /> {n.status.toUpperCase()}
+                      <span className="flex items-center gap-2">
+                        {n.leadId && (
+                          <span className="text-blue-600 dark:text-blue-400 flex items-center gap-0.5 font-sans font-semibold">
+                            View Lead <ArrowUpRight className="w-3 h-3" />
+                          </span>
+                        )}
+                        <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-sans font-semibold">
+                          <CheckCircle2 className="w-3 h-3" /> {n.status.toUpperCase()}
+                        </span>
                       </span>
                     </div>
-                  </div>
+                  </button>
                 ))
               )}
             </>

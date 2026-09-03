@@ -108,6 +108,37 @@ export default function App({
   // server-side by AutomationRule dispatch during that same request).
   const [emailLogs, setEmailLogs] = useState<EmailNotificationLog[]>([]);
 
+  // Read/unread state for the notification bell -- kept separately from
+  // emailLogs itself rather than mutating those objects' isRead field,
+  // since emailLogs is server-authored and isn't part of the debounced
+  // save's payload (see that effect below): anything written onto the
+  // log entries themselves would be silently lost the next time this
+  // loads fresh from GET /crm/state. This survives refreshes the same
+  // way leads/rules/connectors do -- its own localStorage key.
+  const [readNotificationIds, setReadNotificationIds] = useState<Set<string>>(() => {
+    const saved = localStorage.getItem('ptah_crm_read_notifications');
+    if (saved) {
+      try {
+        return new Set(JSON.parse(saved));
+      } catch {
+        return new Set();
+      }
+    }
+    return new Set();
+  });
+
+  useEffect(() => {
+    localStorage.setItem('ptah_crm_read_notifications', JSON.stringify([...readNotificationIds]));
+  }, [readNotificationIds]);
+
+  const handleMarkNotificationRead = (id: string) => {
+    setReadNotificationIds((prev) => (prev.has(id) ? prev : new Set(prev).add(id)));
+  };
+
+  const handleMarkAllNotificationsRead = () => {
+    setReadNotificationIds(new Set(emailLogs.map((n) => n.id)));
+  };
+
   const [automationRules, setAutomationRules] = useState<AutomationRule[]>(() => {
     const saved = localStorage.getItem('ptah_crm_rules');
     if (saved) {
@@ -469,8 +500,10 @@ export default function App({
   // backend write ever populated (the backend logs live on the
   // top-level crm_state document, not nested per-lead).
   const allNotifications = useMemo(() => {
-    return [...emailLogs].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-  }, [emailLogs]);
+    return [...emailLogs]
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+      .map((n) => ({ ...n, isRead: readNotificationIds.has(n.id) }));
+  }, [emailLogs, readNotificationIds]);
 
   // Pending tasks count
   const pendingTasksCount = useMemo(() => {
@@ -977,6 +1010,8 @@ export default function App({
         onSelectLead={(lead) => setSelectedLead(lead)}
         onQuickWhatsApp={handleQuickWhatsApp}
         onAddTask={handleAddTask}
+        onMarkNotificationRead={handleMarkNotificationRead}
+        onMarkAllNotificationsRead={handleMarkAllNotificationsRead}
         onOpenFullTasksView={() => {
           setIsNotificationsOpen(false);
           setCurrentView('calendar');

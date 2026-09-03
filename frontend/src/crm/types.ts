@@ -154,6 +154,11 @@ export interface EmailNotificationLog {
   // Real SES failure reason, only present when status === 'failed' --
   // see api/crm.py's save_crm_state / send_test_email.
   error?: string;
+  // Whether the agent has opened/dismissed this notification in the
+  // NotificationDrawer -- absent/undefined means unread (existing
+  // records created before this field existed default to unread until
+  // clicked, same as a genuinely new notification).
+  isRead?: boolean;
 }
 
 export interface Lead {
