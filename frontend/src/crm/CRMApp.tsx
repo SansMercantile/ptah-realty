@@ -44,6 +44,23 @@ import { getCrmState, saveCrmState, authHeaders } from '../services/api';
 import type { ListingDealRecord } from '../components/modals/MyListingsModal';
 import { Bell, CheckCircle2, Flame, Radio, X, Calendar as CalendarIcon, Sliders, RefreshCw } from 'lucide-react';
 
+// Strips fake demo credentials (API keys, list IDs, webhook URLs --
+// anything a real tenant would need to type in themselves) from
+// INITIAL_CONNECTORS' `config`, while keeping boolean toggles at their
+// sensible default. Keeps the connector *definitions* (which
+// integrations are available, their field metadata) intact -- only the
+// pre-filled fake values are cleared. See leads state's comment above
+// for why this matters: real per-tenant backend state should never get
+// seeded with fictional credentials.
+function clearFakeConnectorConfig(connectors: ConnectorItem[]): ConnectorItem[] {
+  return connectors.map((c) => ({
+    ...c,
+    config: Object.fromEntries(
+      Object.entries(c.config || {}).map(([key, value]) => [key, typeof value === 'boolean' ? value : ''])
+    ),
+  }));
+}
+
 export default function App({
   openConnectorsSignal,
   openCommandPaletteSignal,
@@ -63,17 +80,25 @@ export default function App({
   onViewListingInMain?: (listingId: string) => void;
   onOpenQuickListing?: () => void;
 }) {
-  // Load from local storage or mock data
+  // Load from local storage, or start empty -- NEVER fall back to
+  // INITIAL_LEADS (fictional demo people) for a genuinely new/empty
+  // real tenant. That fallback previously ran on every brand-new
+  // browser session (no localStorage yet), showed fake leads
+  // immediately, and then the debounced save effect below would
+  // persist those fake leads into the tenant's REAL backend record
+  // the moment anything else in the app touched leads state -- so a
+  // first-time real user's actual CRM data got silently seeded with
+  // fictional people. See conversation notes 2026-09-02.
   const [leads, setLeads] = useState<Lead[]>(() => {
     const saved = localStorage.getItem('ptah_crm_leads');
     if (saved) {
       try {
         return JSON.parse(saved);
       } catch {
-        return INITIAL_LEADS;
+        return [];
       }
     }
-    return INITIAL_LEADS;
+    return [];
   });
 
   // Server-authored notification log -- see services/api.ts's CrmState
@@ -96,16 +121,25 @@ export default function App({
   });
 
   // Connectors State & Ingestion Events
+  //
+  // The connector *slots* themselves (Mailchimp/Zapier/Canva available
+  // to configure) are legitimate default scaffolding -- but
+  // INITIAL_CONNECTORS' `config` values are fake demo credentials
+  // (a fabricated Mailchimp API key, audience list id, etc.), which a
+  // real tenant should never see pre-filled as if they were real and
+  // already connected. Strips config values (keeping boolean toggles
+  // at their sensible default, clearing strings) while keeping the
+  // connector definitions/fields metadata intact.
   const [connectors, setConnectors] = useState<ConnectorItem[]>(() => {
     const saved = localStorage.getItem('ptah_crm_connectors');
     if (saved) {
       try {
         return JSON.parse(saved);
       } catch {
-        return INITIAL_CONNECTORS;
+        return clearFakeConnectorConfig(INITIAL_CONNECTORS);
       }
     }
-    return INITIAL_CONNECTORS;
+    return clearFakeConnectorConfig(INITIAL_CONNECTORS);
   });
 
   // Dark Mode Theme State
@@ -128,16 +162,18 @@ export default function App({
     }
   }, [isDarkMode]);
 
+  // Real sync events only -- see leads state's comment above for why
+  // fake demo data must never be a fallback here.
   const [connectorSyncEvents, setConnectorSyncEvents] = useState<ConnectorSyncEvent[]>(() => {
     const saved = localStorage.getItem('ptah_crm_connector_events');
     if (saved) {
       try {
         return JSON.parse(saved);
       } catch {
-        return INITIAL_CONNECTOR_SYNC_EVENTS;
+        return [];
       }
     }
-    return INITIAL_CONNECTOR_SYNC_EVENTS;
+    return [];
   });
 
   // Save to localStorage on changes

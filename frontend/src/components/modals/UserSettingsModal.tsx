@@ -100,9 +100,9 @@ export interface UserProfileData {
 
 const INITIAL_PROFILE: UserProfileData = {
   title: 'Mr',
-  name: 'Ronald',
-  surname: 'Read',
-  email: 'ron@lawrealestate.co.za',
+  name: 'John',
+  surname: 'Doe',
+  email: 'john@ptahrealestate.co.za',
   idNumber: '8303305103087',
   cellPhone: '0828903863',
   officePhone: '021 439 7777',
@@ -119,7 +119,7 @@ const INITIAL_PROFILE: UserProfileData = {
   aboutMe: 'With over 18 years of specialized experience along Cape Town’s premier Atlantic Seaboard, John Doe provides unparalleled market intelligence, precision cadastral valuation, and discreet representation for bespoke residential and sectional title investments.',
   farmingAreas: ['Three Anchor Bay', 'Green Point', 'Sea Point', 'Camps Bay', 'Bantry Bay', 'Clifton'],
   socialMedia: [
-    { platform: 'LinkedIn', url: 'https://linkedin.com/in/ronald-read-ptah' },
+    { platform: 'LinkedIn', url: 'https://linkedin.com/in/john-doe-ptah' },
     { platform: 'Instagram', url: 'https://instagram.com/ronaldread_realty' }
   ],
   viewOnFindAnAgent: true,

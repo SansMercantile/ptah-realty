@@ -32,7 +32,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
   onOpenLeadModal
 }) => {
   const [authMode, setAuthMode] = useState<'signin' | 'demo' | 'signup'>('signin');
-  const [email, setEmail] = useState('ron@lawrealestate.co.za');
+  const [email, setEmail] = useState('john@ptahrealestate.co.za');
   const [password, setPassword] = useState('••••••••••••');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
@@ -72,7 +72,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
       if (demoRole === 'principal') {
         onLoginSuccess({
           name: 'Mr John Doe',
-          email: 'ron@lawrealestate.co.za',
+          email: 'john@ptahrealestate.co.za',
           role: 'Principal Property Practitioner (PPRA)',
           countryCode: 'ZA'
         });

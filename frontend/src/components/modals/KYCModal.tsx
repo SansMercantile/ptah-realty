@@ -98,13 +98,13 @@ const CRM_CLIENT_RECORDS: CrmClientRecord[] = [
   },
   {
     id: 'crm-2',
-    fullName: 'Ronald Spencer Read',
-    firstName: 'Ronald',
-    surname: 'Read',
+    fullName: 'John Doe ',
+    firstName: 'John',
+    surname: 'Doe',
     idNumber: '8303305103087',
     preferredCommunication: 'Email (Electronic Signature + ID Upload)',
     phone: '+27 82 890 3863',
-    email: 'ron@lawrealestate.co.za',
+    email: 'john@ptahrealestate.co.za',
     address: '11 Mutley Road, Three Anchor Bay'
   },
   {
@@ -181,10 +181,10 @@ export const KYCModal: React.FC<KYCModalProps> = ({
     },
     {
       id: 'FICA-REQ-9042',
-      clientName: 'Ronald Spencer Read',
+      clientName: 'John Doe Spencer Read',
       idNumber: '8303305103087',
       communicationMethod: 'Email (Electronic Signature + ID Upload)',
-      contactTarget: 'ron@lawrealestate.co.za',
+      contactTarget: 'john@ptahrealestate.co.za',
       dateSent: '2026-08-27 18:15',
       status: 'PENDING_UPLOAD',
       riskRating: 'LOW',
@@ -383,7 +383,7 @@ export const KYCModal: React.FC<KYCModalProps> = ({
         };
       } else {
         mock = {
-          fullName: 'RONALD SPENCER READ',
+          fullName: 'John Doe SPENCER READ',
           idNumber: idNumber || '8303305103087',
           dob: '1983-03-30',
           age: 43,
@@ -394,7 +394,7 @@ export const KYCModal: React.FC<KYCModalProps> = ({
           contact: {
             mobilePrimary: '082 890 3863',
             mobileSecondary: '021 439 7777',
-            email: 'ron@lawrealestate.co.za',
+            email: 'john@ptahrealestate.co.za',
             physicalAddress: '11 Mutley Road, Three Anchor Bay, Cape Town, 8005',
             previousAddress: '22 Ocean View Drive, Sea Point, 8005'
           },
@@ -1170,7 +1170,7 @@ export const KYCModal: React.FC<KYCModalProps> = ({
                       onClick={() => setIdNumber('8303305103087')}
                       className="text-cyan-700 bg-cyan-50 hover:bg-cyan-100 px-2 py-0.5 rounded font-mono font-semibold"
                     >
-                      8303305103087 (R. Read)
+                      8303305103087 (R. Doe)
                     </button>
                   </div>
 
