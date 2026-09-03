@@ -1208,7 +1208,7 @@ export const MarketingLandingPage: React.FC<MarketingLandingPageProps> = ({ onEn
                   </div>
                   <div>
                     <div className="text-[10px] text-slate-500 uppercase font-semibold">Support & Inquiries</div>
-                    <div className="font-bold text-white">support@ptahcadastre.com</div>
+                    <div className="font-bold text-white">support@ptahrealty.com</div>
                   </div>
                 </div>
 
@@ -1218,7 +1218,7 @@ export const MarketingLandingPage: React.FC<MarketingLandingPageProps> = ({ onEn
                   </div>
                   <div>
                     <div className="text-[10px] text-slate-500 uppercase font-semibold">Practitioner Priority Line</div>
-                    <div className="font-bold text-white">+27 (0) 21 890 4120 / +44 20 7946 0912</div>
+                    <div className="font-bold text-white">+27 (0) 21 890 4120 / +27 66 349 6137</div>
                   </div>
                 </div>
               </div>
@@ -1228,9 +1228,9 @@ export const MarketingLandingPage: React.FC<MarketingLandingPageProps> = ({ onEn
                 <div className="font-bold text-slate-200">Global Operational Hubs:</div>
                 <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-400">
                   <div>🇿🇦 Cape Town (HQ)</div>
-                  <div>🇬🇧 London City</div>
-                  <div>🇺🇸 New York</div>
-                  <div>🇸🇬 Singapore Hub</div>
+                  <div>🇬🇧 London City (Coming soon)</div>
+                  <div>🇺🇸 New York (Coming soon)</div>
+                  <div>🇸🇬 Singapore Hub (Coming soon)</div>
                 </div>
               </div>
             </div>
