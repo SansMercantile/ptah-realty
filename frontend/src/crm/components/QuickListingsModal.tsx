@@ -426,12 +426,12 @@ export const QuickListingsModal: React.FC<QuickListingsModalProps> = ({
                           <span className="text-slate-500 dark:text-slate-400">Syndication:</span>
                           <div className="flex items-center space-x-1 font-mono">
                             <span className={`px-1.5 py-0.2 rounded text-[10px] ${
-                              listing.isSyndicatedP24 ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400' : 'bg-slate-100 text-slate-400'
+                              listing.isSyndicatedP24 ? 'bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-400' : 'bg-slate-100 text-slate-400'
                             }`}>
                               P24
                             </span>
                             <span className={`px-1.5 py-0.2 rounded text-[10px] ${
-                              listing.isSyndicatedPrivateProperty ? 'bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-400' : 'bg-slate-100 text-slate-400'
+                              listing.isSyndicatedPrivateProperty ? 'bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-400' : 'bg-slate-100 text-slate-400'
                             }`}>
                               PP
                             </span>
