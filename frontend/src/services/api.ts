@@ -1012,6 +1012,23 @@ export async function getVerificationStatus(): Promise<VerificationStatus> {
   return authJson<VerificationStatus>('/users/me/verification/status');
 }
 
+// Real registered team members on this tenant -- for lead-assignment
+// pickers (PipelineBoard's reassign action, NewLeadModal, etc.) that
+// previously pulled from a hardcoded list of four fictional people
+// (mockData.ts's INITIAL_AGENTS). Just name/email, same minimal shape
+// Lead.assignedAgent already uses -- not the full admin-only user
+// record (see api/crm.py's list_team_members for why this is a
+// separate, less-restrictive endpoint from GET /users).
+export interface TeamMember {
+  name: string;
+  email: string;
+}
+
+export async function getTeamMembers(): Promise<TeamMember[]> {
+  const data = await authJson<{ members: TeamMember[] }>('/crm/team-members');
+  return data.members;
+}
+
 // ---------------------------------------------------------------------
 // Billing -- real PayFast integration (api/billing.py). Card details
 // never touch this frontend or the backend directly: add-card returns a

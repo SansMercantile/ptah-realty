@@ -40,7 +40,7 @@ import {
   ConnectorCategory,
 } from './types';
 import { formatCurrency, triggerDealWonConfetti } from './utils/formatters';
-import { getCrmState, saveCrmState, authHeaders } from '../services/api';
+import { getCrmState, saveCrmState, authHeaders, getTeamMembers, TeamMember } from '../services/api';
 import type { ListingDealRecord } from '../components/modals/MyListingsModal';
 import { Bell, CheckCircle2, Flame, Radio, X, Calendar as CalendarIcon, Sliders, RefreshCw } from 'lucide-react';
 
@@ -120,6 +120,19 @@ export default function App({
     }
     return [];
   });
+
+  // Real registered team members on this tenant, for lead-assignment
+  // pickers (PipelineBoard's reassign action, NewLeadModal,
+  // AgentPerformanceCard, SlaResponseEfficiencyWidget) -- these
+  // previously all pulled from INITIAL_AGENTS, four fictional people
+  // (mockData.ts), which meant a real team could never actually assign
+  // or reassign leads to themselves. See api/crm.py's list_team_members.
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  useEffect(() => {
+    getTeamMembers()
+      .then(setTeamMembers)
+      .catch((err) => console.error('CRM: failed to load team members:', err));
+  }, []);
 
   // Server-authored notification log -- see services/api.ts's CrmState
   // docstring. Populated from GET /crm/state and refreshed after any
@@ -889,6 +902,7 @@ export default function App({
               onOpenQuickWhatsApp={handleQuickWhatsApp}
               onBulkReassignAgent={handleBulkReassignAgent}
               onBulkChangeStatus={handleBulkChangeStatus}
+              teamMembers={teamMembers}
             />
           </>
         )}
@@ -963,6 +977,7 @@ export default function App({
           <ReportingAnalyticsView
             leads={leads}
             onSelectLead={(lead) => setSelectedLead(lead)}
+            teamMembers={teamMembers}
           />
         )}
 
@@ -1006,6 +1021,7 @@ export default function App({
         <NewLeadModal
           onClose={() => setIsNewLeadOpen(false)}
           onAddLead={handleAddNewLead}
+          teamMembers={teamMembers}
         />
       )}
 
