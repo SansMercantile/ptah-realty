@@ -18,7 +18,8 @@ import {
   Globe, 
   Layers,
   Camera,
-  CheckCircle2
+  CheckCircle2,
+  AlertTriangle
 } from 'lucide-react';
 import { PropertyRecord } from '../types';
 import { INITIAL_PROPERTY_MEDIA } from '../services/mockData';
@@ -201,7 +202,15 @@ export const PropertyPopupCard: React.FC<PropertyPopupCardProps> = ({
             Erf {property.erfNo}
           </span>
           <span className="px-2 py-0.5 rounded-md bg-slate-900/90 border border-slate-700 text-slate-200 text-[10px] font-semibold flex items-center gap-1 shadow-md">
-            <CheckCircle2 className="w-3 h-3 text-emerald-400" /> Deeds Verified
+            {property.isEstimated ? (
+              <>
+                <AlertTriangle className="w-3 h-3 text-amber-400" /> Estimated -- Not Verified
+              </>
+            ) : (
+              <>
+                <CheckCircle2 className="w-3 h-3 text-emerald-400" /> Deeds Verified
+              </>
+            )}
           </span>
         </div>
 
