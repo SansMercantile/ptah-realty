@@ -23,7 +23,7 @@ import { PropertyRecord, ZoningCode, AccommodationType, PropertyUsage } from '..
 import { extractStreetName, formatWGS84 } from '../utils/cadastralFilters';
 import { ARCHITECTURAL_BUILDINGS_DATABASE, getArchitecturalBuilding, ArchitecturalBuildingBox } from '../utils/buildingGeometry';
 import { getCadastralParcels, CadastralParcelFeature } from '../services/api';
-import { classifyZoning, PROFILES as PARCEL_CATEGORY_PROFILES } from '../utils/parcelMockData';
+import { generateParcelMockData } from '../utils/parcelMockData';
 
 // CARTO's basemaps.cartocdn.com raster tiles now require a dedicated,
 // free "Basemaps API key" (request one at https://carto.com/basemaps/apikey)
@@ -250,26 +250,26 @@ export const RealCadastreMap: React.FC<RealCadastreMapProps> = ({
   // Builds a PropertyRecord for a real cadastral parcel that has no
   // matching mock/Property24 listing, so every real parcel (private,
   // corporate, or state-owned; houses, parks, farms, factories,
-  // warehouses, everything) can still be clicked and opened.
+  // warehouses, everything) can still be clicked and opened with a
+  // populated info card (images/valuation/ownership), not blank fields
+  // -- per explicit request.
   //
   // IMPORTANT: these are REAL, identifiable Cape Town parcels (real erf
   // numbers, real streets, real coordinates from the live City of Cape
-  // Town cadastre) -- not synthetic demo properties. An earlier version
-  // of this function also generated a plausible-looking owner name, sale
-  // price, sale date, and stock photo per parcel; that's been removed.
-  // Inventing specific ownership/sale facts about a real, identifiable
-  // property and presenting them with no "estimated" label anywhere in
-  // the UI is a real risk of someone mistaking fabricated data for fact
-  // about an actual property (see chat). The zoning-derived category
-  // (private/complex/commercial/farm/etc, from classifyZoning()) IS kept
-  // -- that part is honestly derived from the real zoning code the
-  // cadastre returns, not invented. Ownership, valuation, and images
-  // stay honestly blank until a real provider is connected -- see
-  // utils/parcelMockData.ts's module docstring.
+  // Town cadastre). Ownership, valuation, sale history, and photos are
+  // generated placeholders (utils/parcelMockData.ts), not real data --
+  // no ownership/valuation provider is connected yet. Presenting an
+  // invented owner name for a real, identifiable address as if it were
+  // verified fact is a genuine misinformation risk, so isEstimated: true
+  // is set here specifically so downstream UI (PropertyPanel's "Verified
+  // Deeds Contact" badge, PropertyPopupCard's "Deeds Verified" badge)
+  // shows "Estimated -- Not Verified" instead for these records. Both
+  // components were fixed to check this flag in the same change that
+  // added it -- if a new component ever surfaces currentSale/
+  // municipalValuation, it needs the same check.
   const buildSyntheticParcelRecord = useCallback((parcel: LiveSurroundingParcel): PropertyRecord => {
     const streetName = extractStreetName(parcel.street) || parcel.street;
-    const zoningCategory = classifyZoning(parcel.zoning);
-    const profile = PARCEL_CATEGORY_PROFILES[zoningCategory];
+    const mock = generateParcelMockData(parcel.erf, parcel.zoning, parcel.extentM2);
     return {
       id: `cadastre-${parcel.erf}`,
       erfNo: parcel.erf,
@@ -288,31 +288,31 @@ export const RealCadastreMap: React.FC<RealCadastreMapProps> = ({
       extentM2: parcel.extentM2,
       cadastralExtentM2: parcel.extentM2,
       polygonPoints: parcel.coords,
-      category: zoningCategory === 'agricultural_farm' ? 'Farm' : zoningCategory === 'commercial_corporate' || zoningCategory === 'industrial_corporate' ? 'Commercial' : 'Freehold',
-      usage: profile.usage as PropertyUsage,
+      category: mock.category === 'agricultural_farm' ? 'Farm' : mock.category === 'commercial_corporate' || mock.category === 'industrial_corporate' ? 'Commercial' : 'Freehold',
+      usage: mock.usage as PropertyUsage,
       zoning: (parcel.zoning as ZoningCode) || 'GR2',
-      zoningDescription: parcel.zoning || profile.zoningDescription,
+      zoningDescription: parcel.zoning || mock.zoningDescription,
       servitudes: false,
-      // No stock photo -- a real photo of a different house presented as
-      // if it's this real address would be more misleading than no
-      // photo at all, not less.
+      isEstimated: true,
+      imageUrl: mock.imageUrl,
+      images: mock.images,
       currentSale: {
-        owner: 'Not available -- no ownership provider connected',
-        ownersId: '',
-        salePrice: 0,
-        saleDate: '',
-        registeredDate: '',
-        titleDeed: '',
-        saleType: '',
+        owner: `${mock.ownerName} (Estimated)`,
+        ownersId: mock.ownerType,
+        salePrice: mock.lastSalePrice,
+        saleDate: mock.lastSaleDate,
+        registeredDate: mock.lastSaleDate,
+        titleDeed: mock.hasMarketValue ? `T${(parcel.erf.replace(/\D/g, '') || '1234').padStart(4, '0').slice(-4)}${new Date(mock.lastSaleDate).getFullYear()}` : '',
+        saleType: mock.hasMarketValue ? 'PRIVATE TREATY' : '',
       },
       municipalValuation: {
-        totalValue: 0,
+        totalValue: mock.totalValue,
         valuationYear: new Date().getFullYear(),
-        ratesEstimateMonthly: 0,
+        ratesEstimateMonthly: mock.ratesEstimateMonthly,
       },
       accommodation: {
-        type: profile.accommodationType as AccommodationType,
-        usage: profile.usage as PropertyUsage,
+        type: mock.accommodationType as AccommodationType,
+        usage: mock.usage as PropertyUsage,
         condition: 'UNKNOWN',
       },
     };

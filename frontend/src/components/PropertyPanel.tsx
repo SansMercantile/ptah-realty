@@ -491,9 +491,15 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
               <div className="p-2.5 bg-slate-50 rounded-md border border-slate-200 space-y-1.5">
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Registered Owner</span>
-                  <span className="bg-emerald-100 text-emerald-800 text-[9px] font-bold px-1.5 py-0.2 rounded">
-                    Verified Deeds Contact
-                  </span>
+                  {property.isEstimated ? (
+                    <span className="bg-amber-100 text-amber-800 text-[9px] font-bold px-1.5 py-0.2 rounded">
+                      Estimated -- Not Verified
+                    </span>
+                  ) : (
+                    <span className="bg-emerald-100 text-emerald-800 text-[9px] font-bold px-1.5 py-0.2 rounded">
+                      Verified Deeds Contact
+                    </span>
+                  )}
                 </div>
                 <div className="font-bold text-slate-900 text-xs">
                   {property.currentSale.owner}

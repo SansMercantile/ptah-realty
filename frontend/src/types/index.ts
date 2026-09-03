@@ -151,6 +151,15 @@ export interface PropertyRecord {
   id: string;
   erfNo: string;
   portionNo?: string;
+  // True for a real cadastral parcel (real erf/boundary/GPS from the live
+  // City of Cape Town feed) whose ownership/valuation/images are
+  // generated placeholders, not real data -- no ownership/valuation
+  // provider is connected yet (see utils/parcelMockData.ts). UI
+  // components showing currentSale/municipalValuation MUST check this
+  // before claiming anything is "Verified"/"Deeds Confirmed" -- doing so
+  // for a real, identifiable address with a fabricated owner name is a
+  // genuine misinformation risk, not just a cosmetic detail.
+  isEstimated?: boolean;
   lpiCode: string;
   deedsOffice: string;
   township: string;
