@@ -29,11 +29,24 @@ export const QuickListingModal: React.FC<QuickListingModalProps> = ({
 }) => {
   const [address, setAddress] = useState(selectedProperty?.address || '8 Richmond Road');
   const [suburb, setSuburb] = useState(selectedProperty?.suburb || 'Three Anchor Bay');
-  const [price, setPrice] = useState(selectedProperty?.currentSale?.salePrice || 11950000);
+  // Only fall back to the demo placeholder price when nothing at all is
+  // selected (a genuine blank-template "quick create" case). When a real
+  // property/parcel IS selected but genuinely has no known sale price
+  // (salePrice: 0, e.g. a real cadastral parcel with no connected
+  // ownership provider -- see RealCadastreMap.tsx's
+  // buildSyntheticParcelRecord), this used to silently fall back to the
+  // same R11,950,000 demo number via `|| 11950000` (0 is falsy), which
+  // would have been a fabricated price attached to a real, identifiable
+  // property in a form that can actually publish to real portals. Left
+  // blank (0) instead so the agent has to consciously enter the real
+  // price before this could be submitted.
+  const [price, setPrice] = useState(selectedProperty ? (selectedProperty.currentSale?.salePrice || 0) : 11950000);
   const [bedrooms, setBedrooms] = useState(selectedProperty?.accommodation?.bedRooms || 3);
   const [bathrooms, setBathrooms] = useState(selectedProperty?.accommodation?.bathRooms || 3);
   const [erfSize, setErfSize] = useState(selectedProperty?.extentM2 || 420);
-  const [sellerName, setSellerName] = useState(selectedProperty?.currentSale?.owner || 'David & Gillian Hirsch');
+  // Same reasoning as price above -- only the true blank-template case
+  // gets the demo seller name.
+  const [sellerName, setSellerName] = useState(selectedProperty ? (selectedProperty.currentSale?.owner || '') : 'David & Gillian Hirsch');
   const [sellerContact, setSellerContact] = useState('+27 82 555 9182');
   const [sellerEmail, setSellerEmail] = useState('d.hirsch@hirschgroup.co.za');
   const [mandateType, setMandateType] = useState<'Sole Mandate' | 'Open Mandate' | 'Joint Mandate'>('Sole Mandate');
@@ -45,11 +58,11 @@ export const QuickListingModal: React.FC<QuickListingModalProps> = ({
     if (selectedProperty) {
       setAddress(selectedProperty.address || '8 Richmond Road');
       setSuburb(selectedProperty.suburb || 'Three Anchor Bay');
-      setPrice(selectedProperty.currentSale?.salePrice || 11950000);
+      setPrice(selectedProperty.currentSale?.salePrice || 0);
       setBedrooms(selectedProperty.accommodation?.bedRooms || 3);
       setBathrooms(selectedProperty.accommodation?.bathRooms || 3);
       setErfSize(selectedProperty.extentM2 || 420);
-      setSellerName(selectedProperty.currentSale?.owner || 'David & Gillian Hirsch');
+      setSellerName(selectedProperty.currentSale?.owner || '');
       if (selectedProperty.contacts?.primaryPhone) {
         setSellerContact(selectedProperty.contacts.primaryPhone);
       }
