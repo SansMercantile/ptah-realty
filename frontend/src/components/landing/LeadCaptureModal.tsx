@@ -216,7 +216,7 @@ export const LeadCaptureModal: React.FC<LeadCaptureModalProps> = ({
                       required
                       value={agencyName}
                       onChange={(e) => setAgencyName(e.target.value)}
-                      placeholder="e.g. LAW Real Estate / Sotheby's"
+                      placeholder="e.g. Ptah Real Estate / Sotheby's"
                       className="w-full pl-9 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:outline-none"
                     />
                   </div>

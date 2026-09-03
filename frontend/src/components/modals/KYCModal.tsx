@@ -402,7 +402,7 @@ export const KYCModal: React.FC<KYCModalProps> = ({
             { erf: 'Erf 1679', suburb: 'Three Anchor Bay', share: '50%', purchaseDate: '2023/07/22', price: 'R 7 450 000', titleDeed: 'T44901/2023' }
           ],
           cipcDirectorships: [
-            { company: 'LAW REAL ESTATE ADVISORS PTY LTD', regNo: '2018/449102/07', status: 'ACTIVE', role: 'Principal Director', appointmentDate: '2018-05-15' }
+            { company: 'PTAH REAL ESTATE ADVISORS PTY LTD', regNo: '2018/449102/07', status: 'ACTIVE', role: 'Principal Director', appointmentDate: '2018-05-15' }
           ],
           creditBureau: {
             score: 810,

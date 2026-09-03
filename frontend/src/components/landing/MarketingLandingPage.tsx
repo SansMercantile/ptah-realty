@@ -1271,7 +1271,7 @@ export const MarketingLandingPage: React.FC<MarketingLandingPageProps> = ({ onEn
                   <label className="block text-slate-300 font-semibold mb-1">Agency / Brokerage Name</label>
                   <input
                     type="text"
-                    placeholder="e.g. LAW Real Estate"
+                    placeholder="e.g. Ptah Real Estate"
                     className="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-lg text-white focus:ring-2 focus:ring-cyan-500 focus:outline-none"
                   />
                 </div>

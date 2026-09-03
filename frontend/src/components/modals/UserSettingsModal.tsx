@@ -107,7 +107,7 @@ const INITIAL_PROFILE: UserProfileData = {
   cellPhone: '0828903863',
   officePhone: '021 439 7777',
   ffcNumber: '20241098234',
-  companyName: 'LAW Real Estate / PTAH Realty',
+  companyName: 'Ptah Real Estate / PTAH Realty',
   yearsExperience: '15+ Years',
   registrationDate: '2018-05-15',
   numberOfAwards: '4 - 8 Awards',
