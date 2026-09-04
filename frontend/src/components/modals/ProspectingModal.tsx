@@ -19,7 +19,7 @@ import {
   Wifi,
   Loader2
 } from 'lucide-react';
-import { PROSPECTING_LEADS_DATA, PROSPECTING_SCRIPTS_DATA } from '../../services/mockData';
+import { PROSPECTING_SCRIPTS_DATA } from '../../services/mockData';
 import { ProspectLead, ProspectScript } from '../../types';
 import { getUpcomingOwnerDates, filterProspects, UpcomingOwnerDate, ProspectFilterResult } from '../../services/api';
 
@@ -80,7 +80,26 @@ export const ProspectingModal: React.FC<ProspectingModalProps> = ({
 
   if (!isOpen) return null;
 
-  let leadsList = [...PROSPECTING_LEADS_DATA];
+  let leadsList: ProspectLead[] = [...(liveDom || [])].map((lead) => ({
+    id: lead.id,
+    propertyAddress: lead.address_line || '',
+    suburb: lead.suburb || '',
+    ownerName: '',
+    ownerIdMasked: '',
+    contactNumber: '',
+    email: '',
+    ownerAge: 0,
+    ownerBirthday: '',
+    purchaseDate: '',
+    durationYears: 0,
+    purchaseAnniversary: '',
+    estimatedEquity: 0,
+    category: 'Freehold',
+    erfExtentM2: 0,
+    daysOnMarket: lead.days_on_market || 0,
+    isForSaleByOwner: false,
+    notes: '',
+  }));
 
   if (activeTab === 'Age of Owner') {
     leadsList = leadsList.filter(l => l.ownerAge >= minAge);

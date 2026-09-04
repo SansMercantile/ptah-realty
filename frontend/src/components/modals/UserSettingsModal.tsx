@@ -59,10 +59,17 @@ import {
   Scale,
   BookOpen,
   FileCheck,
-  Copy
+  Copy,
+  Building,
+  Video,
+  Palette,
+  Megaphone,
+  Share2
 } from 'lucide-react';
-import { uploadAvatar, removeAvatar, uploadCompanyLogo, removeCompanyLogo, changePassword, getMyProfile, getTotpStatus, setupTotp, enableTotp, disableTotp, listPasskeys, getPasskeyRegistrationOptions, verifyPasskeyRegistration, deletePasskey, PasskeySummary, getVerificationStatus, sendEmailVerification, confirmEmailVerification, sendMobileVerification, confirmMobileVerification, getPayfastAddCardUrl, listPaymentMethods, removePaymentMethod, PaymentMethodRecord } from '../../services/api';
+import { uploadAvatar, removeAvatar, uploadCompanyLogo, removeCompanyLogo, changePassword, getMyProfile, updateMyProfile, getTotpStatus, setupTotp, enableTotp, disableTotp, listPasskeys, getPasskeyRegistrationOptions, verifyPasskeyRegistration, deletePasskey, PasskeySummary, getVerificationStatus, sendEmailVerification, confirmEmailVerification, sendMobileVerification, confirmMobileVerification, getPayfastAddCardUrl, listPaymentMethods, removePaymentMethod, PaymentMethodRecord } from '../../services/api';
 import { isWebAuthnSupported, createPasskeyCredential, describeWebAuthnError } from '../../services/webauthnClient';
+import { CONNECTORS_AND_EXTENSIONS } from '../../services/connectorsData';
+import { getConnectorGroup } from '../../types/connectors';
 
 import { 
   GLOBAL_COUNTRIES_DATA, 
@@ -99,32 +106,12 @@ export interface UserProfileData {
 }
 
 const INITIAL_PROFILE: UserProfileData = {
-  title: 'Mr',
-  name: 'John',
-  surname: 'Doe',
-  email: 'john@ptahrealestate.co.za',
-  idNumber: '8303305103087',
-  cellPhone: '0828903863',
-  officePhone: '021 439 7777',
-  ffcNumber: '20241098234',
-  companyName: 'Ptah Real Estate / PTAH Realty',
-  yearsExperience: '15+ Years',
-  registrationDate: '2018-05-15',
-  numberOfAwards: '4 - 8 Awards',
-  propertiesSold12Mo: '16 - 30 Properties',
-  highestQualification: 'Master Practitioner in Real Estate (MPRE / NQF 5)',
-  speciality: 'Atlantic Seaboard Luxury & Sectional Schemes',
-  province: 'Western Cape',
-  agentType: 'Principal Property Practitioner (PPRA)',
-  aboutMe: 'With over 18 years of specialized experience along Cape Town’s premier Atlantic Seaboard, John Doe provides unparalleled market intelligence, precision cadastral valuation, and discreet representation for bespoke residential and sectional title investments.',
-  farmingAreas: ['Three Anchor Bay', 'Green Point', 'Sea Point', 'Camps Bay', 'Bantry Bay', 'Clifton'],
-  socialMedia: [
-    { platform: 'LinkedIn', url: 'https://linkedin.com/in/john-doe-ptah' },
-    { platform: 'Instagram', url: 'https://instagram.com/ronaldread_realty' }
-  ],
-  viewOnFindAnAgent: true,
-  profilePhotoUrl: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=400&q=80',
-  companyLogoUrl: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=400&q=80'
+  title: '', name: '', surname: '', email: '', idNumber: '', cellPhone: '',
+  officePhone: '', ffcNumber: '', companyName: '', yearsExperience: '',
+  registrationDate: '', numberOfAwards: '', propertiesSold12Mo: '',
+  highestQualification: '', speciality: '', province: '', agentType: '', aboutMe: '',
+  farmingAreas: [], socialMedia: [], viewOnFindAnAgent: false,
+  profilePhotoUrl: '', companyLogoUrl: ''
 };
 
 const SUBURB_OPTIONS = [
@@ -185,6 +172,8 @@ export interface UserSettingsModalProps {
   onJurisdictionChange?: (countryId: string, provinceId: string, cityId: string) => void;
   theme?: string;
   onThemeChange?: (theme: string) => void;
+  currentLanguage?: string;
+  onLanguageChange?: (language: string) => void;
 }
 
 interface InvoiceRecord {
@@ -200,64 +189,7 @@ interface InvoiceRecord {
   items: { description: string; qty: number; unitPrice: number; total: number }[];
 }
 
-const SAMPLE_INVOICES: InvoiceRecord[] = [
-  {
-    id: 'inv-1',
-    invoiceNumber: 'INV-2026-08-0194',
-    date: '2026/08/01',
-    description: 'Principal Practitioner Pro Monthly Subscription',
-    amount: 1850.00,
-    vatAmount: 241.30,
-    netAmount: 1608.70,
-    status: 'PAID',
-    paymentMethod: 'Visa •••• 4242',
-    items: [
-      { description: 'Principal Practitioner Pro Monthly (Includes 250 Data Credits & Unlimited CMA)', qty: 1, unitPrice: 1608.70, total: 1608.70 }
-    ]
-  },
-  {
-    id: 'inv-2',
-    invoiceNumber: 'INV-2026-07-0482',
-    date: '2026/07/15',
-    description: '200 x FICA & Bureau Trace Pack Top-Up',
-    amount: 1490.00,
-    vatAmount: 194.35,
-    netAmount: 1295.65,
-    status: 'PAID',
-    paymentMethod: 'Visa •••• 4242',
-    items: [
-      { description: '200 x FICA & Bureau Trace Pack (Home Affairs + Sanctions)', qty: 1, unitPrice: 1295.65, total: 1295.65 }
-    ]
-  },
-  {
-    id: 'inv-3',
-    invoiceNumber: 'INV-2026-07-0012',
-    date: '2026/07/01',
-    description: 'Principal Practitioner Pro Monthly Subscription',
-    amount: 1850.00,
-    vatAmount: 241.30,
-    netAmount: 1608.70,
-    status: 'PAID',
-    paymentMethod: 'Visa •••• 4242',
-    items: [
-      { description: 'Principal Practitioner Pro Monthly (Includes 250 Data Credits & Unlimited CMA)', qty: 1, unitPrice: 1608.70, total: 1608.70 }
-    ]
-  },
-  {
-    id: 'inv-4',
-    invoiceNumber: 'INV-2026-06-0331',
-    date: '2026/06/18',
-    description: '500 x Cadastre & Data Search Credits Pack',
-    amount: 1250.00,
-    vatAmount: 163.04,
-    netAmount: 1086.96,
-    status: 'PAID',
-    paymentMethod: 'Mastercard •••• 8831',
-    items: [
-      { description: '500 x Cadastre & Data Search Top-Up Pack', qty: 1, unitPrice: 1086.96, total: 1086.96 }
-    ]
-  }
-];
+const SAMPLE_INVOICES: InvoiceRecord[] = [];
 
 export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
   isOpen,
@@ -273,7 +205,9 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
   currentCityId = 'CPT',
   onJurisdictionChange,
   theme = 'emerald',
-  onThemeChange
+  onThemeChange,
+  currentLanguage,
+  onLanguageChange
 }) => {
   const [activeTab, setActiveTab] = useState<SettingsTabType>(initialTab);
 
@@ -372,6 +306,9 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
       .then((real) => {
         setProfile((prev) => ({
           ...prev,
+          ...(real.profile || {}),
+          ...(real.name ? { name: real.name, surname: '' } : {}),
+          ...(real.email ? { email: real.email } : {}),
           ...(real.avatarUrl ? { profilePhotoUrl: real.avatarUrl } : {}),
           ...(real.companyLogoUrl ? { companyLogoUrl: real.companyLogoUrl } : {}),
         }));
@@ -670,7 +607,7 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
   const [taxSaved, setTaxSaved] = useState(false);
 
   // Language state (under Profile)
-  const [selectedLanguage, setSelectedLanguage] = useState('en-ZA');
+  const [selectedLanguage, setSelectedLanguage] = useState(currentLanguage || 'en-ZA');
   const [isProfileLanguageOpen, setIsProfileLanguageOpen] = useState(false);
   const [languageSaved, setLanguageSaved] = useState(false);
 
@@ -685,7 +622,17 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
   const [preferencesSavedToast, setPreferencesSavedToast] = useState<string | null>(null);
 
   // Apps & Extensions state
-  const [installedApps, setInstalledApps] = useState<string[]>(['chrome-ext', 'deeds-api', 'whatsapp-crm']);
+  const [settingsConnectors, setSettingsConnectors] = useState(() => {
+    let savedConnectors: Record<string, unknown>[] = [];
+    try {
+      savedConnectors = JSON.parse(localStorage.getItem('ptah_crm_connectors') || '[]');
+    } catch { /* use the shared empty definitions */ }
+    const savedById = new Map(savedConnectors.map((connector) => [String(connector.id), connector]));
+    return CONNECTORS_AND_EXTENSIONS.map((connector) => ({
+      ...connector,
+      ...(savedById.get(connector.id) || {}),
+    }));
+  });
   const [appToast, setAppToast] = useState<string | null>(null);
 
   if (!isOpen) return null;
@@ -799,9 +746,14 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
     }));
   };
 
-  const handleSaveProfile = () => {
-    setIsSaved(true);
-    setTimeout(() => setIsSaved(false), 2500);
+  const handleSaveProfile = async () => {
+    try {
+      await updateMyProfile(profile as unknown as Record<string, unknown>, `${profile.name} ${profile.surname}`.trim());
+      setIsSaved(true);
+      setTimeout(() => setIsSaved(false), 2500);
+    } catch (error) {
+      setImageUploadError(error instanceof Error ? error.message : 'Unable to save profile.');
+    }
   };
 
   const handleSavePassword = async (e: React.FormEvent) => {
@@ -836,18 +788,21 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
 
   const handleSelectLanguage = (code: string) => {
     setSelectedLanguage(code);
+    onLanguageChange?.(code);
     setLanguageSaved(true);
     setTimeout(() => setLanguageSaved(false), 2000);
   };
 
   const handleToggleApp = (appId: string, title: string) => {
-    if (installedApps.includes(appId)) {
-      setInstalledApps(prev => prev.filter(id => id !== appId));
-      showAppToast(`Disconnected ${title}`);
-    } else {
-      setInstalledApps(prev => [...prev, appId]);
-      showAppToast(`Successfully activated & linked ${title}!`);
-    }
+    setSettingsConnectors((previous) => {
+      const updated = previous.map((connector) => connector.id === appId
+        ? { ...connector, isEnabled: !connector.isEnabled, status: !connector.isEnabled ? 'configured' as const : 'disconnected' as const }
+        : connector);
+      localStorage.setItem('ptah_crm_connectors', JSON.stringify(updated.filter((connector) => !connector.isStaticApp)));
+      window.dispatchEvent(new CustomEvent('ptah-connectors-changed', { detail: updated }));
+      return updated;
+    });
+    showAppToast(`Updated ${title}`);
   };
 
   const showAppToast = (msg: string) => {
@@ -932,63 +887,9 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
     setTimeout(() => setTaxSaved(false), 2500);
   };
 
-  const APPS_LIST = [
-    {
-      id: 'chrome-ext',
-      title: 'Virtual Agent Chrome Extension',
-      category: 'Browser Extension',
-      icon: Chrome,
-      color: 'bg-blue-500 text-white',
-      badge: 'POPULAR',
-      description: 'Overlay real-time Cadastral ERF boundaries, transfer histories, and CMA valuations directly onto Property24 & Private Property while browsing.',
-      version: 'v3.4.1',
-      rating: '4.9 ★ (1,240 realtors)'
-    },
-    {
-      id: 'whatsapp-crm',
-      title: 'WhatsApp FICA & Lead Assistant',
-      category: 'CRM & Messaging',
-      icon: MessageSquare,
-      color: 'bg-emerald-500 text-white',
-      badge: 'FICA VERIFIED',
-      description: 'Automate POPIA consent disclaimers, dispatch 1-page CMA snapshots, and request verified ID copy uploads directly from clients via WhatsApp.',
-      version: 'v2.1.0',
-      rating: '4.8 ★ (890 realtors)'
-    },
-    {
-      id: 'mobile-app',
-      title: 'Ptah Mobile Field Companion (iOS & Android)',
-      category: 'Mobile App',
-      icon: Smartphone,
-      color: 'bg-indigo-600 text-white',
-      badge: 'CADASTRE GPS',
-      description: 'Find property boundary beacons in the field using GPS accuracy, capture high-res site photos, and look up Deeds transfers on your phone.',
-      version: 'v4.0.2',
-      rating: '4.9 ★ (2,100 realtors)'
-    },
-    {
-      id: 'deeds-api',
-      title: 'National Deeds Office Live API Stream',
-      category: 'Data Integration',
-      icon: Database,
-      color: 'bg-cyan-600 text-white',
-      badge: 'LIVE SYNC',
-      description: 'Direct high-speed gateway to Pretoria, Cape Town, and Pietermaritzburg Deeds registries for instant title deed extraction and bond tracking.',
-      version: 'v1.9.0',
-      rating: '5.0 ★ Enterprise'
-    },
-    {
-      id: 'excel-addin',
-      title: 'Excel & Google Sheets CMA Sync Add-In',
-      category: 'Analytics & Reporting',
-      icon: FileSpreadsheet,
-      color: 'bg-teal-600 text-white',
-      badge: 'PRODUCTIVITY',
-      description: 'Export structured comparative market analyses, suburb sales trends, and municipal valuation roll data straight into Excel spreadsheets.',
-      version: 'v2.0.4',
-      rating: '4.7 ★ (620 realtors)'
-    }
-  ];
+  const APPS_LIST = [...settingsConnectors]
+    .sort((left, right) => getConnectorGroup(left.category).localeCompare(getConnectorGroup(right.category)))
+    .map((app) => ({ ...app, title: app.name, category: getConnectorGroup(app.category), badge: app.badgeText || 'AVAILABLE', icon: Layers, color: 'bg-cyan-600 text-white' }));
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-2 sm:p-4 overflow-y-auto">
@@ -3141,11 +3042,17 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
               )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {APPS_LIST.map((app) => {
+                {APPS_LIST.map((app, index) => {
                   const Icon = app.icon;
-                  const isInstalled = installedApps.includes(app.id);
+                  const isInstalled = app.isEnabled;
 
                   return (
+                    <React.Fragment key={app.id}>
+                    {(index === 0 || APPS_LIST[index - 1].category !== app.category) && (
+                      <div className="md:col-span-2 pt-2 border-b border-slate-200">
+                        <h2 className="text-xs font-bold uppercase tracking-widest text-slate-700">{app.category}</h2>
+                      </div>
+                    )}
                     <div 
                       key={app.id}
                       className={`bg-white rounded-lg border p-4 shadow-xs flex flex-col justify-between transition-all ${
@@ -3207,6 +3114,7 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
                         </div>
                       </div>
                     </div>
+                    </React.Fragment>
                   );
                 })}
               </div>

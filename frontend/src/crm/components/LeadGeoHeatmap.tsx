@@ -24,12 +24,10 @@ import {
   CheckCircle2,
   Users,
   Target,
-  Sparkles,
-  Map as MapIcon
+  Sparkles
 } from 'lucide-react';
 import { Lead } from '../types';
 import { formatCurrency, formatShortCurrency } from '../utils/formatters';
-import { LeadLeafletMap } from './LeadLeafletMap';
 
 interface LeadGeoHeatmapProps {
   leads: Lead[];
@@ -257,16 +255,11 @@ interface PropertyHub {
   keywords: string[];
 }
 
-// hubStats (below) maps each PropertyHub to one of these -- the actual
-// per-hub lead rollup used for the leaderboard and detail card. activeHub
-// holds one of these enriched objects (from a hubStats entry), not a
-// bare PropertyHub, hence the separate type.
-interface PropertyHubWithStats extends PropertyHub {
+interface PropertyHubStats extends PropertyHub {
   leads: Lead[];
   count: number;
   totalValue: number;
   dealsWon: number;
-  urgentCount: number;
   avgScore: number;
   topSource: string;
   conversionRate: string;
@@ -357,11 +350,10 @@ const PROPERTY_HUBS: PropertyHub[] = [
 ];
 
 export const LeadGeoHeatmap: React.FC<LeadGeoHeatmapProps> = ({ leads, onSelectLead }) => {
-  const [mapEngine, setMapEngine] = useState<'leaflet' | 'choropleth'>('leaflet');
   const [selectedMetric, setSelectedMetric] = useState<'volume' | 'value' | 'conversion' | 'urgent'>('value');
   const [selectedPortal, setSelectedPortal] = useState<string>('all');
   const [selectedProvince, setSelectedProvince] = useState<string>('all');
-  const [activeHub, setActiveHub] = useState<PropertyHubWithStats | null>(null);
+  const [activeHub, setActiveHub] = useState<PropertyHubStats | null>(null);
   const [mapPosition, setMapPosition] = useState<{ coordinates: [number, number]; zoom: number }>({
     coordinates: [24.8, -29.2],
     zoom: 1
@@ -537,9 +529,9 @@ export const LeadGeoHeatmap: React.FC<LeadGeoHeatmapProps> = ({ leads, onSelectL
   };
 
   return (
-    <div className="bg-white dark:bg-black rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden transition-colors">
+    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden transition-colors">
       {/* Heatmap Header & Controls Strip */}
-      <div className="p-4 sm:p-6 border-b border-slate-200 dark:border-slate-800 flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-slate-50/70 dark:bg-black/90">
+      <div className="p-4 sm:p-6 border-b border-slate-200 dark:border-slate-800 flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-slate-50/70 dark:bg-slate-900/90">
         <div>
           <div className="flex items-center space-x-2 text-emerald-700 dark:text-emerald-400 text-xs font-bold uppercase tracking-wider mb-1">
             <Compass className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
@@ -556,36 +548,8 @@ export const LeadGeoHeatmap: React.FC<LeadGeoHeatmapProps> = ({ leads, onSelectL
           </p>
         </div>
 
-        {/* Heatmap Engine Selector & Metric Filters */}
+        {/* Heatmap Metric Selector & Filters */}
         <div className="flex flex-wrap items-center gap-2">
-          {/* Map Engine Toggle */}
-          <div className="flex items-center bg-emerald-50 dark:bg-slate-800 p-1 rounded-xl border border-emerald-200 dark:border-slate-700 text-xs font-semibold shadow-2xs">
-            <button
-              onClick={() => setMapEngine('leaflet')}
-              className={`px-3 py-1.5 rounded-lg transition cursor-pointer flex items-center space-x-1.5 ${
-                mapEngine === 'leaflet'
-                  ? 'bg-emerald-600 text-white shadow-xs'
-                  : 'text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              <Layers className="w-3.5 h-3.5" />
-              <span>Cadastral / RealMap & Clusters</span>
-            </button>
-            <button
-              onClick={() => setMapEngine('choropleth')}
-              className={`px-3 py-1.5 rounded-lg transition cursor-pointer flex items-center space-x-1.5 ${
-                mapEngine === 'choropleth'
-                  ? 'bg-slate-900 dark:bg-emerald-600 text-white shadow-xs'
-                  : 'text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              <MapIcon className="w-3.5 h-3.5" />
-              <span>Macro Choropleth</span>
-            </button>
-          </div>
-
-          {mapEngine === 'choropleth' && (
-            <>
           {/* Metric mode toggle */}
           <div className="flex items-center bg-white dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-semibold shadow-2xs">
             <button
@@ -636,16 +600,10 @@ export const LeadGeoHeatmap: React.FC<LeadGeoHeatmapProps> = ({ leads, onSelectL
             <option value="Facebook / Instagram Ads">Meta Ads Only</option>
             <option value="Competitor Syndication">Competitor Syndication</option>
           </select>
-            </>
-          )}
         </div>
       </div>
 
-      {mapEngine === 'leaflet' ? (
-        <div className="p-4 sm:p-6 bg-slate-950">
-          <LeadLeafletMap leads={leads} onSelectLead={onSelectLead} />
-        </div>
-      ) : (
+      {/* Main Map & Territory Split View */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 divide-y lg:divide-y-0 lg:divide-x divide-slate-200 dark:divide-slate-800">
         {/* Left: Interactive Map Container */}
         <div className="lg:col-span-8 p-4 sm:p-6 relative flex flex-col items-center justify-center min-h-[460px] bg-slate-50/50 dark:bg-slate-950/40">
@@ -881,7 +839,7 @@ export const LeadGeoHeatmap: React.FC<LeadGeoHeatmapProps> = ({ leads, onSelectL
         </div>
 
         {/* Right: Territory Intelligence & Suburb Breakdown */}
-        <div className="lg:col-span-4 p-4 sm:p-6 flex flex-col justify-between space-y-4 bg-white dark:bg-black">
+        <div className="lg:col-span-4 p-4 sm:p-6 flex flex-col justify-between space-y-4 bg-white dark:bg-slate-900">
           <div>
             <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
               <div>
@@ -1027,7 +985,6 @@ export const LeadGeoHeatmap: React.FC<LeadGeoHeatmapProps> = ({ leads, onSelectL
           </div>
         </div>
       </div>
-      )}
     </div>
   );
 };

@@ -37,6 +37,7 @@ interface PipelineBoardProps {
   onOpenQuickWhatsApp: (lead: Lead) => void;
   onBulkReassignAgent?: (leadIds: string[], agent: typeof INITIAL_AGENTS[0]) => void;
   onBulkChangeStatus?: (leadIds: string[], status: LeadStatus) => void;
+  teamMembers?: unknown[];
 }
 
 export const PIPELINE_COLUMNS: { id: LeadStatus; label: string; color: string; badgeBg: string }[] = [

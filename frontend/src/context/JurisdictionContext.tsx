@@ -18,21 +18,49 @@ interface JurisdictionContextType {
   currentProperties: PropertyRecord[];
   currencySymbol: string;
   currencyCode: string;
+  language: string;
+  theme: string;
   landRegistryAuthority: string;
   legalIdentifierName: string;
   selectCountry: (countryId: string) => void;
   selectProvince: (provinceId: string) => void;
   selectCity: (cityId: string) => void;
   setFullJurisdiction: (countryId: string, provinceId: string, cityId: string) => void;
+  setLanguage: (language: string) => void;
+  setTheme: (theme: string) => void;
 }
 
 const JurisdictionContext = createContext<JurisdictionContextType | undefined>(undefined);
 
 export const JurisdictionProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Default to South Africa -> Western Cape -> Cape Town
-  const [countryId, setCountryId] = useState<string>('ZA');
-  const [provinceId, setProvinceId] = useState<string>('WC');
-  const [cityId, setCityId] = useState<string>('CPT');
+  const [countryId, setCountryId] = useState<string>(() => localStorage.getItem('ptah_country') || 'ZA');
+  const [provinceId, setProvinceId] = useState<string>(() => localStorage.getItem('ptah_province') || 'WC');
+  const [cityId, setCityId] = useState<string>(() => localStorage.getItem('ptah_city') || 'CPT');
+  const [language, setLanguage] = useState<string>(() => localStorage.getItem('ptah_language') || navigator.language || 'en-ZA');
+  const [theme, setTheme] = useState<string>(() => localStorage.getItem('ptah_theme') || 'system');
+
+  useEffect(() => {
+    localStorage.setItem('ptah_country', countryId);
+    localStorage.setItem('ptah_province', provinceId);
+    localStorage.setItem('ptah_city', cityId);
+    localStorage.setItem('ptah_currency', country.currency.code);
+  }, [countryId, provinceId, cityId]);
+
+  useEffect(() => {
+    localStorage.setItem('ptah_language', language);
+    document.documentElement.lang = language;
+    window.dispatchEvent(new CustomEvent('ptah-language-changed', { detail: language }));
+  }, [language]);
+
+  useEffect(() => {
+    const resolvedTheme = theme === 'system'
+      ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'onyx' : 'emerald')
+      : theme;
+    localStorage.setItem('ptah_theme', theme);
+    document.documentElement.dataset.theme = resolvedTheme;
+    document.documentElement.classList.toggle('dark', resolvedTheme === 'onyx');
+  }, [theme]);
 
   const { country, province, city } = getJurisdictionByCode(countryId, provinceId, cityId);
 
@@ -78,12 +106,16 @@ export const JurisdictionProvider: React.FC<{ children: React.ReactNode }> = ({ 
         currentProperties: city.properties,
         currencySymbol: country.currency.symbol,
         currencyCode: country.currency.code,
+        language,
+        theme,
         landRegistryAuthority: country.landRegistryAuthority,
         legalIdentifierName: country.legalIdentifierName,
         selectCountry,
         selectProvince,
         selectCity,
-        setFullJurisdiction
+        setFullJurisdiction,
+        setLanguage,
+        setTheme
       }}
     >
       {children}

@@ -45,6 +45,7 @@ import { SlaResponseEfficiencyWidget } from './SlaResponseEfficiencyWidget';
 interface ReportingAnalyticsViewProps {
   leads: Lead[];
   onSelectLead?: (lead: Lead) => void;
+  teamMembers?: unknown[];
 }
 
 const SOURCE_COLORS: Record<string, string> = {

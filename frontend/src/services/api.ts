@@ -900,10 +900,18 @@ export interface MyProfile {
   role: string;
   avatarUrl?: string | null;
   companyLogoUrl?: string | null;
+  profile?: Record<string, unknown>;
 }
 
 export async function getMyProfile(): Promise<MyProfile> {
   return authJson<MyProfile>('/users/me');
+}
+
+export async function updateMyProfile(profile: Record<string, unknown>, name?: string): Promise<{ saved: boolean }> {
+  return authJson<{ saved: boolean }>('/users/me', {
+    method: 'PATCH',
+    body: JSON.stringify({ profile, name }),
+  });
 }
 
 async function uploadImage(path: string, file: File): Promise<any> {

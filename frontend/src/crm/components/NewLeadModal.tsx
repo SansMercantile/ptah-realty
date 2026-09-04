@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { X, Building, Plus, User, Mail, Phone, DollarSign, Tag, Calendar, Sparkles } from 'lucide-react';
 import { Lead, LeadSource, UrgencyLevel, LeadStatus } from '../types';
-import { INITIAL_AGENTS } from '../data/mockData';
 import { computeAgeBracket } from '../utils/formatters';
+import type { TeamMember } from '../../services/api';
 
 interface NewLeadModalProps {
   onClose: () => void;
   onAddLead: (lead: Lead) => void;
+  teamMembers?: TeamMember[];
 }
 
-export const NewLeadModal: React.FC<NewLeadModalProps> = ({ onClose, onAddLead }) => {
+export const NewLeadModal: React.FC<NewLeadModalProps> = ({ onClose, onAddLead, teamMembers = [] }) => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -23,11 +24,11 @@ export const NewLeadModal: React.FC<NewLeadModalProps> = ({ onClose, onAddLead }
   const [phone, setPhone] = useState('');
   const [source, setSource] = useState<LeadSource>('Property 24');
   const [propertyTitle, setPropertyTitle] = useState('');
-  const [propertyPrice, setPropertyPrice] = useState('15000000');
-  const [propertyLocation, setPropertyLocation] = useState('Atlantic Seaboard, Cape Town');
-  const [inquiryMessage, setInquiryMessage] = useState('Interested in viewing this property this week.');
+  const [propertyPrice, setPropertyPrice] = useState('');
+  const [propertyLocation, setPropertyLocation] = useState('');
+  const [inquiryMessage, setInquiryMessage] = useState('');
   const [urgency, setUrgency] = useState<UrgencyLevel>('high');
-  const [budget, setBudget] = useState('R15M - R18M');
+  const [budget, setBudget] = useState('');
   const [buyerType, setBuyerType] = useState<any>('Cash Buyer');
   // Optional -- deliberately NOT tied to any ID/FICA verification yet (no
   // buyer-side KYC flow exists in this CRM; only the property-owner deeds
@@ -38,11 +39,15 @@ export const NewLeadModal: React.FC<NewLeadModalProps> = ({ onClose, onAddLead }
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !phone.trim()) return;
+    if (teamMembers.length === 0) return;
 
-    const numPrice = parseFloat(propertyPrice) || 15000000;
+    const numPrice = parseFloat(propertyPrice) || 0;
+    const assignedAgent = { ...teamMembers[0], phone: '', avatar: '' };
+    const leadId = `lead-${Date.now()}`;
+    const taskId = `task-${Date.now()}`;
 
     const newLead: Lead = {
-      id: `lead-${Date.now()}`,
+      id: leadId,
       referenceNumber: `PTR-${Math.floor(1000 + Math.random() * 9000)}`,
       name,
       email: email || `${name.toLowerCase().replace(/\s+/g, '.')}@client.com`,
@@ -59,8 +64,8 @@ export const NewLeadModal: React.FC<NewLeadModalProps> = ({ onClose, onAddLead }
       propertyType: 'House',
       inquiryMessage,
       inquiryDate: new Date().toISOString(),
-      assignedAgent: INITIAL_AGENTS[0],
-      budget: budget || `R${(numPrice / 1000000).toFixed(1)}M`,
+      assignedAgent,
+      budget,
       buyerType,
       birthday: birthday || undefined,
       ageBracket: computeAgeBracket(birthday),
@@ -79,10 +84,10 @@ export const NewLeadModal: React.FC<NewLeadModalProps> = ({ onClose, onAddLead }
       ],
       tasks: [
         {
-          id: `task-${Date.now()}`,
-          leadId: `lead-${Date.now()}`,
+          id: taskId,
+          leadId,
           leadName: name,
-          propertyTitle: propertyTitle || 'Luxury Residence',
+          propertyTitle,
           title: `Initial Discovery Call with ${name}`,
           dueDate: new Date(Date.now() + 30 * 60000).toISOString(),
           priority: urgency,
@@ -90,18 +95,7 @@ export const NewLeadModal: React.FC<NewLeadModalProps> = ({ onClose, onAddLead }
           type: 'call',
         },
       ],
-      emailLogs: [
-        {
-          id: `em-man-${Date.now()}`,
-          recipientType: 'agent',
-          recipientEmail: 'privjapan@gmail.com',
-          subject: `[NEW LEAD] Manual Lead: ${name} (${source})`,
-          triggerReason: 'Manual Lead Creation',
-          timestamp: new Date().toISOString(),
-          status: 'delivered',
-          previewSnippet: `Lead created for ${propertyTitle || 'Listing'}. Contact: ${phone}`,
-        },
-      ],
+      emailLogs: [],
     };
 
     onAddLead(newLead);

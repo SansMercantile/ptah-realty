@@ -19,6 +19,8 @@ interface AiAdvisorDrawerProps {
   onOpen: () => void;
   onClose: () => void;
   leads: Lead[];
+  appContext?: Record<string, unknown>;
+  onTask?: (task: { type: string; target?: string }) => void;
 }
 
 export const AiAdvisorDrawer: React.FC<AiAdvisorDrawerProps> = ({
@@ -26,6 +28,8 @@ export const AiAdvisorDrawer: React.FC<AiAdvisorDrawerProps> = ({
   onOpen,
   onClose,
   leads,
+  appContext = {},
+  onTask,
 }) => {
   const [messages, setMessages] = useState<{ role: 'user' | 'assistant'; text: string }[]>([
     {
@@ -78,10 +82,17 @@ export const AiAdvisorDrawer: React.FC<AiAdvisorDrawerProps> = ({
         body: JSON.stringify({
           message: textToSend,
           crmSummary,
+          appContext: { ...appContext, crm: crmSummary },
         }),
       });
 
       const data = await response.json();
+      const allowedTasks = new Set(['navigate', 'open_settings', 'open_new_lead', 'open_notifications', 'open_search', 'open_listings', 'open_campaigns']);
+      if (Array.isArray(data.tasks)) {
+        data.tasks
+          .filter((task: unknown): task is { type: string; target?: string } => Boolean(task && typeof task === 'object' && allowedTasks.has((task as { type?: string }).type || '')))
+          .forEach((task: { type: string; target?: string }) => onTask?.(task));
+      }
       setMessages((prev) => [...prev, { role: 'assistant', text: data.reply || 'Analysis complete.' }]);
     } catch (err) {
       console.error(err);
