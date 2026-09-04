@@ -13,7 +13,7 @@
  */
 
 import { INITIAL_CONNECTORS } from '../crm/data/mockData';
-import { ConnectorItem, getConnectorGroup } from '../types/connectors';
+import { ConnectorItem } from '../types/connectors';
 
 /** The 5 items that used to live only in UserSettingsModal's local
  * APPS_LIST, now expressed as ConnectorItem so they render in the same
@@ -60,21 +60,3 @@ export const CONNECTORS_AND_EXTENSIONS: ConnectorItem[] = [
   ...(INITIAL_CONNECTORS as unknown as ConnectorItem[]),
   ...STATIC_APPS,
 ];
-
-/** The full list Settings' Connectors & Extensions tab renders --
- * real CRM connectors (Property24, Gmail, WhatsApp Business, Zoom,
- * Xero, Zapier, etc.) plus the 5 former Settings-only apps above. */
-export const ALL_CONNECTORS: ConnectorItem[] = [
-  ...INITIAL_CONNECTORS,
-  ...STATIC_APPS,
-];
-
-export function groupConnectors(connectors: ConnectorItem[]) {
-  const groups: Record<string, ConnectorItem[]> = {};
-  for (const c of connectors) {
-    const group = getConnectorGroup(c.category);
-    if (!groups[group]) groups[group] = [];
-    groups[group].push(c);
-  }
-  return groups;
-}

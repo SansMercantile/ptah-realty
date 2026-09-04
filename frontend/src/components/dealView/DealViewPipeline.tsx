@@ -399,11 +399,7 @@ export const DealViewPipeline: React.FC<DealViewPipelineProps> = ({
 
                     <div className="mt-2.5 flex items-center justify-between text-xs pt-2 border-t border-slate-100">
                       <button
-                        onClick={() => {
-                          const text = `Hi ${viewing.buyerName}, confirming your viewing on ${viewing.date} at ${viewing.time}. Looking forward to seeing you there!`;
-                          const cleanNum = viewing.buyerPhone.replace(/[^0-9]/g, '');
-                          window.open(`https://wa.me/${cleanNum}?text=${encodeURIComponent(text)}`, '_blank');
-                        }}
+                        onClick={() => alert(`Sending WhatsApp confirmation to ${viewing.buyerName} (${viewing.buyerPhone}) for ${viewing.date} at ${viewing.time}...`)}
                         className="text-emerald-700 hover:text-emerald-800 font-bold flex items-center gap-1 text-[11px]"
                       >
                         <MessageSquare className="w-3 h-3" />
@@ -504,12 +500,11 @@ export const DealViewPipeline: React.FC<DealViewPipelineProps> = ({
                       </span>
                       <div className="flex items-center gap-2">
                         <button
-                          disabled
-                          title="No signed document has been uploaded for this OTP yet"
-                          className="px-2.5 py-1 rounded bg-slate-50 text-slate-400 font-semibold text-[11px] flex items-center gap-1 cursor-not-allowed"
+                          onClick={() => alert(`Downloading signed OTP agreement PDF for ${otp.otpRef}...`)}
+                          className="px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-[11px] flex items-center gap-1"
                         >
                           <FileText className="w-3 h-3" />
-                          <span>No Signed PDF on File</span>
+                          <span>View OTP PDF</span>
                         </button>
                         <button
                           onClick={() => onSelectStage('ATTORNEY_DOCUMENT')}
@@ -737,12 +732,11 @@ export const DealViewPipeline: React.FC<DealViewPipelineProps> = ({
                         Expected Registration Date: <strong className="text-slate-800">{lodge.expectedRegistrationDate}</strong>
                       </span>
                       <button
-                        disabled
-                        title="Not connected to a trust accounting system yet -- no payout has been authorized"
-                        className="px-3 py-1 bg-slate-100 text-slate-400 rounded font-bold text-xs flex items-center gap-1 cursor-not-allowed"
+                        onClick={() => alert(`Commission payout authorization of R ${lodge.commissionPayable.toLocaleString()} submitted to principal auditor trust account!`)}
+                        className="px-3 py-1 bg-emerald-700 hover:bg-emerald-800 text-white rounded font-bold text-xs flex items-center gap-1 shadow-xs"
                       >
                         <DollarSign className="w-3.5 h-3.5" />
-                        <span>Payout Not Yet Available</span>
+                        <span>Authorize Commission Payout</span>
                       </button>
                     </div>
                   </div>

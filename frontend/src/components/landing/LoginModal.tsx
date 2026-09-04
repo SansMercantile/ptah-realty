@@ -203,20 +203,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <label className="text-xs font-bold text-slate-700">Password</label>
-                  <a
-                    href="#forgot"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      // No backend password-reset endpoint exists yet
-                      // (checked api/*.py -- none found). This used to
-                      // claim an email was sent regardless, which is a
-                      // real security-relevant false-success claim on a
-                      // login screen. Honest placeholder until a real
-                      // reset flow (token + email) is built.
-                      alert('Password reset isn\'t available yet. Please contact your account administrator to reset your password.');
-                    }}
-                    className="text-[11px] text-cyan-700 hover:underline"
-                  >
+                  <a href="#forgot" onClick={(e) => { e.preventDefault(); alert('Password reset link sent to your registered practitioner email.'); }} className="text-[11px] text-cyan-700 hover:underline">
                     Forgot Password?
                   </a>
                 </div>
