@@ -934,7 +934,7 @@ export const MarketingLandingPage: React.FC<MarketingLandingPageProps> = ({ onEn
                   }`}
                 />
               </button>
-              <span className={`flex items-center gap-1.5 ${billingCycle === 'annual' ? 'text-emerald-400 font-bold' : 'text-slate-500'}`}>
+              <span className={`flex items-center gap-1.5 ${billingCycle === 'annual' ? 'text-emerald-600 font-bold' : 'text-slate-500'}`}>
                 <span>Annual Billing</span>
                 <span className="bg-emerald-950 text-emerald-300 text-[10px] px-2 py-0.5 rounded border border-emerald-800">
                   Save 20%
@@ -964,23 +964,23 @@ export const MarketingLandingPage: React.FC<MarketingLandingPageProps> = ({ onEn
 
                 <ul className="space-y-2.5 text-xs text-slate-700">
                   <li className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-cyan-400 shrink-0" />
+                    <Check className="w-4 h-4 text-cyan-600 shrink-0" />
                     <span>100 Cadastral & Vector Map Searches / mo</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-cyan-400 shrink-0" />
+                    <Check className="w-4 h-4 text-cyan-600 shrink-0" />
                     <span>25 Title Deeds Lookups included</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-cyan-400 shrink-0" />
+                    <Check className="w-4 h-4 text-cyan-600 shrink-0" />
                     <span>10 Automated CMA Valuations / mo</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-cyan-400 shrink-0" />
+                    <Check className="w-4 h-4 text-cyan-600 shrink-0" />
                     <span>Standard PDF Export with Watermark</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-cyan-400 shrink-0" />
+                    <Check className="w-4 h-4 text-cyan-600 shrink-0" />
                     <span>1 User Seat</span>
                   </li>
                 </ul>
@@ -1079,27 +1079,27 @@ export const MarketingLandingPage: React.FC<MarketingLandingPageProps> = ({ onEn
 
                 <ul className="space-y-2.5 text-xs text-slate-700">
                   <li className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-teal-400 shrink-0" />
+                    <Check className="w-4 h-4 text-teal-600 shrink-0" />
                     <span>Unlimited Agent & Principal Seats</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-teal-400 shrink-0" />
+                    <Check className="w-4 h-4 text-teal-600 shrink-0" />
                     <span>1,500 Monthly Data & Deeds Credits</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-teal-400 shrink-0" />
+                    <Check className="w-4 h-4 text-teal-600 shrink-0" />
                     <span>150 FICA / AML Institutional Verifications</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-teal-400 shrink-0" />
+                    <Check className="w-4 h-4 text-teal-600 shrink-0" />
                     <span>White-Label Client Reports & Custom Domain</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-teal-400 shrink-0" />
+                    <Check className="w-4 h-4 text-teal-600 shrink-0" />
                     <span>REST API Access & Direct CRM Webhooks</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-teal-400 shrink-0" />
+                    <Check className="w-4 h-4 text-teal-600 shrink-0" />
                     <span>Dedicated SLA & Priority Technical Support</span>
                   </li>
                 </ul>
@@ -1122,13 +1122,13 @@ export const MarketingLandingPage: React.FC<MarketingLandingPageProps> = ({ onEn
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-6">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-50 border border-cyan-200 text-cyan-700 text-xs font-semibold">
-                <Building2 className="w-3.5 h-3.5 text-cyan-400" />
+                <Building2 className="w-3.5 h-3.5 text-cyan-600" />
                 <span>About Ptah Real Estate Technologies</span>
               </div>
               <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
                 Empowering Real Estate with Millimeter Spatial Integrity
               </h2>
-              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+              <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">
                 Ptah was engineered by land surveyors, conveyancers, and software architects to eliminate the fragmentation between land registries, cadastral GIS mapping, and real estate marketing.
               </p>
               <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
@@ -1138,13 +1138,13 @@ export const MarketingLandingPage: React.FC<MarketingLandingPageProps> = ({ onEn
               <div className="grid grid-cols-2 gap-4 pt-2">
                 <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-sm">
                   <div className="font-bold text-slate-900 text-sm mb-1 flex items-center gap-2">
-                    <Lock className="w-4 h-4 text-cyan-400" /> Bank-Grade Security
+                    <Lock className="w-4 h-4 text-cyan-600" /> Bank-Grade Security
                   </div>
                   <p className="text-[11px] text-slate-600">256-bit AES encryption with ISO 27001 data governance.</p>
                 </div>
                 <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-sm">
                   <div className="font-bold text-slate-900 text-sm mb-1 flex items-center gap-2">
-                    <Scale className="w-4 h-4 text-emerald-400" /> Statutory Compliance
+                    <Scale className="w-4 h-4 text-emerald-600" /> Statutory Compliance
                   </div>
                   <p className="text-[11px] text-slate-600">Full POPIA, GDPR, and AML/CFT statutory adherence.</p>
                 </div>
@@ -1152,13 +1152,13 @@ export const MarketingLandingPage: React.FC<MarketingLandingPageProps> = ({ onEn
             </div>
 
             <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-sm">
-              <h3 className="text-base font-bold text-slate-900 flex items-center gap-2 border-b border-slate-800 pb-3">
-                <ShieldCheck className="w-5 h-5 text-cyan-400" />
+              <h3 className="text-base font-bold text-slate-900 flex items-center gap-2 border-b border-slate-200 pb-3">
+                <ShieldCheck className="w-5 h-5 text-cyan-600" />
                 <span>Our Core Operating Commitments</span>
               </h3>
-              <div className="space-y-3 text-xs text-slate-300">
+              <div className="space-y-3 text-xs text-slate-700">
                 <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 flex items-start gap-3">
-                  <CheckCircle2 className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
+                  <CheckCircle2 className="w-4 h-4 text-cyan-600 shrink-0 mt-0.5" />
                   <div>
                     <span className="font-bold text-slate-900 block">Statutory Authenticity</span>
                     <span className="text-slate-500 text-[11px]">We pull directly from official national land registries with timestamped audit certificates.</span>
@@ -1166,7 +1166,7 @@ export const MarketingLandingPage: React.FC<MarketingLandingPageProps> = ({ onEn
                 </div>
 
                 <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 flex items-start gap-3">
-                  <CheckCircle2 className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
+                  <CheckCircle2 className="w-4 h-4 text-cyan-600 shrink-0 mt-0.5" />
                   <div>
                     <span className="font-bold text-slate-900 block">No Vendor Lock-In</span>
                     <span className="text-slate-500 text-[11px]">Export your listings, valuations, and compliance audits to CSV, GeoJSON, and PDF at any time.</span>
@@ -1174,7 +1174,7 @@ export const MarketingLandingPage: React.FC<MarketingLandingPageProps> = ({ onEn
                 </div>
 
                 <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 flex items-start gap-3">
-                  <CheckCircle2 className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
+                  <CheckCircle2 className="w-4 h-4 text-cyan-600 shrink-0 mt-0.5" />
                   <div>
                     <span className="font-bold text-slate-900 block">Global Territory Engine</span>
                     <span className="text-slate-500 text-[11px]">Continuous legal updates across 196 countries ensuring compliance with local statutory amendments.</span>
@@ -1192,17 +1192,17 @@ export const MarketingLandingPage: React.FC<MarketingLandingPageProps> = ({ onEn
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-1 space-y-6">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-50 border border-cyan-200 text-cyan-700 text-xs font-semibold">
-                <Mail className="w-3.5 h-3.5 text-cyan-400" />
+                <Mail className="w-3.5 h-3.5 text-cyan-600" />
                 <span>Get in Touch</span>
               </div>
-              <h2 className="text-3xl font-extrabold text-white tracking-tight">
+              <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">
                 Global Practitioner Support & Hubs
               </h2>
               <p className="text-xs text-slate-600 leading-relaxed">
                 Our support team includes licensed conveyancers, cadastral surveyors, and API engineers ready to assist with enterprise integrations and data feeds.
               </p>
 
-              <div className="space-y-3 text-xs text-slate-300">
+              <div className="space-y-3 text-xs text-slate-700">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 shadow-sm flex items-center justify-center text-cyan-600">
                     <Mail className="w-4 h-4" />
@@ -1288,8 +1288,8 @@ export const MarketingLandingPage: React.FC<MarketingLandingPageProps> = ({ onEn
               </div>
 
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
-                <div className="flex items-center gap-2 text-[11px] text-slate-400">
-                  <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                <div className="flex items-center gap-2 text-[11px] text-slate-500">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
                   <span>Your information is strictly protected under POPIA / GDPR.</span>
                 </div>
                 <button
