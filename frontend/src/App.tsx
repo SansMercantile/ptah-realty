@@ -64,30 +64,34 @@ export function App() {
   }, [theme]);
 
   const [properties, setProperties] = useState<PropertyRecord[]>(PROPERTIES_DATA);
-  const [selectedProperty, setSelectedProperty] = useState<PropertyRecord | null>(PROPERTIES_DATA[0]); // Default 5 Richmond Road
+  const [selectedProperty, setSelectedProperty] = usePersistedState<PropertyRecord | null>('selectedProperty', PROPERTIES_DATA[0]); // Default 5 Richmond Road
   const [isLoadingProperties, setIsLoadingProperties] = useState(false);
   
   // Navigation & Modals State
-  const [activeNavTab, setActiveNavTab] = useState<ActiveTab | null>(null);
-  const [isAccommodationModalOpen, setIsAccommodationModalOpen] = useState(false);
-  const [isValuationModalOpen, setIsValuationModalOpen] = useState(false);
-  const [isDocumentsModalOpen, setIsDocumentsModalOpen] = useState(false);
-  const [isSectionalModalOpen, setIsSectionalModalOpen] = useState(false);
-  const [isCMAEngineOpen, setIsCMAEngineOpen] = useState(false);
-  const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
-  const [isPDFReportOpen, setIsPDFReportOpen] = useState(false);
-  const [isPortalSyncOpen, setIsPortalSyncOpen] = useState(false);
-  const [isMyListingsOpen, setIsMyListingsOpen] = useState(false);
+  // usePersistedState (sessionStorage-backed) so an F5 reload keeps the
+  // user exactly where they were -- which nav tab/modal was open -- instead
+  // of always resetting to the cadastre map, which is what plain useState
+  // defaulting to null/false on every mount was doing.
+  const [activeNavTab, setActiveNavTab] = usePersistedState<ActiveTab | null>('activeNavTab', null);
+  const [isAccommodationModalOpen, setIsAccommodationModalOpen] = usePersistedState('isAccommodationModalOpen', false);
+  const [isValuationModalOpen, setIsValuationModalOpen] = usePersistedState('isValuationModalOpen', false);
+  const [isDocumentsModalOpen, setIsDocumentsModalOpen] = usePersistedState('isDocumentsModalOpen', false);
+  const [isSectionalModalOpen, setIsSectionalModalOpen] = usePersistedState('isSectionalModalOpen', false);
+  const [isCMAEngineOpen, setIsCMAEngineOpen] = usePersistedState('isCMAEngineOpen', false);
+  const [isMediaModalOpen, setIsMediaModalOpen] = usePersistedState('isMediaModalOpen', false);
+  const [isPDFReportOpen, setIsPDFReportOpen] = usePersistedState('isPDFReportOpen', false);
+  const [isPortalSyncOpen, setIsPortalSyncOpen] = usePersistedState('isPortalSyncOpen', false);
+  const [isMyListingsOpen, setIsMyListingsOpen] = usePersistedState('isMyListingsOpen', false);
   // Listings pipeline data now lives here (not inside MyListingsModal) so
   // the Quick Listing shortcut -- CRM header only, see chat -- can add to
   // it from the CRM tab without My Listings needing to be open.
   const [listings, setListings] = useState<ListingDealRecord[]>(INITIAL_MY_LISTINGS);
-  const [isQuickListingOpen, setIsQuickListingOpen] = useState(false);
-  const [isUserSettingsOpen, setIsUserSettingsOpen] = useState(false);
-  const [userSettingsInitialTab, setUserSettingsInitialTab] = useState<SettingsTabType>('profile');
-  const [isBalanceDetailsOpen, setIsBalanceDetailsOpen] = useState(false);
-  const [isCreditsTopUpOpen, setIsCreditsTopUpOpen] = useState(false);
-  const [isSearchHistoryOpen, setIsSearchHistoryOpen] = useState(false);
+  const [isQuickListingOpen, setIsQuickListingOpen] = usePersistedState('isQuickListingOpen', false);
+  const [isUserSettingsOpen, setIsUserSettingsOpen] = usePersistedState('isUserSettingsOpen', false);
+  const [userSettingsInitialTab, setUserSettingsInitialTab] = usePersistedState<SettingsTabType>('userSettingsInitialTab', 'profile');
+  const [isBalanceDetailsOpen, setIsBalanceDetailsOpen] = usePersistedState('isBalanceDetailsOpen', false);
+  const [isCreditsTopUpOpen, setIsCreditsTopUpOpen] = usePersistedState('isCreditsTopUpOpen', false);
+  const [isSearchHistoryOpen, setIsSearchHistoryOpen] = usePersistedState('isSearchHistoryOpen', false);
 
   // Credits/billing balance -- shared between the header's Balance badge,
   // BalanceDetailsModal, CreditsTopUpModal and UserSettingsModal's Billing
@@ -163,10 +167,49 @@ export function App() {
   // mounted on the CRM tab).
   const [crmOpenCommandPaletteSignal, setCrmOpenCommandPaletteSignal] = useState(0);
 
+  // Full-app context + task execution for the CRM's AI Copilot
+  // (AiAdvisorDrawer.tsx) -- so it can answer questions grounded in
+  // what's actually on screen right now (not just CRM lead data) and
+  // act on requests like "open my listings" or "take me to search"
+  // rather than just describing what the user could click. Built fresh
+  // on every render (cheap -- plain field reads, no computation) so the
+  // AI always sees current state, not a stale snapshot from mount time.
+  // Task execution is allowlisted server-side (api/crm_ai.py's prompt)
+  // AND re-checked client-side in AiAdvisorDrawer before anything here
+  // runs -- this handler only ever receives task types both sides have
+  // already approved.
+  const appContext = {
+    activeTab: activeNavTab,
+    selectedProperty: selectedProperty ? {
+      id: selectedProperty.id,
+      address: selectedProperty.address,
+      suburb: selectedProperty.suburb,
+      municipality: selectedProperty.municipality,
+    } : null,
+    totalProperties: properties.length,
+    totalListings: listings.length,
+    jurisdiction: { countryId, provinceId, cityId },
+  };
+
+  const handleCRMAiTask = (task: { type: string; target?: string }) => {
+    switch (task.type) {
+      case 'navigate':
+        if (task.target) handleSelectTab(task.target as ActiveTab);
+        break;
+      case 'open_settings':
+        setIsUserSettingsOpen(true);
+        break;
+      case 'open_search':
+        handleQuickSearch();
+        break;
+    }
+  };
+
+
   // Owner Contact Modal State
-  const [isContactOwnerModalOpen, setIsContactOwnerModalOpen] = useState(false);
-  const [contactOwnerProperty, setContactOwnerProperty] = useState<PropertyRecord | null>(null);
-  const [contactOwnerTab, setContactOwnerTab] = useState<'call' | 'email' | 'whatsapp'>('call');
+  const [isContactOwnerModalOpen, setIsContactOwnerModalOpen] = usePersistedState('isContactOwnerModalOpen', false);
+  const [contactOwnerProperty, setContactOwnerProperty] = usePersistedState<PropertyRecord | null>('contactOwnerProperty', null);
+  const [contactOwnerTab, setContactOwnerTab] = usePersistedState<'call' | 'email' | 'whatsapp'>('contactOwnerTab', 'call');
 
   // KYC quick launch target
   const [kycTarget, setKycTarget] = useState<{ name: string; id: string }>({ name: '', id: '' });
@@ -388,6 +431,8 @@ export function App() {
             viewListingSignal={crmViewListingSignal}
             viewListingId={crmViewListingId}
             onViewListingInMain={handleViewListingInMain}
+            appContext={appContext}
+            onTask={handleCRMAiTask}
           />
         ) : (
           <>

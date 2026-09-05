@@ -515,6 +515,95 @@ export async function getListingCopy(
   });
 }
 
+// Real syndication to Property24 & Private Property (both served through
+// one Entegral Sync API account -- see services/property24_feed.py on
+// the backend). publishListing attempts a real push if credentials are
+// configured; otherwise the backend returns the feed XML instead of a
+// fake success, and the caller should show that honestly rather than a
+// "Synced!" badge that isn't true yet.
+export interface PublishListingResult {
+  success: boolean;
+  error_message?: string;
+  raw?: string;
+  feed_xml?: string;
+}
+
+export async function publishListing(
+  propertyId: string,
+  description: string,
+  price: number,
+  agentName?: string,
+  agentEmail?: string
+): Promise<PublishListingResult> {
+  return authJson<PublishListingResult>('/listings/publish', {
+    method: 'POST',
+    body: JSON.stringify({
+      property_id: propertyId,
+      description,
+      price,
+      agent_name: agentName,
+      agent_email: agentEmail,
+    }),
+  });
+}
+
+export async function getListingFeedXml(
+  propertyId: string,
+  description: string,
+  price: number,
+  agentName?: string,
+  agentEmail?: string
+): Promise<{ feed_xml: string }> {
+  return authJson<{ feed_xml: string }>('/listings/feed', {
+    method: 'POST',
+    body: JSON.stringify({
+      property_id: propertyId,
+      description,
+      price,
+      agent_name: agentName,
+      agent_email: agentEmail,
+    }),
+  });
+}
+
+export interface SyncJob {
+  id: string;
+  property_id: string;
+  portal_name: string;
+  status: 'running' | 'success' | 'failed';
+  error_detail?: string | null;
+  created_at: string;
+  attempted_at?: string;
+}
+
+export async function getListingSyncStatus(propertyId: string): Promise<{ jobs: SyncJob[] }> {
+  return authJson<{ jobs: SyncJob[] }>(`/listings/${propertyId}/status`);
+}
+
+export interface PortalConnectionStatus {
+  portal_name: string;
+  is_configured: boolean;
+  is_active: boolean;
+  base_url?: string;
+  updated_at?: string;
+}
+
+export async function getPortalConnection(portalName: string): Promise<PortalConnectionStatus> {
+  return authJson<PortalConnectionStatus>(`/portal-connections/${portalName}`);
+}
+
+export async function savePortalConnection(
+  portalName: string,
+  baseUrl: string,
+  apiKey: string,
+  isActive: boolean = true
+): Promise<{ portal_name: string; is_active: boolean; saved: boolean }> {
+  return authJson(`/portal-connections/${portalName}`, {
+    method: 'PUT',
+    body: JSON.stringify({ base_url: baseUrl, api_key: apiKey, is_active: isActive }),
+  });
+}
+
 // ---------------------------------------------------------------------
 // Media
 // ---------------------------------------------------------------------

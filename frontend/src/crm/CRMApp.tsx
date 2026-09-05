@@ -90,6 +90,8 @@ export default function App({
   viewListingSignal,
   viewListingId,
   onViewListingInMain,
+  appContext,
+  onTask,
 }: {
   openConnectorsSignal?: number;
   openCommandPaletteSignal?: number;
@@ -99,6 +101,8 @@ export default function App({
   viewListingId?: string | null;
   onViewListingInMain?: (listingId: string) => void;
   onOpenQuickListing?: () => void;
+  appContext?: Record<string, unknown>;
+  onTask?: (task: { type: string; target?: string }) => void;
 }) {
   // Load from local storage, or start empty -- NEVER fall back to
   // INITIAL_LEADS (fictional demo people) for a genuinely new/empty
@@ -425,6 +429,23 @@ export default function App({
   const [isSimulatorOpen, setIsSimulatorOpen] = useState(false);
   const [isAiAdvisorOpen, setIsAiAdvisorOpen] = useState(true); // side panel, open by default per explicit request
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+
+  // Routes an allowlisted AI Copilot task (see AiAdvisorDrawer.tsx and
+  // the backend's chat_assistant prompt in api/crm_ai.py) to the right
+  // handler. open_new_lead/open_campaigns/open_listings are CRM-internal
+  // surfaces handled directly here; everything else (navigate,
+  // open_settings, open_search) bubbles up to App.tsx via the onTask
+  // prop, since those are main-app-level concerns this component
+  // doesn't own.
+  const handleAiTask = (task: { type: string; target?: string }) => {
+    switch (task.type) {
+      case 'open_new_lead': setIsNewLeadOpen(true); break;
+      case 'open_campaigns': setIsCampaignsModalOpen(true); break;
+      case 'open_listings': setIsQuickListingsOpen(true); break;
+      case 'open_notifications': setIsNotificationsOpen(true); break;
+      default: onTask?.(task);
+    }
+  };
 
   // Google Calendar sync -- moved here from DashboardView.tsx, since the
   // button now lives in the Schedule Calendar tab's header instead of
@@ -997,6 +1018,8 @@ export default function App({
           onOpen={() => setIsAiAdvisorOpen(true)}
           onClose={() => setIsAiAdvisorOpen(false)}
           leads={leads}
+          appContext={appContext}
+          onTask={handleAiTask}
         />
       </div>
 
