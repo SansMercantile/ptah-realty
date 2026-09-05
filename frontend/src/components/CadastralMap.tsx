@@ -17,6 +17,7 @@ import { RealCadastreMap, extractHouseNumber } from './RealCadastreMap';
 import { PropertyPopupCard } from './PropertyPopupCard';
 import { StreetFilterControls } from './StreetFilterControls';
 import { CompassTool } from './CompassTool';
+import { Property24Brand } from './Property24Brand';
 import { CADASTRAL_STREETS, filterPropertiesByStreet, formatWGS84 } from '../utils/cadastralFilters';
 import { pullProperty24RadiusListings, radiusListingToPropertyRecord, createPropertyFromRadiusListing, Property24RadiusResponse } from '../services/api';
 
@@ -357,7 +358,7 @@ export const CadastralMap: React.FC<CadastralMapProps> = ({
             <RefreshCw className="w-3.5 h-3.5 text-cyan-400" />
           )}
           <span>
-            Pull Live <span className="text-red-400">P24</span> &amp; <span className="text-blue-400">PP</span> Data
+            Pull Live <Property24Brand variant="short" className="font-bold" /> &amp; <span className="text-blue-400">PP</span> Data
           </span>
         </button>
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { usePersistedState } from './hooks/usePersistedState';
 import { Header, ActiveTab } from './components/Header';
 import { CadastralMap } from './components/CadastralMap';
 import { PropertyPanel } from './components/PropertyPanel';

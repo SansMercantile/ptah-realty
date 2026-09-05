@@ -37,6 +37,7 @@ import {
 import { PropertyRecord } from '../../types';
 import { PROPERTIES_DATA } from '../../services/mockData';
 import { DealViewPipeline } from '../dealView/DealViewPipeline';
+import { Property24Brand } from '../Property24Brand';
 import { 
   DealStage, 
   ViewingAppointment, 
@@ -378,7 +379,7 @@ export const MyListingsModal: React.FC<MyListingsModalProps> = ({
                     </span>
                   </h2>
                   <p className="text-[11px] text-cyan-200/80">
-                    Manage agency mandates, syndication pipelines to Property24 & Private Property, and deal documents.
+                    Manage agency mandates, syndication pipelines to <Property24Brand /> & Private Property, and deal documents.
                   </p>
                 </div>
               </div>
@@ -1439,7 +1440,7 @@ export const MyListingsModal: React.FC<MyListingsModalProps> = ({
                             onChange={(e) => setSyncProperty24(e.target.checked)}
                             className="rounded text-cyan-600 focus:ring-cyan-500"
                           />
-                          <span className="font-bold text-red-700">Property24</span>
+                          <Property24Brand className="font-bold" />
                         </label>
                         <label className="flex items-center gap-2 p-3 bg-slate-50 border border-slate-200 rounded cursor-pointer">
                           <input

@@ -24,6 +24,7 @@ import {
 import { PropertyRecord } from '../types';
 import { INITIAL_PROPERTY_MEDIA } from '../services/mockData';
 import { listMedia } from '../services/api';
+import { Property24Brand } from './Property24Brand';
 
 interface PropertyPopupCardProps {
   property: PropertyRecord | null;
@@ -282,7 +283,7 @@ export const PropertyPopupCard: React.FC<PropertyPopupCardProps> = ({
           <div className="bg-cyan-950/40 border border-cyan-500/40 rounded-xl p-2.5 flex items-center justify-between">
             <div>
               <div className="text-[10px] uppercase font-bold text-cyan-400 flex items-center gap-1">
-                <Globe className="w-3 h-3" /> Property24 Live Listing
+                <Globe className="w-3 h-3" /> <Property24Brand className="font-bold" /> Live Listing
               </div>
               <div className="text-xs text-slate-300 font-medium line-clamp-1 mt-0.5">
                 {p24.headline || p24.title}

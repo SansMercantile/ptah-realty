@@ -12,10 +12,14 @@ import { InboundSimulatorModal } from './components/InboundSimulatorModal';
 import { NewLeadModal } from './components/NewLeadModal';
 import { AiAdvisorDrawer } from './components/AiAdvisorDrawer';
 import { NotificationDrawer } from './components/NotificationDrawer';
+import { SettingsConnectorsModal } from './components/SettingsConnectorsModal';
 import { CommandPaletteModal } from './components/CommandPaletteModal';
 import { CampaignsHubModal } from './components/CampaignsHubModal';
 import {
+  INITIAL_LEADS,
+  INITIAL_AUTOMATION_RULES,
   INITIAL_CONNECTORS,
+  INITIAL_CONNECTOR_SYNC_EVENTS,
   INITIAL_SPRINT,
   INITIAL_LISTINGS,
   INITIAL_SHOW_HOUSES,
@@ -39,7 +43,6 @@ import { formatCurrency, triggerDealWonConfetti } from './utils/formatters';
 import { getCrmState, saveCrmState, authHeaders, getTeamMembers, TeamMember } from '../services/api';
 import type { ListingDealRecord } from '../components/modals/MyListingsModal';
 import { Bell, CheckCircle2, Flame, Radio, X, Calendar as CalendarIcon, Sliders, RefreshCw } from 'lucide-react';
-import { useJurisdiction } from '../context/JurisdictionContext';
 
 // Strips fake demo credentials (API keys, list IDs, webhook URLs --
 // anything a real tenant would need to type in themselves) from
@@ -87,8 +90,6 @@ export default function App({
   viewListingSignal,
   viewListingId,
   onViewListingInMain,
-  onOpenSettings,
-  appContext,
 }: {
   openConnectorsSignal?: number;
   openCommandPaletteSignal?: number;
@@ -98,10 +99,7 @@ export default function App({
   viewListingId?: string | null;
   onViewListingInMain?: (listingId: string) => void;
   onOpenQuickListing?: () => void;
-  onOpenSettings?: () => void;
-  appContext?: Record<string, unknown>;
 }) {
-  const { theme, setTheme } = useJurisdiction();
   // Load from local storage, or start empty -- NEVER fall back to
   // INITIAL_LEADS (fictional demo people) for a genuinely new/empty
   // real tenant. That fallback previously ran on every brand-new
@@ -180,10 +178,10 @@ export default function App({
       try {
         return JSON.parse(saved);
       } catch {
-        return [];
+        return INITIAL_AUTOMATION_RULES;
       }
     }
-    return [];
+    return INITIAL_AUTOMATION_RULES;
   });
 
   // Connectors State & Ingestion Events
@@ -208,30 +206,25 @@ export default function App({
     return clearFakeConnectorConfig(INITIAL_CONNECTORS);
   });
 
+  // Dark Mode Theme State
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
+    const saved = localStorage.getItem('ptah_crm_theme');
+    if (saved) {
+      return saved === 'dark';
+    }
+    return typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
+
+  // Sync Dark Mode with document.documentElement class
   useEffect(() => {
-    const handleConnectorChange = (event: Event) => {
-      const changed = (event as CustomEvent<ConnectorItem[]>).detail;
-      if (Array.isArray(changed)) {
-        setConnectors(changed.filter((connector) => !(connector as ConnectorItem & { isStaticApp?: boolean }).isStaticApp));
-      }
-    };
-    window.addEventListener('ptah-connectors-changed', handleConnectorChange);
-    return () => window.removeEventListener('ptah-connectors-changed', handleConnectorChange);
-  }, []);
-
-  const isDarkMode = theme === 'onyx';
-  const toggleDarkMode = () => setTheme(isDarkMode ? 'emerald' : 'onyx');
-
-  const handleAiTask = (task: { type: string; target?: string }) => {
-    if (task.type === 'navigate' && ['pipeline', 'calendar', 'automations', 'reporting', 'scrum'].includes(task.target || '')) {
-      setCurrentView(task.target as typeof currentView);
-    } else if (task.type === 'open_settings') onOpenSettings?.();
-    else if (task.type === 'open_new_lead') setIsNewLeadOpen(true);
-    else if (task.type === 'open_notifications') setIsNotificationsOpen(true);
-    else if (task.type === 'open_search') setIsCommandPaletteOpen(true);
-    else if (task.type === 'open_listings') setIsQuickListingsOpen(true);
-    else if (task.type === 'open_campaigns') setIsCampaignsModalOpen(true);
-  };
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('ptah_crm_theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('ptah_crm_theme', 'light');
+    }
+  }, [isDarkMode]);
 
   // Real sync events only -- see leads state's comment above for why
   // fake demo data must never be a fallback here.
@@ -367,7 +360,7 @@ export default function App({
         const state = await getCrmState();
         if (state.initialized) {
           if (state.leads?.length) setLeads(state.leads);
-          setAutomationRules(state.automationRules || []);
+          setAutomationRules(state.automationRules?.length ? state.automationRules : INITIAL_AUTOMATION_RULES);
           if (state.connectors?.length) setConnectors(state.connectors);
           if (state.connectorSyncEvents?.length) setConnectorSyncEvents(state.connectorSyncEvents);
           if (state.sprint && Object.keys(state.sprint).length) setSprint(state.sprint);
@@ -463,8 +456,8 @@ export default function App({
       isInitialConnectorsSignalRef.current = false;
       return;
     }
-    if (openConnectorsSignal) onOpenSettings?.();
-  }, [openConnectorsSignal, onOpenSettings]);
+    if (openConnectorsSignal) setIsSettingsOpen(true);
+  }, [openConnectorsSignal]);
 
   // Same signal pattern as openConnectorsSignal above, for the main app
   // header's consolidated Quick Search button -- CRM no longer has its
@@ -852,7 +845,7 @@ export default function App({
         onOpenNewLead={() => setIsNewLeadOpen(true)}
         onOpenSimulator={() => setIsSimulatorOpen(true)}
         darkMode={isDarkMode}
-        onToggleDarkMode={toggleDarkMode}
+        onToggleDarkMode={() => setIsDarkMode((prev) => !prev)}
         onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
       />
 
@@ -976,7 +969,7 @@ export default function App({
             emailLogs={allNotifications}
             onTriggerTestNotification={handleTriggerTestEmail}
             latestLead={leads[0]}
-            onOpenConnectors={() => onOpenSettings?.()}
+            onOpenConnectors={() => setIsSettingsOpen(true)}
           />
         )}
 
@@ -1004,16 +997,6 @@ export default function App({
           onOpen={() => setIsAiAdvisorOpen(true)}
           onClose={() => setIsAiAdvisorOpen(false)}
           leads={leads}
-          appContext={{
-            ...appContext,
-            currentSurface: 'crm',
-            crmView: currentView,
-            teamMemberCount: teamMembers.length,
-            connectorCount: connectors.length,
-            enabledConnectorCount: connectors.filter((connector) => connector.isEnabled).length,
-            listingCount: myListings?.length || 0,
-          }}
-          onTask={handleAiTask}
         />
       </div>
 
@@ -1074,6 +1057,21 @@ export default function App({
         }}
       />
 
+      <SettingsConnectorsModal
+        isOpen={isSettingsOpen}
+        onClose={() => {
+          setIsSettingsOpen(false);
+          setSettingsInitialTab('portals');
+        }}
+        initialTab={settingsInitialTab}
+        connectors={connectors}
+        onUpdateConnector={handleUpdateConnector}
+        onAddConnector={handleAddConnector}
+        syncEvents={connectorSyncEvents}
+        onAddSyncEvent={handleAddSyncEvent}
+        onClearSyncEvents={handleClearSyncEvents}
+      />
+
       <CommandPaletteModal
         isOpen={isCommandPaletteOpen}
         onClose={() => setIsCommandPaletteOpen(false)}
@@ -1081,13 +1079,16 @@ export default function App({
         onSelectLead={(lead) => setSelectedLead(lead)}
         onToggleTask={handleToggleTask}
         syncEvents={connectorSyncEvents}
-        onOpenSettings={() => onOpenSettings?.()}
+        onOpenSettings={() => {
+          setSettingsInitialTab('portals');
+          setIsSettingsOpen(true);
+        }}
         onOpenSimulator={() => setIsSimulatorOpen(true)}
         onOpenNewLead={() => setIsNewLeadOpen(true)}
         onOpenQuickListings={() => setIsQuickListingsOpen(true)}
         onOpenCampaigns={() => setIsCampaignsModalOpen(true)}
         onToggleAiAdvisor={() => setIsAiAdvisorOpen(!isAiAdvisorOpen)}
-        onToggleDarkMode={toggleDarkMode}
+        onToggleDarkMode={() => setIsDarkMode((prev) => !prev)}
         darkMode={isDarkMode}
         onNavigateView={(view) => setCurrentView(view)}
         onOpenNotifications={() => setIsNotificationsOpen(true)}
@@ -1135,7 +1136,10 @@ export default function App({
         listings={listings}
         leads={leads}
         connectors={connectors}
-          onOpenConnectorsMarketingTab={() => onOpenSettings?.()}
+        onOpenConnectorsMarketingTab={() => {
+          setSettingsInitialTab('marketing_campaigns');
+          setIsSettingsOpen(true);
+        }}
         onAddSyncEvent={handleAddSyncEvent}
       />
 

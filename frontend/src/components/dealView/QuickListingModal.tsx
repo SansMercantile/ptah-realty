@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { ListingDealRecord } from '../modals/MyListingsModal';
 import { PropertyRecord } from '../../types';
+import { Property24Brand } from '../Property24Brand';
 
 interface QuickListingModalProps {
   isOpen: boolean;
@@ -244,7 +245,7 @@ export const QuickListingModal: React.FC<QuickListingModalProps> = ({
               className="rounded text-emerald-600 focus:ring-emerald-500 h-4 w-4"
             />
             <label htmlFor="quick-sync-portals" className="text-xs text-emerald-900 font-medium cursor-pointer">
-              Auto-Syndicate immediately to <strong>Property24</strong> & <strong>Private Property</strong>
+              Auto-Syndicate immediately to <strong><Property24Brand /></strong> & <strong>Private Property</strong>
             </label>
           </div>
 

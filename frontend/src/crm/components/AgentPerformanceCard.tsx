@@ -21,6 +21,7 @@ import {
   Target
 } from 'lucide-react';
 import { Lead } from '../types';
+import { INITIAL_AGENTS } from '../data/mockData';
 import { formatCurrency, formatShortCurrency } from '../utils/formatters';
 
 interface AgentPerformanceCardProps {
@@ -75,16 +76,7 @@ export const AgentPerformanceCard: React.FC<AgentPerformanceCardProps> = ({ lead
       'Tariq Al-Mansoor': 'Commercial & Investment Advisory Associate',
     };
 
-    const liveAgents = Array.from(
-      new Map(
-        leads
-          .filter((lead) => lead.assignedAgent?.name || lead.assignedAgent?.email)
-          .map((lead) => [lead.assignedAgent?.email || lead.assignedAgent?.name, lead.assignedAgent])
-      ).values()
-    );
-
-    return liveAgents.map((agent) => {
-      if (!agent) return null;
+    return INITIAL_AGENTS.map((agent) => {
       // Find all leads assigned to this agent
       const assignedLeads = leads.filter(
         (l) => l.assignedAgent?.name === agent.name || l.assignedAgent?.email === agent.email
@@ -176,7 +168,7 @@ export const AgentPerformanceCard: React.FC<AgentPerformanceCardProps> = ({ lead
         topDeal,
         leads: assignedLeads,
       };
-    }).filter((agent): agent is AgentStatRecord => agent !== null);
+    });
   }, [leads]);
 
   // Max values for relative bar charts

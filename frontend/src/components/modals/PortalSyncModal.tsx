@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { PropertyRecord, PortalListingPayload, AIGeneratedCMACopy } from '../../types';
 import { getListingCopy } from '../../services/api';
+import { Property24Brand } from '../Property24Brand';
 
 interface PortalSyncModalProps {
   isOpen: boolean;
@@ -194,7 +195,7 @@ export const PortalSyncModal: React.FC<PortalSyncModalProps> = ({
               </div>
             ) : (
               <p className="text-xs text-slate-400">
-                Click above to instantly draft compelling, high-conversion portal copy calibrated for Property24 and Private Property algorithms.
+                Click above to instantly draft compelling, high-conversion portal copy calibrated for <Property24Brand /> and Private Property algorithms.
               </p>
             )}
           </div>

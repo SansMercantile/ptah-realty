@@ -59,17 +59,12 @@ export function formatDateWithPreference(dateString: string, pref: DateFormatPre
   }
 }
 
-function getSharedCurrency(): { code: string; locale: string } {
-  const code = localStorage.getItem('ptah_currency') || 'ZAR';
-  const locale = localStorage.getItem('ptah_language') || navigator.language || 'en-ZA';
-  return { code, locale };
-}
-
-export function formatCurrency(amount: number, currency?: string): string {
-  const preference = getSharedCurrency();
-  const code = currency || preference.code;
-  if (!amount) return new Intl.NumberFormat(preference.locale, { style: 'currency', currency: code, maximumFractionDigits: 0 }).format(0);
-  return new Intl.NumberFormat(preference.locale, { style: 'currency', currency: code, maximumFractionDigits: 0 }).format(amount);
+export function formatCurrency(amount: number, currency: 'ZAR' | 'USD' = 'ZAR'): string {
+  if (!amount) return 'R0';
+  if (currency === 'ZAR') {
+    return `R ${amount.toLocaleString('en-ZA', { maximumFractionDigits: 0 })}`;
+  }
+  return `$ ${amount.toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
 }
 
 // South African ID numbers encode DOB in their first 6 digits, which is a
@@ -94,16 +89,13 @@ export function computeAgeBracket(birthday?: string): string | undefined {
 }
 
 export function formatShortCurrency(amount: number): string {
-  const { code } = getSharedCurrency();
-  const symbol = new Intl.NumberFormat(undefined, { style: 'currency', currency: code, maximumFractionDigits: 0 })
-    .formatToParts(0).find((part) => part.type === 'currency')?.value || code;
   if (amount >= 1_000_000) {
-    return `${symbol}${(amount / 1_000_000).toFixed(1)}M`;
+    return `R${(amount / 1_000_000).toFixed(1)}M`;
   }
   if (amount >= 1_000) {
-    return `${symbol}${(amount / 1_000).toFixed(0)}K`;
+    return `R${(amount / 1_000).toFixed(0)}K`;
   }
-  return `${symbol}${amount}`;
+  return `R${amount}`;
 }
 
 export function formatDate(dateString: string): string {

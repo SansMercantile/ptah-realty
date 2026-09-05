@@ -45,6 +45,7 @@ import {
   ConnectorStatus
 } from '../types';
 import { formatRelativeTime } from '../utils/formatters';
+import { Property24Brand } from '../../components/Property24Brand';
 
 interface SettingsConnectorsModalProps {
   isOpen: boolean;
@@ -421,7 +422,7 @@ export const SettingsConnectorsModal: React.FC<SettingsConnectorsModalProps> = (
                 </span>
               </div>
               <p className="text-xs text-slate-300 mt-0.5">
-                Manage live API keys, Property 24 syndication, Gmail / SMTP dispatch, Cal ID sync, WhatsApp Business, and deeds valuation connectors.
+                Manage live API keys, <Property24Brand /> syndication, Gmail / SMTP dispatch, Cal ID sync, WhatsApp Business, and deeds valuation connectors.
               </p>
             </div>
           </div>
@@ -505,7 +506,7 @@ export const SettingsConnectorsModal: React.FC<SettingsConnectorsModalProps> = (
               }`}
             >
               <Building className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Portals & Syndication (P24 & PP)</span>
+              <span>Portals & Syndication (<Property24Brand variant="short" /> & PP)</span>
             </button>
 
             <button

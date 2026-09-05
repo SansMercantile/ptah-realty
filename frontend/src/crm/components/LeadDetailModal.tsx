@@ -518,7 +518,16 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
             </div>
 
             <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mt-1.5 flex items-center gap-2">
-              <span>{lead.name}</span>
+              {/* Editable in place -- was a plain <span>, no way to fix a
+                  misspelled/mistyped name after intake. Same size/weight
+                  as before, just editable now. */}
+              <input
+                type="text"
+                value={lead.name}
+                onChange={(e) => onUpdateLead({ ...lead, name: e.target.value })}
+                className="bg-transparent border-b border-dashed border-transparent hover:border-slate-300 focus:border-slate-900 focus:outline-none"
+                style={{ width: `${Math.max(lead.name.length, 4)}ch` }}
+              />
             </h2>
 
             <p className="text-xs text-slate-500 mt-1 flex items-center gap-1.5">
@@ -1322,9 +1331,51 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
               <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs space-y-3">
                 <h4 className="font-bold text-xs text-emerald-700 uppercase tracking-wider">Buyer / Client Profile</h4>
                 <div className="space-y-2 text-xs">
-                  <div className="flex justify-between border-b border-slate-100 pb-1.5">
+                  {/* Contact fields below (phone/email/WhatsApp/source) used
+                      to only appear inside action-button hrefs (tel:,
+                      wa.me) or a header badge -- never as visible, editable
+                      text, so a mistyped number/address/source at intake
+                      had no fix. Same row styling as the fields below. */}
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
+                    <span className="text-slate-500">Phone:</span>
+                    <input
+                      type="tel"
+                      value={lead.phone}
+                      onChange={(e) => onUpdateLead({ ...lead, phone: e.target.value })}
+                      className="text-right text-slate-700 bg-transparent border-b border-dashed border-slate-300 hover:border-slate-500 focus:border-slate-900 focus:outline-none text-xs"
+                    />
+                  </div>
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
+                    <span className="text-slate-500">WhatsApp Number:</span>
+                    <input
+                      type="tel"
+                      value={lead.whatsappNumber}
+                      onChange={(e) => onUpdateLead({ ...lead, whatsappNumber: e.target.value })}
+                      className="text-right text-slate-700 bg-transparent border-b border-dashed border-slate-300 hover:border-slate-500 focus:border-slate-900 focus:outline-none text-xs"
+                    />
+                  </div>
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
+                    <span className="text-slate-500">Email:</span>
+                    <input
+                      type="email"
+                      value={lead.email}
+                      onChange={(e) => onUpdateLead({ ...lead, email: e.target.value })}
+                      className="text-right text-slate-700 bg-transparent border-b border-dashed border-slate-300 hover:border-slate-500 focus:border-slate-900 focus:outline-none text-xs"
+                    />
+                  </div>
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
                     <span className="text-slate-500">Buyer Type:</span>
-                    <span className="font-semibold text-slate-900">{lead.buyerType}</span>
+                    <select
+                      value={lead.buyerType}
+                      onChange={(e) => onUpdateLead({ ...lead, buyerType: e.target.value as Lead['buyerType'] })}
+                      className="font-semibold text-slate-900 bg-transparent border-b border-dashed border-slate-300 hover:border-slate-500 focus:border-slate-900 focus:outline-none text-xs text-right"
+                    >
+                      <option value="Cash Buyer">Cash Buyer</option>
+                      <option value="Bond Approved">Bond Approved</option>
+                      <option value="Pre-Approval Pending">Pre-Approval Pending</option>
+                      <option value="First-Time Buyer">First-Time Buyer</option>
+                      <option value="Investor">Investor</option>
+                    </select>
                   </div>
                   <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
                     <span className="text-slate-500">Date of Birth:</span>
@@ -1346,9 +1397,14 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
                       className="text-right text-slate-700 bg-transparent border-b border-dashed border-slate-300 hover:border-slate-500 focus:border-slate-900 focus:outline-none text-xs"
                     />
                   </div>
-                  <div className="flex justify-between border-b border-slate-100 pb-1.5">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
                     <span className="text-slate-500">Budget Range:</span>
-                    <span className="text-slate-700">{lead.budget}</span>
+                    <input
+                      type="text"
+                      value={lead.budget}
+                      onChange={(e) => onUpdateLead({ ...lead, budget: e.target.value })}
+                      className="text-right text-slate-700 bg-transparent border-b border-dashed border-slate-300 hover:border-slate-500 focus:border-slate-900 focus:outline-none text-xs"
+                    />
                   </div>
                   <div className="flex justify-between border-b border-slate-100 pb-1.5">
                     <span className="text-slate-500">Purchase Timeframe:</span>
