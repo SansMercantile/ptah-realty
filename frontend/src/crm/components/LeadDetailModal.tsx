@@ -489,8 +489,21 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
               <span className="font-mono text-xs text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 font-semibold">
                 {lead.referenceNumber}
               </span>
-              <span className="text-xs font-semibold text-slate-700 bg-slate-200/80 px-2.5 py-0.5 rounded-full">
-                Source: {lead.source}
+              <span className="text-xs font-semibold text-slate-700 bg-slate-200/80 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                Source:
+                <select
+                  value={lead.source}
+                  onChange={(e) => onUpdateLead({ ...lead, source: e.target.value as Lead['source'] })}
+                  className="bg-transparent font-semibold text-slate-700 focus:outline-none cursor-pointer"
+                >
+                  <option value="Property 24">Property 24</option>
+                  <option value="Private Property">Private Property</option>
+                  <option value="Ptah Realty Website">Ptah Realty Website</option>
+                  <option value="Facebook / Instagram Ads">Facebook / Instagram Ads</option>
+                  <option value="Direct Call / Walk-in">Direct Call / Walk-in</option>
+                  <option value="Competitor Syndication">Competitor Syndication</option>
+                  <option value="Gumtree / IOL Property">Gumtree / IOL Property</option>
+                </select>
               </span>
               {lead.urgency === 'urgent' && (
                 <span className="flex items-center text-xs font-bold text-red-700 bg-red-50 px-2 py-0.5 rounded-full border border-red-200">
@@ -1371,10 +1384,10 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
                       className="font-semibold text-slate-900 bg-transparent border-b border-dashed border-slate-300 hover:border-slate-500 focus:border-slate-900 focus:outline-none text-xs text-right"
                     >
                       <option value="Cash Buyer">Cash Buyer</option>
-                      <option value="Bond Approved">Bond Approved</option>
-                      <option value="Pre-Approval Pending">Pre-Approval Pending</option>
-                      <option value="First-Time Buyer">First-Time Buyer</option>
+                      <option value="Pre-approved Mortgage">Pre-approved Mortgage</option>
                       <option value="Investor">Investor</option>
+                      <option value="First-Time Buyer">First-Time Buyer</option>
+                      <option value="Tenant">Tenant</option>
                     </select>
                   </div>
                   <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
