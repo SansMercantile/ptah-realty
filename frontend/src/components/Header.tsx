@@ -393,7 +393,7 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Marketing Portal -- signs out and returns to the marketing
               landing page; explicit owner request (see also the Sign Out
               dropdown item below, which does the same thing). */}
-          {onExitToLandingPage && (
+          {/*onExitToLandingPage && (
             <button
               id="btn-header-marketing-landing"
               onClick={onExitToLandingPage}
@@ -403,7 +403,7 @@ export const Header: React.FC<HeaderProps> = ({
               <Globe className="w-3.5 h-3.5 text-cyan-400" />
               <span>Marketing Portal</span>
             </button>
-          )}
+          )*/}
 
           {/* Quick Search trigger -- consolidated entry point: on the CRM
               tab this opens the CRM's own command palette (leads/tasks/
