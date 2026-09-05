@@ -69,7 +69,7 @@ import {
 import { uploadAvatar, removeAvatar, uploadCompanyLogo, removeCompanyLogo, changePassword, getMyProfile, updateMyProfile, getTotpStatus, setupTotp, enableTotp, disableTotp, listPasskeys, getPasskeyRegistrationOptions, verifyPasskeyRegistration, deletePasskey, PasskeySummary, getVerificationStatus, sendEmailVerification, confirmEmailVerification, sendMobileVerification, confirmMobileVerification, getPayfastAddCardUrl, listPaymentMethods, removePaymentMethod, PaymentMethodRecord } from '../../services/api';
 import { isWebAuthnSupported, createPasskeyCredential, describeWebAuthnError } from '../../services/webauthnClient';
 import { CONNECTORS_AND_EXTENSIONS } from '../../services/connectorsData';
-import { getConnectorGroup } from '../../types/connectors';
+import { getConnectorGroup, ConnectorStatus } from '../../types/connectors';
 
 import { 
   GLOBAL_COUNTRIES_DATA, 
@@ -634,6 +634,48 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
     }));
   });
   const [appToast, setAppToast] = useState<string | null>(null);
+
+  const handleToggleConnector = (id: string, name: string) => {
+    setSettingsConnectors((prev) => {
+      const next = prev.map((c) =>
+        c.id === id
+          ? { ...c, isEnabled: !c.isEnabled, status: (!c.isEnabled ? 'connected' : 'disconnected') as ConnectorStatus }
+          : c
+      );
+      localStorage.setItem('ptah_crm_connectors', JSON.stringify(next));
+      return next;
+    });
+    const isNowEnabled = !settingsConnectors.find((c) => c.id === id)?.isEnabled;
+    setAppToast(`${name} ${isNowEnabled ? 'connected' : 'disconnected'}.`);
+    setTimeout(() => setAppToast(null), 2500);
+  };
+
+  // Icon resolver -- mirrors crm/components/SettingsConnectorsModal.tsx's
+  // getConnectorIcon so both surfaces render the same connector the
+  // same way, without duplicating that file's whole component.
+  const getAppIcon = (iconName: string, className = 'w-5 h-5') => {
+    switch (iconName) {
+      case 'Building': return <Building className={className} />;
+      case 'Building2': return <Building2 className={className} />;
+      case 'Mail': return <Mail className={className} />;
+      case 'Calendar': return <Calendar className={className} />;
+      case 'MessageSquare': return <MessageSquare className={className} />;
+      case 'FileCheck': return <FileCheck className={className} />;
+      case 'ShieldCheck': return <ShieldCheck className={className} />;
+      case 'Video': return <Video className={className} />;
+      case 'Layers': return <Layers className={className} />;
+      case 'FileSpreadsheet': return <FileSpreadsheet className={className} />;
+      case 'Zap': return <Zap className={className} />;
+      case 'Palette': return <Palette className={className} />;
+      case 'Send': return <Send className={className} />;
+      case 'Megaphone': return <Megaphone className={className} />;
+      case 'Share2': return <Share2 className={className} />;
+      case 'Chrome': return <Chrome className={className} />;
+      case 'Smartphone': return <Smartphone className={className} />;
+      case 'Database': return <Database className={className} />;
+      default: return <Globe className={className} />;
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -3041,83 +3083,93 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
                 </div>
               )}
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {APPS_LIST.map((app, index) => {
-                  const Icon = app.icon;
-                  const isInstalled = app.isEnabled;
-
-                  return (
-                    <React.Fragment key={app.id}>
-                    {(index === 0 || APPS_LIST[index - 1].category !== app.category) && (
-                      <div className="md:col-span-2 pt-2 border-b border-slate-200">
-                        <h2 className="text-xs font-bold uppercase tracking-widest text-slate-700">{app.category}</h2>
-                      </div>
-                    )}
-                    <div 
-                      key={app.id}
-                      className={`bg-white rounded-lg border p-4 shadow-xs flex flex-col justify-between transition-all ${
-                        isInstalled ? 'border-cyan-400/80 ring-1 ring-cyan-200' : 'border-slate-200'
-                      }`}
-                    >
-                      <div>
-                        {/* Top row with icon, title, badge */}
-                        <div className="flex items-start justify-between gap-2 mb-2">
-                          <div className="flex items-center gap-3">
-                            <div className={`w-9 h-9 rounded-lg ${app.color} flex items-center justify-center shadow-xs shrink-0`}>
-                              <Icon className="w-5 h-5" />
-                            </div>
-                            <div>
-                              <h3 className="font-bold text-xs text-slate-900 leading-snug">{app.title}</h3>
-                              <span className="text-[10px] text-slate-400 font-medium block">{app.category}</span>
-                            </div>
-                          </div>
-
-                          <span className="bg-cyan-50 text-cyan-800 text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider border border-cyan-200">
-                            {app.badge}
-                          </span>
-                        </div>
-
-                        {/* Description */}
-                        <p className="text-[11px] text-slate-600 leading-relaxed mb-3">
-                          {app.description}
-                        </p>
-                      </div>
-
-                      {/* Bottom row with ratings and Action Button */}
-                      <div className="flex items-center justify-between pt-3 border-t border-slate-100 text-xs">
-                        <div className="text-[10px] text-slate-500 font-medium">
-                          <span>{app.version}</span> • <span className="text-amber-600 font-bold">{app.rating}</span>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => handleToggleApp(app.id, app.title)}
-                            className={`px-3 py-1 rounded text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer ${
-                              isInstalled
-                                ? 'bg-emerald-100 hover:bg-rose-100 text-emerald-800 hover:text-rose-800 border border-emerald-300 hover:border-rose-300'
-                                : 'bg-[#00bcd4] hover:bg-[#00acc1] text-white shadow-xs'
+              {/* Grouped by function (Portals & Syndication, Communication,
+                  Marketing & Media, Productivity, Legal & Compliance,
+                  Browser & Mobile) rather than one flat list -- this now
+                  covers every connector previously only reachable from the
+                  CRM's own "Agency Settings & Connectors Hub" (Property24,
+                  Gmail, WhatsApp Business, Zoom, Xero, Zapier, etc.), not
+                  just the original 5 static apps. */}
+              {(() => {
+                const groups: Record<string, typeof settingsConnectors> = {};
+                for (const c of settingsConnectors) {
+                  const g = getConnectorGroup(c.category);
+                  if (!groups[g]) groups[g] = [];
+                  groups[g].push(c);
+                }
+                const groupOrder = ['Portals & Syndication', 'Communication', 'Marketing & Media', 'Productivity', 'Legal & Compliance', 'Browser & Mobile'];
+                return groupOrder.filter((g) => groups[g]?.length).map((groupName) => (
+                  <div key={groupName} className="space-y-3">
+                    <h2 className="text-xs font-bold uppercase tracking-widest text-slate-700 pt-2 border-b border-slate-200 pb-1.5">
+                      {groupName}
+                    </h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {groups[groupName].map((app: any) => {
+                        const isInstalled = app.isEnabled;
+                        return (
+                          <div
+                            key={app.id}
+                            className={`bg-white rounded-lg border p-4 shadow-xs flex flex-col justify-between transition-all ${
+                              isInstalled ? 'border-cyan-400/80 ring-1 ring-cyan-200' : 'border-slate-200'
                             }`}
                           >
-                            {isInstalled ? (
-                              <>
-                                <Check className="w-3.5 h-3.5 text-emerald-600" />
-                                <span>Active (Synced)</span>
-                              </>
-                            ) : (
-                              <>
-                                <Plus className="w-3.5 h-3.5" />
-                                <span>Connect App</span>
-                              </>
-                            )}
-                          </button>
-                        </div>
-                      </div>
+                            <div>
+                              <div className="flex items-start justify-between gap-2 mb-2">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-9 h-9 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center shadow-xs shrink-0">
+                                    {getAppIcon(app.iconName)}
+                                  </div>
+                                  <div>
+                                    <h3 className="font-bold text-xs text-slate-900 leading-snug">{app.name}</h3>
+                                    {!app.isStaticApp && (
+                                      <span className={`text-[10px] font-semibold ${isInstalled ? 'text-emerald-600' : 'text-slate-400'}`}>
+                                        {isInstalled ? 'Connected' : 'Not connected'}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                                {app.badgeText && (
+                                  <span className="bg-cyan-50 text-cyan-800 text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider border border-cyan-200 whitespace-nowrap">
+                                    {app.badgeText}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[11px] text-slate-600 leading-relaxed mb-3">
+                                {app.description}
+                              </p>
+                            </div>
+
+                            <div className="flex items-center justify-between pt-3 border-t border-slate-100 text-xs">
+                              <div className="text-[10px] text-slate-500 font-medium">
+                                {app.isStaticApp ? (
+                                  <><span>{app.version}</span> • <span className="text-amber-600 font-bold">{app.rating}</span></>
+                                ) : (
+                                  <span className="capitalize">{app.category.replace(/_/g, ' ')}</span>
+                                )}
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => handleToggleConnector(app.id, app.name)}
+                                className={`px-3 py-1 rounded text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer ${
+                                  isInstalled
+                                    ? 'bg-emerald-100 hover:bg-rose-100 text-emerald-800 hover:text-rose-800 border border-emerald-300 hover:border-rose-300'
+                                    : 'bg-[#00bcd4] hover:bg-[#00acc1] text-white shadow-xs'
+                                }`}
+                              >
+                                {isInstalled ? (
+                                  <><Check className="w-3.5 h-3.5 text-emerald-600" /><span>{app.isStaticApp ? 'Active' : 'Connected'}</span></>
+                                ) : (
+                                  <><Plus className="w-3.5 h-3.5" /><span>{app.isStaticApp ? 'Install' : 'Connect'}</span></>
+                                )}
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
-                    </React.Fragment>
-                  );
-                })}
-              </div>
+                  </div>
+                ));
+              })()}
 
               {/* Developer API Access Card */}
               <div className="bg-slate-900 text-slate-100 p-5 rounded-lg border border-slate-800 flex items-center justify-between">
