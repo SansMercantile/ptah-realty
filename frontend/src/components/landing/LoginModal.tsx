@@ -17,11 +17,12 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { GLOBAL_COUNTRIES_DATA } from '../../services/jurisdictionsData';
+import { login, type AuthUser } from '../../services/api';
 
 interface LoginModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onLoginSuccess: (user?: { name: string; email: string; role: string; countryCode: string }) => void;
+  onLoginSuccess: (user: AuthUser) => void;
   onOpenLeadModal?: () => void;
 }
 
@@ -32,8 +33,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({
   onOpenLeadModal
 }) => {
   const [authMode, setAuthMode] = useState<'signin' | 'demo' | 'signup'>('signin');
-  const [email, setEmail] = useState('john@ptahrealestate.co.za');
-  const [password, setPassword] = useState('••••••••••••');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [selectedCountry, setSelectedCountry] = useState('ZA');
@@ -42,7 +43,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 
   if (!isOpen) return null;
 
-  const handleStandardSubmit = (e: React.FormEvent) => {
+  const handleStandardSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim() || !password.trim()) {
       setErrorMessage('Please enter both your work email and password.');
@@ -50,47 +51,35 @@ export const LoginModal: React.FC<LoginModalProps> = ({
     }
     setErrorMessage('');
     setIsLoading(true);
-
-    setTimeout(() => {
-      setIsLoading(false);
-      onLoginSuccess({
-        name: 'Mr John Doe',
-        email: email,
-        role: 'Principal Property Practitioner (PPRA)',
-        countryCode: selectedCountry
-      });
+    try {
+      const user = await login(email, password);
+      onLoginSuccess(user);
       onClose();
-    }, 600);
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'Invalid email or password.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
+  // Demo Sandbox personas are a deliberate, clearly-labeled shortcut --
+  // not real accounts, so no real login() call here. Because they don't
+  // get a real JWT, any authenticated backend feature (CRM sync, KYC,
+  // valuations) will 401 for a demo persona; this trades that off for
+  // instant, credential-free exploration of the UI.
   const handleDemoLogin = (demoRole: 'principal' | 'valuer' | 'conveyancer') => {
     setIsLoading(true);
     setErrorMessage('');
 
     setTimeout(() => {
       setIsLoading(false);
-      if (demoRole === 'principal') {
-        onLoginSuccess({
-          name: 'Mr John Doe',
-          email: 'john@ptahrealestate.co.za',
-          role: 'Principal Property Practitioner (PPRA)',
-          countryCode: 'ZA'
-        });
-      } else if (demoRole === 'valuer') {
-        onLoginSuccess({
-          name: 'Dr Samantha Hayes',
-          email: 's.hayes@globalvaluation.co.uk',
-          role: 'Chartered Valuation Surveyor (RICS)',
-          countryCode: 'GB'
-        });
-      } else {
-        onLoginSuccess({
-          name: 'Adv. Johan Van Der Merwe',
-          email: 'johan@capetownconveyancing.co.za',
-          role: 'Registered Conveyancer & Legal Counsel',
-          countryCode: 'ZA'
-        });
-      }
+      const demoUser: AuthUser =
+        demoRole === 'principal'
+          ? { id: 'demo-principal', name: 'Mr John Doe', email: 'john@ptahrealestate.co.za', role: 'Principal Property Practitioner (PPRA)' }
+          : demoRole === 'valuer'
+          ? { id: 'demo-valuer', name: 'Dr Samantha Hayes', email: 's.hayes@globalvaluation.co.uk', role: 'Chartered Valuation Surveyor (RICS)' }
+          : { id: 'demo-conveyancer', name: 'Adv. Johan Van Der Merwe', email: 'johan@capetownconveyancing.co.za', role: 'Registered Conveyancer & Legal Counsel' };
+      onLoginSuccess(demoUser);
       onClose();
     }, 450);
   };

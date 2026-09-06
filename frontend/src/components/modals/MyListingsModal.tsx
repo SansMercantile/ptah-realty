@@ -28,6 +28,7 @@ import {
   Share2,
   Trash2,
   ExternalLink,
+  RefreshCw,
   MessageCircle,
   Info,
   Check,
@@ -38,7 +39,7 @@ import { PropertyRecord } from '../../types';
 import { PROPERTIES_DATA } from '../../services/mockData';
 import { DealViewPipeline } from '../dealView/DealViewPipeline';
 import { Property24Brand } from '../Property24Brand';
-import { publishListing } from '../../services/api';
+import { publishListing, getListingSyncStatus } from '../../services/api';
 import { 
   DealStage, 
   ViewingAppointment, 
@@ -216,6 +217,27 @@ export const MyListingsModal: React.FC<MyListingsModalProps> = ({
   // this modal's tree.
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
+  const [checkingStatusId, setCheckingStatusId] = useState<string | null>(null);
+
+  const handleCheckSyncStatus = async (listingId: string) => {
+    setCheckingStatusId(listingId);
+    try {
+      const { jobs } = await getListingSyncStatus(listingId);
+      if (jobs.length === 0) {
+        window.alert('No sync attempts on record for this listing yet (backend has no sync_jobs entry).');
+      } else {
+        const latest = jobs[0];
+        const lines = jobs.slice(0, 5).map(
+          (j) => `${j.portal_name}: ${j.status}${j.error_detail ? ` (${j.error_detail})` : ''} -- ${new Date(j.created_at).toLocaleString()}`
+        );
+        window.alert(`Latest sync status: ${latest.status.toUpperCase()}\n\n${lines.join('\n')}`);
+      }
+    } catch (err) {
+      window.alert(`Couldn't check sync status: ${err instanceof Error ? err.message : 'unknown error'}`);
+    } finally {
+      setCheckingStatusId(null);
+    }
+  };
 
   // Wizard Stepper (1: Deal Details, 2: Location, 3: Property Details, 4: Media, 5: Preview)
   const [wizardStep, setWizardStep] = useState<number>(1);
@@ -564,6 +586,18 @@ export const MyListingsModal: React.FC<MyListingsModalProps> = ({
                               PP
                             </span>
                           )}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleCheckSyncStatus(item.id);
+                            }}
+                            disabled={checkingStatusId === item.id}
+                            title="Check real sync status against the backend"
+                            className="bg-black/60 hover:bg-black/80 backdrop-blur-xs text-white p-1 rounded border border-white/20 disabled:opacity-50 cursor-pointer"
+                          >
+                            <RefreshCw className={`w-2.5 h-2.5 ${checkingStatusId === item.id ? 'animate-spin' : ''}`} />
+                          </button>
                         </div>
 
                         {/* Bottom Info on Image */}

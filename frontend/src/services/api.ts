@@ -1383,3 +1383,36 @@ export async function updateProspectingLead(leadId: string, body: { status?: str
   });
 }
 
+// Real external integrations (services/integrations.py, api/integrations.py)
+// -- Google Calendar, Gmail, Google Drive, Zoom, Xero, Notion, Slack,
+// Canva, Docusign (OAuth2), Sumsub, Apollo.io (API key). Replaces the
+// all-simulated ConnectorItem system in SettingsConnectorsModal.tsx for
+// these specific connectors -- see that module's own docstring.
+export interface IntegrationStatus {
+  id: string;
+  name: string;
+  authType: 'oauth2' | 'api_key';
+  available: boolean;
+  connected: boolean;
+  connectedAt: string | null;
+}
+
+export async function listIntegrations(): Promise<{ integrations: IntegrationStatus[] }> {
+  return authJson<{ integrations: IntegrationStatus[] }>('/integrations');
+}
+
+export async function getIntegrationAuthorizeUrl(connectorId: string): Promise<{ authorizeUrl: string }> {
+  return authJson<{ authorizeUrl: string }>(`/integrations/${connectorId}/authorize`);
+}
+
+export async function connectIntegrationApiKey(connectorId: string, fields: Record<string, string>): Promise<{ connected: boolean }> {
+  return authJson<{ connected: boolean }>(`/integrations/${connectorId}/api-key`, {
+    method: 'POST',
+    body: JSON.stringify({ fields }),
+  });
+}
+
+export async function disconnectIntegration(connectorId: string): Promise<{ disconnected: boolean }> {
+  return authJson<{ disconnected: boolean }>(`/integrations/${connectorId}`, { method: 'DELETE' });
+}
+

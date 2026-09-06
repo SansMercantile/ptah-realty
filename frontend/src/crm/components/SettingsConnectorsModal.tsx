@@ -46,6 +46,31 @@ import {
 } from '../types';
 import { formatRelativeTime } from '../utils/formatters';
 import { Property24Brand } from '../../components/Property24Brand';
+import {
+  IntegrationStatus,
+  listIntegrations,
+  getIntegrationAuthorizeUrl,
+  connectIntegrationApiKey,
+  disconnectIntegration,
+} from '../../services/api';
+
+// Real integrations (services/integrations.py / api/integrations.py) --
+// display metadata for the "External Integrations" tab below. The
+// backend is the source of truth for id/authType/available/connected;
+// this is just icon/description, which the backend has no reason to know.
+const REAL_INTEGRATIONS_META: Record<string, { icon: string; description: string }> = {
+  google_calendar: { icon: 'Calendar', description: 'Real two-way sync for show-house scheduling and viewings -- replaces the previous simulated sync.' },
+  gmail: { icon: 'Mail', description: 'Send and read agent email directly from Ptah, alongside the existing SES-based system emails.' },
+  google_drive: { icon: 'Globe', description: 'Store signed contracts, deeds, and KYC documents somewhere durable outside Ptah\u2019s own media storage.' },
+  zoom: { icon: 'Video', description: 'Virtual property tours and remote client consultations, schedulable from a deal or lead.' },
+  xero: { icon: 'FileSpreadsheet', description: 'Push commission and agency accounting entries straight to your books.' },
+  notion: { icon: 'Layers', description: 'Internal SOPs and compliance checklists agents can reference from Ptah.' },
+  slack: { icon: 'MessageSquare', description: 'Team notifications for new leads and deals won, instead of only the in-app toast.' },
+  canva: { icon: 'Palette', description: 'The AI Marketing Hub\u2019s Canva channel -- design listing graphics without leaving Ptah.' },
+  docusign: { icon: 'FileCheck', description: 'Real e-signatures for offers and lease agreements from the Deal Tracker.' },
+  sumsub: { icon: 'ShieldCheck', description: 'Real identity verification behind the existing KYC modal, in place of the current stub.' },
+  apollo: { icon: 'Zap', description: 'Lead enrichment and prospecting data feeding the CRM\u2019s Prospecting view.' },
+};
 import { getPortalConnection, savePortalConnection, PortalConnectionStatus } from '../../services/api';
 
 interface SettingsConnectorsModalProps {
@@ -57,7 +82,7 @@ interface SettingsConnectorsModalProps {
   syncEvents: ConnectorSyncEvent[];
   onAddSyncEvent: (event: ConnectorSyncEvent) => void;
   onClearSyncEvents: () => void;
-  initialTab?: ConnectorCategory | 'all' | 'events' | 'agency';
+  initialTab?: ConnectorCategory | 'all' | 'events' | 'agency' | 'real_integrations';
 }
 
 export const SettingsConnectorsModal: React.FC<SettingsConnectorsModalProps> = ({
@@ -71,7 +96,74 @@ export const SettingsConnectorsModal: React.FC<SettingsConnectorsModalProps> = (
   onClearSyncEvents,
   initialTab = 'all',
 }) => {
-  const [activeTab, setActiveTab] = useState<ConnectorCategory | 'all' | 'events' | 'agency'>(initialTab);
+  const [activeTab, setActiveTab] = useState<ConnectorCategory | 'all' | 'events' | 'agency' | 'real_integrations'>(initialTab);
+
+  // Real integrations tab state (services/integrations.py backend --
+  // unlike every other connector in this modal, these are real API
+  // calls, not local-state simulation).
+  const [realIntegrations, setRealIntegrations] = useState<IntegrationStatus[]>([]);
+  const [isLoadingRealIntegrations, setIsLoadingRealIntegrations] = useState(false);
+  const [realIntegrationsError, setRealIntegrationsError] = useState<string | null>(null);
+  const [connectingId, setConnectingId] = useState<string | null>(null);
+  const [apiKeyModalConnectorId, setApiKeyModalConnectorId] = useState<string | null>(null);
+  const [apiKeyFieldValues, setApiKeyFieldValues] = useState<Record<string, string>>({});
+
+  const refreshRealIntegrations = async () => {
+    setIsLoadingRealIntegrations(true);
+    setRealIntegrationsError(null);
+    try {
+      const { integrations } = await listIntegrations();
+      setRealIntegrations(integrations);
+    } catch (err) {
+      setRealIntegrationsError(err instanceof Error ? err.message : 'Could not load integrations.');
+    } finally {
+      setIsLoadingRealIntegrations(false);
+    }
+  };
+
+  React.useEffect(() => {
+    if (isOpen && activeTab === 'real_integrations') {
+      refreshRealIntegrations();
+    }
+  }, [isOpen, activeTab]);
+
+  const handleConnectOAuth = async (connectorId: string) => {
+    setConnectingId(connectorId);
+    try {
+      const { authorizeUrl } = await getIntegrationAuthorizeUrl(connectorId);
+      window.location.href = authorizeUrl;
+    } catch (err) {
+      setRealIntegrationsError(err instanceof Error ? err.message : `Could not start ${connectorId} connection.`);
+      setConnectingId(null);
+    }
+  };
+
+  const handleSubmitApiKey = async () => {
+    if (!apiKeyModalConnectorId) return;
+    setConnectingId(apiKeyModalConnectorId);
+    try {
+      await connectIntegrationApiKey(apiKeyModalConnectorId, apiKeyFieldValues);
+      setApiKeyModalConnectorId(null);
+      setApiKeyFieldValues({});
+      await refreshRealIntegrations();
+    } catch (err) {
+      setRealIntegrationsError(err instanceof Error ? err.message : 'Could not save API key.');
+    } finally {
+      setConnectingId(null);
+    }
+  };
+
+  const handleDisconnectReal = async (connectorId: string) => {
+    setConnectingId(connectorId);
+    try {
+      await disconnectIntegration(connectorId);
+      await refreshRealIntegrations();
+    } catch (err) {
+      setRealIntegrationsError(err instanceof Error ? err.message : `Could not disconnect ${connectorId}.`);
+    } finally {
+      setConnectingId(null);
+    }
+  };
 
   // Sync activeTab if initialTab changes
   React.useEffect(() => {
