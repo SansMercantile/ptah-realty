@@ -38,6 +38,7 @@ import { PropertyRecord } from '../../types';
 import { PROPERTIES_DATA } from '../../services/mockData';
 import { DealViewPipeline } from '../dealView/DealViewPipeline';
 import { Property24Brand } from '../Property24Brand';
+import { publishListing } from '../../services/api';
 import { 
   DealStage, 
   ViewingAppointment, 
@@ -323,37 +324,61 @@ export const MyListingsModal: React.FC<MyListingsModalProps> = ({
     setCurrentView('SYNDICATION_WIZARD');
   };
 
-  const handleSaveAndSyndicate = () => {
+  const handleSaveAndSyndicate = async () => {
     setIsPublishing(true);
-    setTimeout(() => {
-      const newListing: ListingDealRecord = {
-        id: `list-${Date.now()}`,
-        title: listingHeadline,
-        address: `${propStreetNumber} ${propStreet}`,
-        suburb: propSuburb,
-        price: listingPrice,
-        bedrooms: propBedrooms,
-        bathrooms: propBathrooms,
-        erfSize: propErfSize,
-        sellerName: sellerName || 'Client Seller',
-        sellerId: sellerIdNumber || '8303305103087',
-        sellerContact: sellerContact || '+27 82 491 8820',
-        sellerEmail: sellerEmail || 'seller@mail.co.za',
-        mandateType: mandateType,
-        mandateStatus: 'Live on Portals',
-        commissionRate: commissionPercent,
-        photosCount: 16,
-        p24Synced: syncProperty24,
-        privatePropertySynced: syncPrivateProperty,
-        views: 1,
-        enquiries: 0,
-        imageUrl: selectedProperty?.imageUrl || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80'
-      };
+    const listingId = `list-${Date.now()}`;
 
-      setListings(prev => [newListing, ...prev]);
-      setIsPublishing(false);
-      setPublishSuccess(true);
-    }, 1000);
+    // Real syndication attempt (Property24 + Private Property both go
+    // through the same Entegral Sync API account) -- this used to be a
+    // fake setTimeout(..., 1000) that unconditionally set 'Live on
+    // Portals' regardless of the sync checkboxes or whether any API
+    // call ever happened. Now: attempt it for real if either portal is
+    // checked, and only claim synced/live if the backend confirms it.
+    let didSync = false;
+    let syncMessage: string | null = null;
+    if (syncProperty24 || syncPrivateProperty) {
+      try {
+        const description = `${propBedrooms} bed, ${propBathrooms} bath ${mandateType.toLowerCase()} in ${propSuburb}, ${propErfSize}m² erf.`;
+        const result = await publishListing(listingId, description, listingPrice, sellerName, sellerEmail);
+        didSync = result.success;
+        if (!result.success) {
+          syncMessage = result.feed_xml
+            ? 'Portal syndication isn\u2019t connected yet (no Entegral Sync API credentials configured in Settings > Connectors) -- saved as a mandate instead. A feed file is ready once it is.'
+            : `Portal sync failed: ${result.error_message || 'unknown error'}`;
+        }
+      } catch (err) {
+        syncMessage = `Portal sync failed: ${err instanceof Error ? err.message : 'unknown error'}`;
+      }
+    }
+
+    const newListing: ListingDealRecord = {
+      id: listingId,
+      title: listingHeadline,
+      address: `${propStreetNumber} ${propStreet}`,
+      suburb: propSuburb,
+      price: listingPrice,
+      bedrooms: propBedrooms,
+      bathrooms: propBathrooms,
+      erfSize: propErfSize,
+      sellerName: sellerName || 'Client Seller',
+      sellerId: sellerIdNumber || '8303305103087',
+      sellerContact: sellerContact || '+27 82 491 8820',
+      sellerEmail: sellerEmail || 'seller@mail.co.za',
+      mandateType: mandateType,
+      mandateStatus: didSync ? 'Live on Portals' : 'Mandate Pending',
+      commissionRate: commissionPercent,
+      photosCount: 16,
+      p24Synced: didSync && syncProperty24,
+      privatePropertySynced: didSync && syncPrivateProperty,
+      views: 1,
+      enquiries: 0,
+      imageUrl: selectedProperty?.imageUrl || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80'
+    };
+
+    setListings(prev => [newListing, ...prev]);
+    setIsPublishing(false);
+    setPublishSuccess(true);
+    if (syncMessage) window.alert(syncMessage);
   };
 
   return (

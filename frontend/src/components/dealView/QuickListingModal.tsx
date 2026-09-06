@@ -14,6 +14,7 @@ import {
 import { ListingDealRecord } from '../modals/MyListingsModal';
 import { PropertyRecord } from '../../types';
 import { Property24Brand } from '../Property24Brand';
+import { publishListing } from '../../services/api';
 
 interface QuickListingModalProps {
   isOpen: boolean;
@@ -53,6 +54,7 @@ export const QuickListingModal: React.FC<QuickListingModalProps> = ({
   const [mandateType, setMandateType] = useState<'Sole Mandate' | 'Open Mandate' | 'Joint Mandate'>('Sole Mandate');
   const [commissionRate, setCommissionRate] = useState(5.0);
   const [syncPortals, setSyncPortals] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Sync state whenever selected property changes or modal opens
   React.useEffect(() => {
@@ -75,10 +77,36 @@ export const QuickListingModal: React.FC<QuickListingModalProps> = ({
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
+    const listingId = `quick-${Date.now()}`;
+
+    // Real syndication attempt (Property24 + Private Property both go
+    // through the same Entegral Sync API account) -- was previously
+    // just flipping p24Synced/privatePropertySynced to `syncPortals`
+    // with no API call at all, showing "Live on Portals" whether or not
+    // anything was actually sent anywhere. Now: attempt it, and only
+    // claim synced if the backend actually confirms success.
+    let didSync = false;
+    let syncMessage: string | null = null;
+    if (syncPortals) {
+      try {
+        const description = `${bedrooms} bed, ${bathrooms} bath ${mandateType.toLowerCase()} in ${suburb}, ${erfSize}m² erf.`;
+        const result = await publishListing(listingId, description, Number(price), sellerName, sellerEmail);
+        didSync = result.success;
+        if (!result.success) {
+          syncMessage = result.feed_xml
+            ? 'Portal syndication isn\u2019t connected yet (no Entegral Sync API credentials configured) -- saved as a mandate instead. A feed file is ready once it is.'
+            : `Portal sync failed: ${result.error_message || 'unknown error'}`;
+        }
+      } catch (err) {
+        syncMessage = `Portal sync failed: ${err instanceof Error ? err.message : 'unknown error'}`;
+      }
+    }
+
     const newRecord: ListingDealRecord = {
-      id: `quick-${Date.now()}`,
+      id: listingId,
       title: `${bedrooms} Bed Luxury Residence in ${suburb}`,
       address,
       suburb,
@@ -91,17 +119,19 @@ export const QuickListingModal: React.FC<QuickListingModalProps> = ({
       sellerContact,
       sellerEmail,
       mandateType,
-      mandateStatus: syncPortals ? 'Live on Portals' : 'Mandate Pending',
+      mandateStatus: didSync ? 'Live on Portals' : 'Mandate Pending',
       commissionRate: Number(commissionRate),
       photosCount: 8,
-      p24Synced: syncPortals,
-      privatePropertySynced: syncPortals,
+      p24Synced: didSync,
+      privatePropertySynced: didSync,
       views: 1,
       enquiries: 0,
       imageUrl: selectedProperty?.imageUrl || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80'
     };
 
     onAddListing(newRecord);
+    if (syncMessage) window.alert(syncMessage);
+    setIsSubmitting(false);
     onClose();
   };
 
@@ -260,10 +290,11 @@ export const QuickListingModal: React.FC<QuickListingModalProps> = ({
             </button>
             <button
               type="submit"
-              className="px-4 py-1.5 rounded text-xs font-bold bg-[#6b827a] hover:bg-[#596d66] text-white flex items-center gap-1.5 shadow-sm"
+              disabled={isSubmitting}
+              className="px-4 py-1.5 rounded text-xs font-bold bg-[#6b827a] hover:bg-[#596d66] disabled:opacity-60 disabled:cursor-not-allowed text-white flex items-center gap-1.5 shadow-sm"
             >
               <Zap className="w-3.5 h-3.5 fill-current" />
-              <span>Create & Activate Listing</span>
+              <span>{isSubmitting ? 'Syndicating...' : 'Create & Activate Listing'}</span>
             </button>
           </div>
         </form>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   X,
   CheckCircle2,
@@ -46,6 +46,7 @@ import {
 } from '../types';
 import { formatRelativeTime } from '../utils/formatters';
 import { Property24Brand } from '../../components/Property24Brand';
+import { getPortalConnection, savePortalConnection, PortalConnectionStatus } from '../../services/api';
 
 interface SettingsConnectorsModalProps {
   isOpen: boolean;
@@ -103,6 +104,44 @@ export const SettingsConnectorsModal: React.FC<SettingsConnectorsModalProps> = (
   const [newConnDescription, setNewConnDescription] = useState('');
   const [newConnWebhookUrl, setNewConnWebhookUrl] = useState('https://api.ptahrealty.co.za/v1/webhooks/custom');
   const [newConnApiKey, setNewConnApiKey] = useState('');
+
+  // Real Entegral Sync API credentials -- the one account that actually
+  // syndicates to both Property24 and Private Property (see chat). This
+  // is separate from the generic connector cards below (which are
+  // mock/cosmetic isEnabled toggles, not wired to any real backend
+  // credential storage) -- these fields genuinely read/write
+  // portal_connections via GET/PUT /portal-connections/entegral_sync.
+  const [entegralStatus, setEntegralStatus] = useState<PortalConnectionStatus | null>(null);
+  const [entegralBaseUrl, setEntegralBaseUrl] = useState('');
+  const [entegralApiKey, setEntegralApiKey] = useState('');
+  const [entegralSaving, setEntegralSaving] = useState(false);
+  const [entegralSaveMessage, setEntegralSaveMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    getPortalConnection('entegral_sync')
+      .then((status) => {
+        setEntegralStatus(status);
+        if (status.base_url) setEntegralBaseUrl(status.base_url);
+      })
+      .catch(() => setEntegralStatus(null));
+  }, [isOpen]);
+
+  const handleSaveEntegralCredentials = async () => {
+    setEntegralSaving(true);
+    setEntegralSaveMessage(null);
+    try {
+      await savePortalConnection('entegral_sync', entegralBaseUrl, entegralApiKey, true);
+      const status = await getPortalConnection('entegral_sync');
+      setEntegralStatus(status);
+      setEntegralApiKey('');
+      setEntegralSaveMessage('Saved. Property24 & Private Property syndication will use this from now on.');
+    } catch (err) {
+      setEntegralSaveMessage(`Failed to save: ${err instanceof Error ? err.message : 'unknown error'}`);
+    } finally {
+      setEntegralSaving(false);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -619,6 +658,71 @@ export const SettingsConnectorsModal: React.FC<SettingsConnectorsModalProps> = (
 
         {/* Modal Main Body */}
         <div className="flex-1 overflow-y-auto p-6 bg-slate-100/60">
+          {/* Real Entegral Sync API credentials -- the single account
+              that actually pushes to both Property24 and Private
+              Property. Distinct from the mock connector cards below. */}
+          {activeTab === 'portals' && (
+            <div className="bg-white rounded-xl border-2 border-emerald-200 shadow-xs p-4 mb-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-bold text-sm text-slate-900 flex items-center gap-1.5">
+                    <Building2 className="w-4 h-4 text-emerald-600" />
+                    <span>Entegral Sync API</span>
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    One account syndicates live listings to both <Property24Brand variant="short" /> and Private Property.
+                  </p>
+                </div>
+                {entegralStatus?.is_configured ? (
+                  <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-1 rounded-lg">
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Connected
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1 text-[11px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-1 rounded-lg">
+                    <AlertTriangle className="w-3.5 h-3.5" /> Not connected
+                  </span>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <input
+                  type="text"
+                  placeholder="Base URL (e.g. https://api.entegral.net)"
+                  value={entegralBaseUrl}
+                  onChange={(e) => setEntegralBaseUrl(e.target.value)}
+                  className="px-3 py-1.5 rounded-lg border border-slate-200 text-xs focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                />
+                <input
+                  type="password"
+                  placeholder={entegralStatus?.is_configured ? 'API key (leave blank to keep current)' : 'API key'}
+                  value={entegralApiKey}
+                  onChange={(e) => setEntegralApiKey(e.target.value)}
+                  className="px-3 py-1.5 rounded-lg border border-slate-200 text-xs focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <p className="text-[11px] text-slate-400">
+                  Sign up at entegral.net/sync to get real credentials -- until then, listings save as a feed file instead of syncing live.
+                </p>
+                <button
+                  type="button"
+                  onClick={handleSaveEntegralCredentials}
+                  disabled={entegralSaving || !entegralBaseUrl || !entegralApiKey}
+                  className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold shrink-0 ml-3 cursor-pointer"
+                >
+                  {entegralSaving ? 'Saving...' : 'Save Credentials'}
+                </button>
+              </div>
+
+              {entegralSaveMessage && (
+                <p className="text-[11px] text-slate-600 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5">
+                  {entegralSaveMessage}
+                </p>
+              )}
+            </div>
+          )}
+
           {/* TAB: LIVE DIAGNOSTIC LOGS */}
           {activeTab === 'events' ? (
             <div className="space-y-4">
