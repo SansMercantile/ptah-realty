@@ -19,7 +19,7 @@ import { PDFReportModal } from './components/modals/PDFReportModal';
 import { PortalSyncModal } from './components/modals/PortalSyncModal';
 import { MyListingsModal, INITIAL_MY_LISTINGS, type ListingDealRecord } from './components/modals/MyListingsModal';
 import { QuickListingModal } from './components/dealView/QuickListingModal';
-import { UserSettingsModal, SettingsTabType } from './components/modals/UserSettingsModal';
+import { UserSettingsModal, SettingsTabType, LANGUAGES_DATA } from './components/modals/UserSettingsModal';
 import { BalanceDetailsModal } from './components/modals/BalanceDetailsModal';
 import { CreditsTopUpModal } from './components/modals/CreditsTopUpModal';
 import { SearchHistoryModal } from './components/modals/SearchHistoryModal';
@@ -62,6 +62,35 @@ export function App() {
     }
     localStorage.setItem('ptah_theme', theme);
   }, [theme]);
+
+  // Language: defaults to the browser/OS locale (navigator.language), NOT
+  // an IP/geolocation guess -- explicit requirement, since IP-based
+  // location is an unreliable proxy for what language someone actually
+  // reads (a South African expat in Germany still wants en-ZA, not de-DE).
+  // Once the user picks a language themselves it's saved to localStorage
+  // and always wins after that; navigator.language is only ever consulted
+  // when nothing has been saved yet.
+  const [language, setLanguage] = useState<string>(() => {
+    const saved = localStorage.getItem('ptah_language');
+    if (saved) return saved;
+    // navigator.language (e.g. "en-US") is checked against the real
+    // supported list first exactly, then by base language code (the "en"
+    // in "en-US") against each option's own base code, since the app
+    // doesn't support every region variant a browser might report.
+    // Falls back to LANGUAGES_DATA's own designated default (en-ZA) only
+    // when nothing matches at all -- not a hardcoded guess.
+    const browserLang = navigator.language;
+    const exactMatch = LANGUAGES_DATA.find((l) => l.code === browserLang);
+    if (exactMatch) return exactMatch.code;
+    const baseLang = browserLang.split('-')[0];
+    const baseMatch = LANGUAGES_DATA.find((l) => l.code.split('-')[0] === baseLang);
+    if (baseMatch) return baseMatch.code;
+    return LANGUAGES_DATA.find((l) => l.default)?.code || 'en-ZA';
+  });
+  const handleLanguageChange = (newLanguage: string) => {
+    setLanguage(newLanguage);
+    localStorage.setItem('ptah_language', newLanguage);
+  };
 
   const [properties, setProperties] = useState<PropertyRecord[]>(PROPERTIES_DATA);
   const [selectedProperty, setSelectedProperty] = usePersistedState<PropertyRecord | null>('selectedProperty', PROPERTIES_DATA[0]); // Default 5 Richmond Road
@@ -640,6 +669,8 @@ export function App() {
         onJurisdictionChange={handleJurisdictionChange}
         theme={theme}
         onThemeChange={setTheme}
+        currentLanguage={language}
+        onLanguageChange={handleLanguageChange}
       />
 
       {/* 17. Balance & Available Funds Details Modal */}
