@@ -13,12 +13,30 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
+
+    // Read the actual current DOM values at submit time, not just React
+    // state -- some browser extensions/password managers (and some
+    // mobile browser autofill) set an input's visible value without
+    // dispatching the input/change event React's onChange listens for,
+    // so state can silently stay '' even though the field looks filled.
+    // Submitting stale empty state then sends {email:'',password:''},
+    // which the backend correctly rejects (422) -- looking like a fake/
+    // broken login when the real issue is just what got submitted.
+    const formData = new FormData(e.currentTarget);
+    const submittedEmail = (formData.get('email') as string) || email;
+    const submittedPassword = (formData.get('password') as string) || password;
+
+    if (!submittedEmail || !submittedPassword) {
+      setError('Please enter both your email and password.');
+      return;
+    }
+
     setIsLoading(true);
     try {
-      const user = await login(email, password);
+      const user = await login(submittedEmail, submittedPassword);
       onLogin(user);
     } catch (err: any) {
       setError(err.message || 'Login failed.');
@@ -51,6 +69,8 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
           <label className="block text-xs font-semibold text-slate-300 mb-1">Email</label>
           <input
             type="email"
+            name="email"
+            autoComplete="username"
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -62,6 +82,8 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
           <label className="block text-xs font-semibold text-slate-300 mb-1">Password</label>
           <input
             type="password"
+            name="password"
+            autoComplete="current-password"
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}
