@@ -3,5 +3,19 @@
   "rewrites": [
     { "source": "/api/:path*", "destination": "https://ptahrealty-api.sansmercantile.com/api/:path*" },
     { "source": "/media/:path*", "destination": "https://ptahrealty-api.sansmercantile.com/media/:path*" }
+  ],
+  "headers": [
+    {
+      "source": "/assets/:path*",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    },
+    {
+      "source": "/(index.html|)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
+      ]
+    }
   ]
 }

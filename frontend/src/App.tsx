@@ -326,15 +326,25 @@ export function App() {
   }, [user]);
 
   if (!user) {
-    // Marketing landing page shows first; its CTAs (including the demo
-    // "instant login" buttons, which are purely cosmetic in that file --
-    // no real auth call, see MarketingLandingPage.tsx/LoginModal.tsx)
-    // all funnel through one onEnterApp callback, which here just
-    // reveals the REAL login screen rather than pretending anyone is
-    // authenticated. Nothing about actual authentication changes -- only
-    // LoginScreen's real onLogin can ever set `user`.
+    // Marketing landing page shows first. Its "Sign In" tab (LoginModal)
+    // now genuinely authenticates via the real login() API and calls
+    // onRealLogin directly with the resulting AuthUser -- no more
+    // redundant second real-login screen. The "Demo Sandbox" tab and the
+    // hero's "1-Click Sandbox Entry" button remain deliberate,
+    // clearly-labeled credential-free shortcuts: the former still lands
+    // here via onRealLogin with a synthetic demo persona (see
+    // LoginModal.tsx), the latter has no login step at all and falls
+    // through to the real LoginScreen below.
     if (showLandingPage) {
-      return <MarketingLandingPage onEnterApp={() => setShowLandingPage(false)} />;
+      return (
+        <MarketingLandingPage
+          onEnterApp={() => setShowLandingPage(false)}
+          onRealLogin={(loggedInUser) => {
+            setUser(loggedInUser);
+            setShowLandingPage(false);
+          }}
+        />
+      );
     }
     return <LoginScreen onLogin={setUser} />;
   }

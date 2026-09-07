@@ -35,12 +35,14 @@ import {
 import { GLOBAL_COUNTRIES_DATA } from '../../services/jurisdictionsData';
 import { LoginModal } from './LoginModal';
 import { LeadCaptureModal } from './LeadCaptureModal';
+import { type AuthUser } from '../../services/api';
 
 interface MarketingLandingPageProps {
   onEnterApp: () => void;
+  onRealLogin: (user: AuthUser) => void;
 }
 
-export const MarketingLandingPage: React.FC<MarketingLandingPageProps> = ({ onEnterApp }) => {
+export const MarketingLandingPage: React.FC<MarketingLandingPageProps> = ({ onEnterApp, onRealLogin }) => {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isLeadModalOpen, setIsLeadModalOpen] = useState(false);
   const [selectedPlanForLead, setSelectedPlanForLead] = useState('Principal Pro (R 1,850/mo)');
@@ -1342,9 +1344,9 @@ export const MarketingLandingPage: React.FC<MarketingLandingPageProps> = ({ onEn
       <LoginModal
         isOpen={isLoginOpen}
         onClose={() => setIsLoginOpen(false)}
-        onLoginSuccess={() => {
+        onLoginSuccess={(user) => {
           setIsLoginOpen(false);
-          onEnterApp();
+          onRealLogin(user);
         }}
         onOpenLeadModal={() => setIsLeadModalOpen(true)}
       />

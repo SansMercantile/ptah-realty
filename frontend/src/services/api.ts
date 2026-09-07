@@ -27,6 +27,30 @@ export interface AuthUser {
   role: string;
 }
 
+// FastAPI's error body shape depends on WHERE the request failed: most
+// handler-raised HTTPExceptions give `detail` as a plain string, but
+// Pydantic request-validation failures (422s) give `detail` as an array
+// of {loc, msg, type} objects instead. `new Error(detail)` on that array
+// silently stringifies it to "[object Object]" via Array.toString()
+// rather than throwing -- every call site that does `detail.detail ||
+// fallback` was vulnerable to this. Centralized here so it's fixed
+// everywhere at once instead of at each throw site individually.
+function extractErrorMessage(detail: unknown, fallback: string): string {
+  if (typeof detail === 'string' && detail.trim()) return detail;
+  if (Array.isArray(detail) && detail.length > 0) {
+    return detail
+      .map((e) => {
+        if (e && typeof e === 'object' && 'msg' in e) {
+          const loc = Array.isArray((e as any).loc) ? (e as any).loc.filter((p: unknown) => p !== 'body').join('.') : '';
+          return loc ? `${loc}: ${(e as any).msg}` : String((e as any).msg);
+        }
+        return typeof e === 'string' ? e : JSON.stringify(e);
+      })
+      .join('; ');
+  }
+  return fallback;
+}
+
 // ---------------------------------------------------------------------
 // Auth
 // ---------------------------------------------------------------------
@@ -63,7 +87,7 @@ export async function login(email: string, password: string): Promise<AuthUser> 
   });
   if (!res.ok) {
     const detail = await res.json().catch(() => ({}));
-    throw new Error(detail.detail || 'Invalid email or password.');
+    throw new Error(extractErrorMessage(detail.detail, 'Invalid email or password.'));
   }
   const data = await res.json();
   localStorage.setItem(TOKEN_KEY, data.access_token);
@@ -93,7 +117,7 @@ async function authJson<T>(path: string, options: RequestInit = {}): Promise<T> 
   const res = await authFetch(path, { ...options, headers });
   if (!res.ok) {
     const detail = await res.json().catch(() => ({}));
-    throw new Error(detail.detail || `Request failed: ${res.status}`);
+    throw new Error(extractErrorMessage(detail.detail, `Request failed: ${res.status}`));
   }
   return res.json();
 }
@@ -115,7 +139,7 @@ async function authJsonAbs<T>(fullPath: string, options: RequestInit = {}): Prom
   }
   if (!res.ok) {
     const detail = await res.json().catch(() => ({}));
-    throw new Error(detail.detail || `Request failed: ${res.status}`);
+    throw new Error(extractErrorMessage(detail.detail, `Request failed: ${res.status}`));
   }
   return res.json();
 }
@@ -1009,7 +1033,7 @@ async function uploadImage(path: string, file: File): Promise<any> {
   const res = await authFetch(path, { method: 'POST', body: formData });
   if (!res.ok) {
     const detail = await res.json().catch(() => ({}));
-    throw new Error(detail.detail || `Upload failed: ${res.status}`);
+    throw new Error(extractErrorMessage(detail.detail, `Upload failed: ${res.status}`));
   }
   return res.json();
 }
