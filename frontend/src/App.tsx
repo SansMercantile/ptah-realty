@@ -63,6 +63,42 @@ export function App() {
     localStorage.setItem('ptah_theme', theme);
   }, [theme]);
 
+  // Light/dark MODE (distinct from the brand-accent `theme` above --
+  // this toggles Tailwind's `dark:` variant app-wide via the `dark`
+  // class on <html>). Respects an explicit user choice if one was saved,
+  // otherwise follows the OS/browser's prefers-color-scheme -- including
+  // LIVE changes made while the app is open, not just on initial load
+  // (this app-wide auto-following previously lived in JurisdictionContext
+  // and was dropped during a cleanup of that file's unrelated, colliding
+  // theme/language state -- restored here, the correct home for it, since
+  // this is a cross-cutting app concern, not a jurisdiction one).
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
+    const saved = localStorage.getItem('ptah_dark_mode');
+    if (saved) return saved === 'dark';
+    return typeof window !== 'undefined' && window.matchMedia
+      ? window.matchMedia('(prefers-color-scheme: dark)').matches
+      : false;
+  });
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', isDarkMode);
+    localStorage.setItem('ptah_dark_mode', isDarkMode ? 'dark' : 'light');
+  }, [isDarkMode]);
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return;
+    const media = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = (event: MediaQueryListEvent) => {
+      // Only auto-follow the OS if the user hasn't explicitly chosen a
+      // mode themselves -- an explicit choice should stick until they
+      // change it again, not get silently overridden by an OS-level
+      // switch (e.g. the OS flipping to dark mode at sunset).
+      if (localStorage.getItem('ptah_dark_mode') === null) {
+        setIsDarkMode(event.matches);
+      }
+    };
+    media.addEventListener('change', handleChange);
+    return () => media.removeEventListener('change', handleChange);
+  }, []);
+
   // Language: defaults to the browser/OS locale (navigator.language), NOT
   // an IP/geolocation guess -- explicit requirement, since IP-based
   // location is an unreliable proxy for what language someone actually
