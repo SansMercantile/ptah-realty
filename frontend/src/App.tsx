@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { usePersistedState } from './hooks/usePersistedState';
 import { Header, ActiveTab } from './components/Header';
 import { CadastralMap } from './components/CadastralMap';
@@ -28,6 +28,7 @@ import { LoginScreen } from './components/LoginScreen';
 import { MarketingLandingPage } from './components/landing/MarketingLandingPage';
 import { PROPERTIES_DATA } from './services/mockData';
 import { getJurisdictionByCode } from './services/jurisdictionsData';
+import { getDefaultLanguageCodeForCountry } from './services/countryLanguages';
 import { PropertyRecord, AccommodationDetails } from './types';
 import { getCurrentUser, logout, listProperties, createProperty, type AuthUser } from './services/api';
 
@@ -46,6 +47,19 @@ export function App() {
   const [countryId, setCountryId] = useState('ZA');
   const [provinceId, setProvinceId] = useState('WC');
   const [cityId, setCityId] = useState('CPT');
+
+  // Single source of truth for "what currency is the currently-selected
+  // jurisdiction in" -- derived from countryId, not a separate state that
+  // could drift out of sync. Passed down to any component that displays
+  // a monetary amount tied to the selected jurisdiction/property, per
+  // explicit request that currency change everywhere automatically when
+  // jurisdiction changes (see utils/currency.ts for the formatter this
+  // feeds, and the components below now threading it through instead of
+  // hardcoding "R"/ZAR).
+  const currentCurrency = useMemo(
+    () => getJurisdictionByCode(countryId).country.currency,
+    [countryId]
+  );
 
   // Luxury theme (Settings > Preferences > Appearance) -- remaps the
   // app's brand accent color app-wide via a data-theme attribute on
@@ -434,6 +448,18 @@ export function App() {
   // no real backend data behind it, so this swaps in that jurisdiction's
   // own curated demo dataset instead -- currency, legal terminology and
   // property listings all change together.
+  //
+  // Language also follows the selected country's own official
+  // language(s) -- English if it's one of them, else the first official
+  // language we have a UI translation for (see services/countryLanguages.ts)
+  // -- UNLESS the user has explicitly picked a language themselves at some
+  // point, in which case that choice keeps winning regardless of country.
+  // Mirrors the same "localStorage has a saved value = explicit choice"
+  // check the initial browser-locale default above uses, and (like that
+  // default) never writes to localStorage itself -- only handleLanguageChange
+  // (an explicit pick) does that, so a country-driven default here stays
+  // overridable by a later country change instead of calcifying into a
+  // permanent "explicit" choice.
   const handleJurisdictionChange = (newCountryId: string, newProvinceId: string, newCityId: string) => {
     setCountryId(newCountryId);
     setProvinceId(newProvinceId);
@@ -442,6 +468,10 @@ export function App() {
     if (jur.city.properties && jur.city.properties.length > 0) {
       setProperties(jur.city.properties);
       setSelectedProperty(jur.city.properties[0]);
+    }
+    if (localStorage.getItem('ptah_language') === null) {
+      const countryDefaultLanguage = getDefaultLanguageCodeForCountry(newCountryId);
+      if (countryDefaultLanguage) setLanguage(countryDefaultLanguage);
     }
   };
 
@@ -615,6 +645,7 @@ export function App() {
         isOpen={isCMAEngineOpen}
         onClose={() => setIsCMAEngineOpen(false)}
         property={selectedProperty}
+        currency={currentCurrency}
         onOpenPDFReport={() => {
           setIsCMAEngineOpen(false);
           setIsPDFReportOpen(true);
@@ -641,6 +672,7 @@ export function App() {
         isOpen={isPDFReportOpen}
         onClose={() => setIsPDFReportOpen(false)}
         property={selectedProperty}
+        currency={currentCurrency}
       />
 
       {/* 11. Multi-Portal Listing Sync & API Distribution Hub Modal */}
