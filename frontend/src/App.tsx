@@ -694,6 +694,7 @@ export function App() {
         isOpen={isValuationModalOpen}
         onClose={() => setIsValuationModalOpen(false)}
         property={selectedProperty}
+        currency={currentCurrency}
         onOpenContactOwner={handleOpenContactOwner}
       />
 

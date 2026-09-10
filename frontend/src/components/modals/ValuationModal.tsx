@@ -24,6 +24,7 @@ interface ValuationModalProps {
   isOpen: boolean;
   onClose: () => void;
   property: PropertyRecord | null;
+  currency?: { code: string; symbol: string; name: string };
   onOpenContactOwner?: (property: PropertyRecord, initialTab?: 'call' | 'email' | 'whatsapp') => void;
 }
 
@@ -31,6 +32,7 @@ export const ValuationModal: React.FC<ValuationModalProps> = ({
   isOpen,
   onClose,
   property,
+  currency,
   onOpenContactOwner
 }) => {
   const [activeTab, setActiveTab] = useState<'AI_Individual' | 'Street_Precinct' | 'VacantLand' | 'Rental'>('AI_Individual');
@@ -109,9 +111,10 @@ export const ValuationModal: React.FC<ValuationModalProps> = ({
 
   if (!isOpen || !property) return null;
 
+  const currencySymbol = currency?.symbol || 'R';
   const formatZar = (val?: number) => {
-    if (!val && val !== 0) return 'R 0';
-    return `R ${val.toLocaleString('en-ZA').replace(/,/g, ' ')}`;
+    if (!val && val !== 0) return `${currencySymbol} 0`;
+    return `${currencySymbol} ${val.toLocaleString('en-ZA').replace(/,/g, ' ')}`;
   };
 
   const calculatedResidualLandValue = landExtent * permissibleBulk * bulkRate;

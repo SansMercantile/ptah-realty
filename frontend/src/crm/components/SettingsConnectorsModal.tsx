@@ -53,6 +53,7 @@ import {
   connectIntegrationApiKey,
   disconnectIntegration,
 } from '../../services/api';
+import { getPortalConnection, savePortalConnection, PortalConnectionStatus } from '../../services/api';
 
 // Real integrations (services/integrations.py / api/integrations.py) --
 // display metadata for the "External Integrations" tab below. The
@@ -71,7 +72,20 @@ const REAL_INTEGRATIONS_META: Record<string, { icon: string; description: string
   sumsub: { icon: 'ShieldCheck', description: 'Real identity verification behind the existing KYC modal, in place of the current stub.' },
   apollo: { icon: 'Zap', description: 'Lead enrichment and prospecting data feeding the CRM\u2019s Prospecting view.' },
 };
-import { getPortalConnection, savePortalConnection, PortalConnectionStatus } from '../../services/api';
+
+const REAL_INTEGRATION_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  Calendar,
+  Mail,
+  Globe,
+  Video,
+  FileSpreadsheet,
+  Layers,
+  MessageSquare,
+  Palette,
+  FileCheck,
+  ShieldCheck,
+  Zap,
+};
 
 interface SettingsConnectorsModalProps {
   isOpen: boolean;
@@ -725,6 +739,18 @@ export const SettingsConnectorsModal: React.FC<SettingsConnectorsModalProps> = (
             </button>
 
             <button
+              onClick={() => setActiveTab('real_integrations')}
+              className={`py-3.5 flex items-center space-x-1.5 border-b-2 transition ${
+                activeTab === 'real_integrations'
+                  ? 'border-emerald-600 text-emerald-900 font-bold'
+                  : 'border-transparent hover:text-slate-800'
+              }`}
+            >
+              <Zap className="w-3.5 h-3.5 text-indigo-600" />
+              <span>External Integrations</span>
+            </button>
+
+            <button
               onClick={() => setActiveTab('events')}
               className={`py-3.5 flex items-center space-x-1.5 border-b-2 transition ${
                 activeTab === 'events'
@@ -815,8 +841,132 @@ export const SettingsConnectorsModal: React.FC<SettingsConnectorsModalProps> = (
             </div>
           )}
 
-          {/* TAB: LIVE DIAGNOSTIC LOGS */}
-          {activeTab === 'events' ? (
+          {/* TAB: EXTERNAL INTEGRATIONS (real backend, not simulated) */}
+          {activeTab === 'real_integrations' ? (
+            <div className="space-y-4">
+              <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+                <h3 className="font-bold text-sm text-slate-900">External Integrations</h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Real OAuth2 / API-key connections, unlike the simulated connectors elsewhere in this modal.
+                  Each becomes connectable once its API credentials are configured on the backend.
+                </p>
+              </div>
+
+              {realIntegrationsError && (
+                <div className="bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg p-3">
+                  {realIntegrationsError}
+                </div>
+              )}
+
+              {isLoadingRealIntegrations ? (
+                <div className="p-12 text-center text-slate-400 text-xs">Loading integrations...</div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {realIntegrations.map((integ) => {
+                    const meta = REAL_INTEGRATIONS_META[integ.id] || { icon: 'Zap', description: '' };
+                    const IconComponent = REAL_INTEGRATION_ICONS[meta.icon] || Zap;
+                    const isBusy = connectingId === integ.id;
+                    return (
+                      <div key={integ.id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col justify-between">
+                        <div>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-2">
+                              <div className="w-8 h-8 rounded-lg bg-indigo-50 border border-indigo-200 flex items-center justify-center">
+                                <IconComponent className="w-4 h-4 text-indigo-600" />
+                              </div>
+                              <span className="font-bold text-sm text-slate-900">{integ.name}</span>
+                            </div>
+                            {integ.connected ? (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                Connected
+                              </span>
+                            ) : !integ.available ? (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200">
+                                Not configured
+                              </span>
+                            ) : (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                                Ready
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-slate-500 mt-2">{meta.description}</p>
+                        </div>
+
+                        <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-end">
+                          {integ.connected ? (
+                            <button
+                              onClick={() => handleDisconnectReal(integ.id)}
+                              disabled={isBusy}
+                              className="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 text-xs font-semibold transition cursor-pointer disabled:opacity-50"
+                            >
+                              {isBusy ? 'Disconnecting...' : 'Disconnect'}
+                            </button>
+                          ) : integ.authType === 'oauth2' ? (
+                            <button
+                              onClick={() => handleConnectOAuth(integ.id)}
+                              disabled={isBusy || !integ.available}
+                              title={!integ.available ? 'Backend API credentials not configured yet' : undefined}
+                              className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                            >
+                              {isBusy ? 'Connecting...' : 'Connect'}
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => { setApiKeyModalConnectorId(integ.id); setApiKeyFieldValues({}); }}
+                              className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition cursor-pointer"
+                            >
+                              Add API Key
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {apiKeyModalConnectorId && (
+                <div className="fixed inset-0 z-[60] bg-black/50 flex items-center justify-center p-4">
+                  <div className="bg-white rounded-xl p-5 w-full max-w-sm shadow-2xl">
+                    <h4 className="font-bold text-sm text-slate-900 mb-3">
+                      Connect {REAL_INTEGRATIONS_META[apiKeyModalConnectorId] ? realIntegrations.find(i => i.id === apiKeyModalConnectorId)?.name : apiKeyModalConnectorId}
+                    </h4>
+                    <div className="space-y-2">
+                      {(apiKeyModalConnectorId === 'sumsub' ? ['app_token', 'secret_key'] : ['api_key']).map((field) => (
+                        <div key={field}>
+                          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">
+                            {field.replace('_', ' ')}
+                          </label>
+                          <input
+                            type="password"
+                            value={apiKeyFieldValues[field] || ''}
+                            onChange={(e) => setApiKeyFieldValues((prev) => ({ ...prev, [field]: e.target.value }))}
+                            className="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex items-center justify-end space-x-2 mt-4">
+                      <button
+                        onClick={() => { setApiKeyModalConnectorId(null); setApiKeyFieldValues({}); }}
+                        className="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 text-xs font-semibold transition cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleSubmitApiKey}
+                        disabled={connectingId === apiKeyModalConnectorId}
+                        className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition cursor-pointer disabled:opacity-50"
+                      >
+                        {connectingId === apiKeyModalConnectorId ? 'Saving...' : 'Save & Connect'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : activeTab === 'events' ? (
             <div className="space-y-4">
               <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
                 <div>

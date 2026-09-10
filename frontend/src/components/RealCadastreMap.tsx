@@ -68,6 +68,11 @@ interface RealCadastreMapProps {
   // CadastralMap's own top bar (which is now Google Maps engine only).
   showStreetFilters?: boolean;
   onToggleStreetFilters?: () => void;
+  // Canvass Mode: the agent's own live GPS position while door-knocking
+  // a street, rendered as a "you are here" marker + accuracy ring on the
+  // vector canvas via the same projectGeoToScreen used for everything
+  // else. See hooks/useLiveGeolocation.ts and CadastralMap.tsx.
+  liveLocation?: { lat: number; lng: number; accuracy: number; heading: number | null } | null;
 }
 
 // Extract house number from address string

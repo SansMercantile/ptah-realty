@@ -23,6 +23,7 @@ interface CMAEngineModalProps {
   isOpen: boolean;
   onClose: () => void;
   property: PropertyRecord | null;
+  currency?: { code: string; symbol: string; name: string };
   onOpenPDFReport?: () => void;
   onOpenPortalSync?: () => void;
 }
@@ -31,6 +32,7 @@ export const CMAEngineModal: React.FC<CMAEngineModalProps> = ({
   isOpen,
   onClose,
   property,
+  currency,
   onOpenPDFReport,
   onOpenPortalSync
 }) => {
@@ -91,9 +93,10 @@ export const CMAEngineModal: React.FC<CMAEngineModalProps> = ({
 
   if (!isOpen || !property) return null;
 
+  const currencySymbol = currency?.symbol || 'R';
   const formatZar = (amount?: number) => {
     if (amount === undefined || amount === null || isNaN(amount)) return '-';
-    return `R ${amount.toLocaleString('en-ZA').replace(/,/g, ' ')}`;
+    return `${currencySymbol} ${amount.toLocaleString('en-ZA').replace(/,/g, ' ')}`;
   };
 
   return (
@@ -193,7 +196,7 @@ export const CMAEngineModal: React.FC<CMAEngineModalProps> = ({
               </div>
               <div className="flex items-center justify-between mt-2 text-[11px] text-slate-400 pt-1 border-t border-slate-700">
                 <span>Avg Rate/m²:</span>
-                <span className="font-bold text-slate-200">R {valuationData?.averagePricePerM2?.toLocaleString('en-ZA')} / m²</span>
+                <span className="font-bold text-slate-200">{currencySymbol} {valuationData?.averagePricePerM2?.toLocaleString('en-ZA')} / m²</span>
               </div>
             </div>
 

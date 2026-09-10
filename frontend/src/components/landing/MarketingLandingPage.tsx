@@ -370,7 +370,7 @@ export const MarketingLandingPage: React.FC<MarketingLandingPageProps> = ({ onEn
                 </p>
               </div>
               <div className="pt-4 mt-4 border-t border-slate-100 text-[11px] text-amber-600 font-semibold flex items-center gap-1">
-                <span>RICS & SACPVP Compliant</span>
+                <span>Deterministic Erf-Basis Engine</span>
               </div>
             </div>
 
@@ -398,11 +398,11 @@ export const MarketingLandingPage: React.FC<MarketingLandingPageProps> = ({ onEn
                 </div>
                 <h3 className="text-base font-bold text-slate-900">Multi-Portal Listing Syndication</h3>
                 <p className="text-xs text-slate-600 leading-relaxed">
-                  One-click distribution to Property24, Private Property, Zillow, Rightmove, Realtor.com, and national MLS networks with live sync logs.
+                  One-click distribution to Property24 and Private Property with live sync status, view/enquiry counters, and commission tracking.
                 </p>
               </div>
               <div className="pt-4 mt-4 border-t border-slate-100 text-[11px] text-blue-600 font-semibold flex items-center gap-1">
-                <span>Global API Integrations</span>
+                <span>Property24 & Private Property Sync</span>
               </div>
             </div>
 
@@ -430,7 +430,7 @@ export const MarketingLandingPage: React.FC<MarketingLandingPageProps> = ({ onEn
                 </div>
                 <h3 className="text-base font-bold text-slate-900">AI Copywriting & Media Studio</h3>
                 <p className="text-xs text-slate-600 leading-relaxed">
-                  Generate statutory property descriptions in 15+ languages, enhanced floorplan visualizers, high-res drone asset managers, and virtual tours.
+                  Generate statutory property descriptions in 11 supported languages, enhanced floorplan visualizers, high-res drone asset managers, and virtual tours.
                 </p>
               </div>
               <div className="pt-4 mt-4 border-t border-slate-100 text-[11px] text-pink-600 font-semibold flex items-center gap-1">

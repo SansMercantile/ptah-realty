@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 import { 
   CountryOption, 
   ProvinceStateOption, 
@@ -6,7 +6,6 @@ import {
   GLOBAL_COUNTRIES_DATA, 
   getJurisdictionByCode 
 } from '../services/jurisdictionsData';
-import { getDefaultLanguageCodeForCountry } from '../services/countryLanguages';
 import { PropertyRecord } from '../types';
 
 interface JurisdictionContextType {
@@ -21,8 +20,6 @@ interface JurisdictionContextType {
   currencyCode: string;
   landRegistryAuthority: string;
   legalIdentifierName: string;
-  language: string;
-  setLanguage: (languageCode: string) => void;
   selectCountry: (countryId: string) => void;
   selectProvince: (provinceId: string) => void;
   selectCity: (cityId: string) => void;
@@ -31,48 +28,11 @@ interface JurisdictionContextType {
 
 const JurisdictionContext = createContext<JurisdictionContextType | undefined>(undefined);
 
-const LANGUAGE_STORAGE_KEY = 'ptah_language';
-const LANGUAGE_MANUALLY_SET_STORAGE_KEY = 'ptah_language_manually_set';
-
 export const JurisdictionProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Default to South Africa -> Western Cape -> Cape Town
   const [countryId, setCountryId] = useState<string>('ZA');
   const [provinceId, setProvinceId] = useState<string>('WC');
   const [cityId, setCityId] = useState<string>('CPT');
-
-  // Language defaults to the selected country/jurisdiction's own official
-  // language (English if it's among them -- see
-  // services/countryLanguages.ts) UNLESS the user has explicitly picked
-  // a language themselves, in which case that choice sticks regardless
-  // of which country gets selected afterward. hasManuallySetLanguage is
-  // the flag that distinguishes "still following the country" from
-  // "user overrode it" -- both persisted so the override survives a
-  // refresh.
-  const [language, setLanguageState] = useState<string>(
-    () => localStorage.getItem(LANGUAGE_STORAGE_KEY) || 'en-ZA'
-  );
-  const [hasManuallySetLanguage, setHasManuallySetLanguage] = useState<boolean>(
-    () => localStorage.getItem(LANGUAGE_MANUALLY_SET_STORAGE_KEY) === 'true'
-  );
-
-  useEffect(() => {
-    localStorage.setItem(LANGUAGE_STORAGE_KEY, language);
-  }, [language]);
-
-  const setLanguage = (languageCode: string) => {
-    setLanguageState(languageCode);
-    setHasManuallySetLanguage(true);
-    localStorage.setItem(LANGUAGE_MANUALLY_SET_STORAGE_KEY, 'true');
-  };
-
-  const applyCountryLanguageDefault = (newCountryId: string) => {
-    if (hasManuallySetLanguage) return; // explicit user choice always wins
-    const defaultLanguage = getDefaultLanguageCodeForCountry(newCountryId);
-    if (defaultLanguage) setLanguageState(defaultLanguage);
-    // If we don't have a UI language for this country yet, leave the
-    // current selection alone rather than force a change to something
-    // arbitrary/unsupported.
-  };
 
   const { country, province, city } = getJurisdictionByCode(countryId, provinceId, cityId);
 
@@ -86,7 +46,6 @@ export const JurisdictionProvider: React.FC<{ children: React.ReactNode }> = ({ 
     setCountryId(targetCountry.id);
     setProvinceId(defaultProv.id);
     setCityId(defaultCity.id);
-    applyCountryLanguageDefault(targetCountry.id);
   };
 
   const selectProvince = (newProvinceId: string) => {
@@ -105,7 +64,6 @@ export const JurisdictionProvider: React.FC<{ children: React.ReactNode }> = ({ 
     setCountryId(cId);
     setProvinceId(pId);
     setCityId(ctId);
-    applyCountryLanguageDefault(cId);
   };
 
   return (
@@ -122,8 +80,6 @@ export const JurisdictionProvider: React.FC<{ children: React.ReactNode }> = ({ 
         currencyCode: country.currency.code,
         landRegistryAuthority: country.landRegistryAuthority,
         legalIdentifierName: country.legalIdentifierName,
-        language,
-        setLanguage,
         selectCountry,
         selectProvince,
         selectCity,

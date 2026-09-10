@@ -21,12 +21,14 @@ interface PDFReportModalProps {
   isOpen: boolean;
   onClose: () => void;
   property: PropertyRecord | null;
+  currency?: { code: string; symbol: string; name: string };
 }
 
 export const PDFReportModal: React.FC<PDFReportModalProps> = ({
   isOpen,
   onClose,
-  property
+  property,
+  currency
 }) => {
   const [aiTone, setAiTone] = useState<'Executive' | 'Luxury' | 'Investor'>('Executive');
   const [isGeneratingAi, setIsGeneratingAi] = useState(false);
@@ -93,7 +95,7 @@ export const PDFReportModal: React.FC<PDFReportModalProps> = ({
 
   const formatZar = (amount?: number) => {
     if (amount === undefined || amount === null || isNaN(amount)) return '-';
-    return `R ${amount.toLocaleString('en-ZA').replace(/,/g, ' ')}`;
+    return `${currency?.symbol || 'R'} ${amount.toLocaleString('en-ZA').replace(/,/g, ' ')}`;
   };
 
   const heroAsset = mediaList.find(m => m.isHero) || mediaList[0];
