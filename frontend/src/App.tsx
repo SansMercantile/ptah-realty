@@ -545,6 +545,7 @@ export function App() {
         <CadastralMap
           properties={properties}
           selectedProperty={selectedProperty}
+          currency={currentCurrency}
           onSelectProperty={handleSelectProperty}
           isSidebarOpen={isSidebarOpen}
           onOpenCMAEngine={() => setIsCMAEngineOpen(true)}

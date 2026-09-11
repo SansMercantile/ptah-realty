@@ -28,6 +28,7 @@ import { Property24Brand } from './Property24Brand';
 
 interface PropertyPopupCardProps {
   property: PropertyRecord | null;
+  currency?: { code: string; symbol: string; name: string };
   onClose: () => void;
   onOpenCMA?: () => void;
   onOpenPDF?: () => void;
@@ -37,6 +38,7 @@ interface PropertyPopupCardProps {
 
 export const PropertyPopupCard: React.FC<PropertyPopupCardProps> = ({
   property,
+  currency,
   onClose,
   onOpenCMA,
   onOpenPDF,
@@ -117,10 +119,13 @@ export const PropertyPopupCard: React.FC<PropertyPopupCardProps> = ({
     setActiveImageIndex((prev) => (prev === imageList.length - 1 ? 0 : prev + 1));
   };
 
-  // Format currency in ZAR
+  // Format currency, using the currently-selected jurisdiction's currency
+  // (falls back to ZAR/"R" if none is passed, e.g. an older call site
+  // that hasn't been updated yet).
   const formatZar = (amount?: number) => {
     if (!amount || amount === 0) return 'N/A';
-    return `R ${amount.toLocaleString('en-ZA').replace(/,/g, ' ')}`;
+    const symbol = currency?.symbol || 'R';
+    return `${symbol} ${amount.toLocaleString('en-ZA').replace(/,/g, ' ')}`;
   };
 
   // Format date nicely

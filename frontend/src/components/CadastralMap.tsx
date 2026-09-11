@@ -24,6 +24,7 @@ import { pullProperty24RadiusListings, radiusListingToPropertyRecord, createProp
 interface CadastralMapProps {
   properties: PropertyRecord[];
   selectedProperty: PropertyRecord | null;
+  currency?: { code: string; symbol: string; name: string };
   onSelectProperty: (property: PropertyRecord) => void;
   isSidebarOpen: boolean;
   onOpenCMAEngine?: () => void;
@@ -40,6 +41,7 @@ interface CadastralMapProps {
 export const CadastralMap: React.FC<CadastralMapProps> = ({
   properties,
   selectedProperty,
+  currency,
   onSelectProperty,
   isSidebarOpen,
   onOpenCMAEngine,
@@ -449,6 +451,7 @@ export const CadastralMap: React.FC<CadastralMapProps> = ({
       {selectedProperty && showPopupCard && (
         <PropertyPopupCard
           property={selectedProperty}
+          currency={currency}
           onClose={() => setShowPopupCard(false)}
           onOpenCMA={onOpenCMAEngine}
           onOpenPDF={onOpenPDFReport}
