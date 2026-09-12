@@ -66,7 +66,7 @@ export const CadastralMap: React.FC<CadastralMapProps> = ({
   // handleGmAuthFailure's fallback) but isn't user-selectable in the UI.
   const [mapEngine, setMapEngine] = useState<'google' | 'vector'>('vector');
   const [googleMapsError, setGoogleMapsError] = useState<string | null>(null);
-  const [googleMapType, setGoogleMapType] = useState<'roadmap' | 'satellite' | 'hybrid' | 'terrain'>('hybrid');
+  const [googleMapType, setGoogleMapType] = useState<'roadmap' | 'satellite' | 'hybrid' | 'terrain'>('satellite');
   const [showRadiusRing, setShowRadiusRing] = useState(true);
   const [radiusMeters, setRadiusMeters] = useState(500);
   const [showZoningLayer, setShowZoningLayer] = useState(true);

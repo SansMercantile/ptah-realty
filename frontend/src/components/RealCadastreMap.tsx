@@ -335,11 +335,10 @@ export const RealCadastreMap: React.FC<RealCadastreMapProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [dragCenterStart, setDragCenterStart] = useState<{ lat: number; lng: number }>(center);
-  // Street GIS (OpenStreetMap) is the default/primary basemap -- it needs
-  // no API key at all, so it always renders cleanly regardless of Carto
-  // key/token state. The Carto raster basemaps (Cadastral Dark, Deeds Plan
-  // Light) remain available as an explicit switch.
-  const [activeTileSource, setActiveTileSource] = useState<'carto-dark' | 'esri-satellite' | 'osm-standard' | 'carto-light'>('osm-standard');
+  // Default to the high-resolution satellite basemap on the landing experience
+  // so the property map opens in the requested aerial view, while still
+  // keeping the OSM/Carto basemaps available as explicit switches.
+  const [activeTileSource, setActiveTileSource] = useState<'carto-dark' | 'esri-satellite' | 'osm-standard' | 'carto-light'>('esri-satellite');
   const [hoveredErfNo, setHoveredErfNo] = useState<string | null>(null);
 
   // Resize observer for responsive canvas
