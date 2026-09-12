@@ -52,6 +52,7 @@ export const MarketingLandingPage: React.FC<MarketingLandingPageProps> = ({ onEn
   const [activeInteractiveTab, setActiveInteractiveTab] = useState<'cadastre' | 'deeds' | 'cma' | 'kyc' | 'portals'>('cadastre');
   const [previewCountryCode, setPreviewCountryCode] = useState('ZA');
   const [selectedPreviewProperty, setSelectedPreviewProperty] = useState(PROPERTIES_DATA[0]);
+  const [isPreviewMapHovered, setIsPreviewMapHovered] = useState(false);
 
   const activeCountry = GLOBAL_COUNTRIES_DATA.find(c => c.id === previewCountryCode) || GLOBAL_COUNTRIES_DATA[0];
 
@@ -228,19 +229,33 @@ export const MarketingLandingPage: React.FC<MarketingLandingPageProps> = ({ onEn
                   </div>
                 </div>
 
-                <div className="my-6 min-h-[340px] rounded-xl overflow-hidden border border-cyan-500/40 relative shadow-inner">
-                  <RealCadastreMap
-                    properties={PROPERTIES_DATA}
-                    selectedProperty={selectedPreviewProperty}
-                    hoveredProperty={null}
-                    onSelectProperty={setSelectedPreviewProperty}
-                    onHoverProperty={() => undefined}
-                    showZoningLayer
-                    showRadiusRing={false}
-                    showSurroundingParcels
-                    showHouseNumbers={false}
-                    buildingRenderMode="cadastre_lots"
-                  />
+                <div
+                  className="my-6 min-h-[340px] rounded-xl overflow-hidden border border-cyan-500/40 relative shadow-inner"
+                  onMouseEnter={() => setIsPreviewMapHovered(true)}
+                  onMouseLeave={() => setIsPreviewMapHovered(false)}
+                >
+                  {isPreviewMapHovered ? (
+                    <RealCadastreMap
+                      properties={PROPERTIES_DATA}
+                      selectedProperty={selectedPreviewProperty}
+                      hoveredProperty={null}
+                      onSelectProperty={setSelectedPreviewProperty}
+                      onHoverProperty={() => undefined}
+                      showZoningLayer
+                      showRadiusRing={false}
+                      showSurroundingParcels
+                      showHouseNumbers={false}
+                      buildingRenderMode="cadastre_lots"
+                    />
+                  ) : (
+                    <div className="min-h-[340px] flex items-center justify-center bg-slate-950 text-center px-6">
+                      <div>
+                        <Layers className="w-8 h-8 text-cyan-400 mx-auto mb-2" />
+                        <p className="text-sm font-bold text-cyan-200">Interactive GIS Cadastre</p>
+                        <p className="text-[11px] text-slate-400 mt-1">Move your pointer over the map to load live parcels</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Quick Interactive Map Actions */}
