@@ -33,6 +33,8 @@ import {
   Laptop
 } from 'lucide-react';
 import { GLOBAL_COUNTRIES_DATA } from '../../services/jurisdictionsData';
+import { PROPERTIES_DATA } from '../../services/mockData';
+import { RealCadastreMap } from '../RealCadastreMap';
 import { LoginModal } from './LoginModal';
 import { LeadCaptureModal } from './LeadCaptureModal';
 import { type AuthUser } from '../../services/api';
@@ -49,6 +51,7 @@ export const MarketingLandingPage: React.FC<MarketingLandingPageProps> = ({ onEn
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('annual');
   const [activeInteractiveTab, setActiveInteractiveTab] = useState<'cadastre' | 'deeds' | 'cma' | 'kyc' | 'portals'>('cadastre');
   const [previewCountryCode, setPreviewCountryCode] = useState('ZA');
+  const [selectedPreviewProperty, setSelectedPreviewProperty] = useState(PROPERTIES_DATA[0]);
 
   const activeCountry = GLOBAL_COUNTRIES_DATA.find(c => c.id === previewCountryCode) || GLOBAL_COUNTRIES_DATA[0];
 
@@ -225,28 +228,19 @@ export const MarketingLandingPage: React.FC<MarketingLandingPageProps> = ({ onEn
                   </div>
                 </div>
 
-                {/* Vector polygon representation */}
-                <div className="my-6 p-4 rounded-xl bg-slate-900/90 border border-cyan-500/40 relative overflow-hidden shadow-inner">
-                  <div className="flex items-center justify-between mb-3 text-xs">
-                    <span className="font-bold text-cyan-300 flex items-center gap-1.5">
-                      <Layers className="w-4 h-4 text-cyan-400" /> Spatial Cadastral Coordinates & Boundary
-                    </span>
-                    <span className="text-[10px] text-emerald-400 font-mono">GPS: -33.9102, 18.3985</span>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2 text-[11px] font-mono">
-                    <div className="p-2 bg-slate-950 rounded border border-slate-800">
-                      <div className="text-slate-500 text-[9px]">LPI CODE</div>
-                      <div className="text-cyan-200 font-bold">C01600000000104800000</div>
-                    </div>
-                    <div className="p-2 bg-slate-950 rounded border border-slate-800">
-                      <div className="text-slate-500 text-[9px]">ZONING CODE</div>
-                      <div className="text-amber-300 font-bold">SR1 (Single Res 1)</div>
-                    </div>
-                    <div className="p-2 bg-slate-950 rounded border border-slate-800">
-                      <div className="text-slate-500 text-[9px]">DEEDS OFFICE</div>
-                      <div className="text-emerald-300 font-bold">Cape Town Registry</div>
-                    </div>
-                  </div>
+                <div className="my-6 min-h-[340px] rounded-xl overflow-hidden border border-cyan-500/40 relative shadow-inner">
+                  <RealCadastreMap
+                    properties={PROPERTIES_DATA}
+                    selectedProperty={selectedPreviewProperty}
+                    hoveredProperty={null}
+                    onSelectProperty={setSelectedPreviewProperty}
+                    onHoverProperty={() => undefined}
+                    showZoningLayer
+                    showRadiusRing={false}
+                    showSurroundingParcels
+                    showHouseNumbers={false}
+                    buildingRenderMode="cadastre_lots"
+                  />
                 </div>
 
                 {/* Quick Interactive Map Actions */}

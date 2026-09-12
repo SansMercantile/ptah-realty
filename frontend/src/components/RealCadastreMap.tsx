@@ -33,7 +33,7 @@ import { generateParcelMockData } from '../utils/parcelMockData';
 // API Access Token (JWT, scoped to a specific connection/dataset for the
 // Maps/SQL/Tilesets APIs at gcp-us-east1.api.carto.com) and is NOT valid
 // against the basemaps.cartocdn.com raster endpoint, so it won't clear the
-// watermark on the Cadastral Dark / Deeds Plan Light basemaps below.
+// watermark on the Cadastral Dark basemap below.
 // Street GIS uses Esri's World Street Map tiles so the app does not send
 // production traffic to OpenStreetMap's volunteer-run tile servers.
 const CARTO_MAPS_API_KEY = import.meta.env.VITE_CARTO_BASEMAPS_API_KEY as string | undefined;
@@ -339,7 +339,7 @@ export const RealCadastreMap: React.FC<RealCadastreMapProps> = ({
   // Default to the high-resolution satellite basemap on the landing experience
   // so the property map opens in the requested aerial view, while still
   // keeping the OSM/Carto basemaps available as explicit switches.
-  const [activeTileSource, setActiveTileSource] = useState<'carto-dark' | 'esri-satellite' | 'osm-standard' | 'carto-light'>('esri-satellite');
+  const [activeTileSource, setActiveTileSource] = useState<'carto-dark' | 'esri-satellite' | 'osm-standard'>('esri-satellite');
   const [hoveredErfNo, setHoveredErfNo] = useState<string | null>(null);
 
   // Resize observer for responsive canvas
@@ -570,8 +570,6 @@ export const RealCadastreMap: React.FC<RealCadastreMapProps> = ({
 
           if (activeTileSource === 'carto-dark') {
             url = `https://${cartoSub}.basemaps.cartocdn.com/rastertiles/dark_all/${zoomInt}/${wrappedX}/${ty}.png${CARTO_TILE_KEY_PARAM}`;
-          } else if (activeTileSource === 'carto-light') {
-            url = `https://${cartoSub}.basemaps.cartocdn.com/rastertiles/light_all/${zoomInt}/${wrappedX}/${ty}.png${CARTO_TILE_KEY_PARAM}`;
           } else if (activeTileSource === 'esri-satellite') {
             url = `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${zoomInt}/${ty}/${wrappedX}`;
           } else {
@@ -933,8 +931,7 @@ export const RealCadastreMap: React.FC<RealCadastreMapProps> = ({
           separated by gap-2 on the outer flex container, matching the
           gap-2 used between the CMA Radius control and the "Pull Live"
           button in the row above -- the same reference gap size applied
-          consistently, rather than the old ad-hoc ml-1 that made the
-          Streets toggle look too close to "Deeds Plan Light". */}
+          consistently with the basemap switcher. */}
       <div className="absolute top-14 left-3 z-20 flex flex-wrap items-center gap-2 bg-slate-900/90 backdrop-blur-md p-1 rounded-lg border border-slate-700 shadow-xl text-xs pointer-events-auto">
         <div className="flex flex-wrap items-center gap-1.5">
           <span className="text-[10px] text-slate-400 font-semibold px-2 uppercase tracking-wider flex items-center gap-1">
@@ -966,15 +963,6 @@ export const RealCadastreMap: React.FC<RealCadastreMapProps> = ({
             }`}
           >
             Cadastral Dark
-          </button>
-          <button
-            id="layer-carto-light"
-            onClick={() => setActiveTileSource('carto-light')}
-            className={`px-2.5 py-1 rounded text-[11px] font-semibold transition-all ${
-              activeTileSource === 'carto-light' ? 'bg-[#006980] text-white shadow-xs' : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            Deeds Plan Light
           </button>
         </div>
 
