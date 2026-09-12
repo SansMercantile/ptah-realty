@@ -882,6 +882,36 @@ export async function rotateLeadWebhookSecret(): Promise<WebhookConfig> {
 }
 
 // ---------------------------------------------------------------------
+// Live agent location (door-knocking / canvassing) -- see api/crm.py's
+// update_agent_location / list_agent_locations. One doc per user (their
+// current position), not a breadcrumb trail; only positions updated in
+// the last 15 minutes come back from listLiveAgentLocations, so an
+// agent who stopped sharing disappears from teammates' maps instead of
+// showing a stale, permanently-parked pin.
+// ---------------------------------------------------------------------
+
+export async function updateMyLocation(lat: number, lng: number, accuracy?: number): Promise<void> {
+  await authJson('/crm/agent-location', {
+    method: 'POST',
+    body: JSON.stringify({ lat, lng, accuracy: accuracy ?? null }),
+  });
+}
+
+export interface LiveAgentLocation {
+  name: string;
+  email: string;
+  lat: number;
+  lng: number;
+  accuracy: number | null;
+  updatedAt: string;
+}
+
+export async function listLiveAgentLocations(): Promise<LiveAgentLocation[]> {
+  const data = await authJson<{ agents: LiveAgentLocation[] }>('/crm/agent-locations');
+  return data.agents;
+}
+
+// ---------------------------------------------------------------------
 // KYC / FICA verification (real backend round trip, provider-neutral
 // mock findings behind it -- see services/kyc.py's own docstring. Mounted
 // under /api/v1/intelligence, not /api/v1/realty, hence authJsonAbs.)
