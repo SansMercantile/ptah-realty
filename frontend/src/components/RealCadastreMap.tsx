@@ -62,6 +62,7 @@ interface RealCadastreMapProps {
   show3DExtrusions?: boolean;
   onToggle3DExtrusions?: (show: boolean) => void;
   onCursorCoordsChange?: (coords: { lat: number; lng: number } | null) => void;
+  enableLiveParcels?: boolean;
   // Street & Cluster Filter toggle -- state and the StreetFilterControls
   // panel itself still live in CadastralMap (the parent), this is just
   // the trigger button, rendered here in the Basemap bar next to "Deeds
@@ -198,6 +199,7 @@ export const RealCadastreMap: React.FC<RealCadastreMapProps> = ({
   show3DExtrusions = false,
   onToggle3DExtrusions,
   onCursorCoordsChange,
+  enableLiveParcels = true,
   showStreetFilters = false,
   onToggleStreetFilters
 }) => {
@@ -491,6 +493,13 @@ export const RealCadastreMap: React.FC<RealCadastreMapProps> = ({
   useEffect(() => {
     if (liveParcelFetchDebounceRef.current) clearTimeout(liveParcelFetchDebounceRef.current);
 
+    if (!enableLiveParcels) {
+      setLiveSurroundingParcels([]);
+      setLiveParcelsError(null);
+      setIsLoadingLiveParcels(false);
+      return;
+    }
+
     if (zoomLevel < MIN_ZOOM_FOR_LIVE_PARCELS) {
       setLiveSurroundingParcels([]);
       setLiveParcelsError(null);
@@ -532,7 +541,7 @@ export const RealCadastreMap: React.FC<RealCadastreMapProps> = ({
       if (liveParcelFetchDebounceRef.current) clearTimeout(liveParcelFetchDebounceRef.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [center.lat, center.lng, zoomLevel, dimensions.width, dimensions.height, heading, tilt]);
+  }, [center.lat, center.lng, zoomLevel, dimensions.width, dimensions.height, heading, tilt, enableLiveParcels]);
 
   // Tile calculation for real Esri street/satellite and Carto raster tiles
   const visibleTiles = useMemo(() => {

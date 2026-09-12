@@ -245,6 +245,7 @@ export const MarketingLandingPage: React.FC<MarketingLandingPageProps> = ({ onEn
                       showRadiusRing={false}
                       showSurroundingParcels
                       showHouseNumbers={false}
+                      enableLiveParcels={false}
                       buildingRenderMode="cadastre_lots"
                     />
                   ) : (
