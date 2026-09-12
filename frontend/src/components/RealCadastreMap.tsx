@@ -34,7 +34,8 @@ import { generateParcelMockData } from '../utils/parcelMockData';
 // Maps/SQL/Tilesets APIs at gcp-us-east1.api.carto.com) and is NOT valid
 // against the basemaps.cartocdn.com raster endpoint, so it won't clear the
 // watermark on the Cadastral Dark / Deeds Plan Light basemaps below.
-// Street GIS (OpenStreetMap) needs no key at all and is the default.
+// Street GIS uses Esri's World Street Map tiles so the app does not send
+// production traffic to OpenStreetMap's volunteer-run tile servers.
 const CARTO_MAPS_API_KEY = import.meta.env.VITE_CARTO_BASEMAPS_API_KEY as string | undefined;
 const CARTO_TILE_KEY_PARAM = CARTO_MAPS_API_KEY ? `?key=${CARTO_MAPS_API_KEY}` : '';
 
@@ -533,7 +534,7 @@ export const RealCadastreMap: React.FC<RealCadastreMapProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [center.lat, center.lng, zoomLevel, dimensions.width, dimensions.height, heading, tilt]);
 
-  // Tile calculation for real OpenStreetMap / CartoDB / Esri satellite raster tiles
+  // Tile calculation for real Esri street/satellite and Carto raster tiles
   const visibleTiles = useMemo(() => {
     const centerWorld = latLngToWorld(center.lat, center.lng);
     const zoomInt = Math.floor(zoomLevel);
@@ -565,12 +566,7 @@ export const RealCadastreMap: React.FC<RealCadastreMapProps> = ({
         const wrappedX = ((tx % numTiles) + numTiles) % numTiles;
         if (ty >= 0 && ty < numTiles) {
           let url = '';
-          // OSM's tile CDN only rotates across 3 subdomains (a/b/c) --
-          // using the same 4-way 'd' subdomain as Carto here would send a
-          // quarter of Street GIS tile requests to a host that doesn't
-          // resolve for OSM, leaving visible gaps on the default basemap.
           const cartoSub = ['a', 'b', 'c', 'd'][Math.abs(tx + ty) % 4];
-          const osmSub = ['a', 'b', 'c'][Math.abs(tx + ty) % 3];
 
           if (activeTileSource === 'carto-dark') {
             url = `https://${cartoSub}.basemaps.cartocdn.com/rastertiles/dark_all/${zoomInt}/${wrappedX}/${ty}.png${CARTO_TILE_KEY_PARAM}`;
@@ -579,7 +575,7 @@ export const RealCadastreMap: React.FC<RealCadastreMapProps> = ({
           } else if (activeTileSource === 'esri-satellite') {
             url = `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${zoomInt}/${ty}/${wrappedX}`;
           } else {
-            url = `https://${osmSub}.tile.openstreetmap.org/${zoomInt}/${wrappedX}/${ty}.png`;
+            url = `https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/${zoomInt}/${ty}/${wrappedX}`;
           }
           
           const screenX = (tx - centerTileX) * tileSize + dimensions.width / 2;
