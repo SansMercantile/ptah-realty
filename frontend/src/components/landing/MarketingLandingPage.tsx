@@ -33,26 +33,20 @@ import {
   Laptop
 } from 'lucide-react';
 import { GLOBAL_COUNTRIES_DATA } from '../../services/jurisdictionsData';
-import { PROPERTIES_DATA } from '../../services/mockData';
-import { RealCadastreMap } from '../RealCadastreMap';
 import { LoginModal } from './LoginModal';
 import { LeadCaptureModal } from './LeadCaptureModal';
-import { type AuthUser } from '../../services/api';
 
 interface MarketingLandingPageProps {
   onEnterApp: () => void;
-  onRealLogin: (user: AuthUser) => void;
 }
 
-export const MarketingLandingPage: React.FC<MarketingLandingPageProps> = ({ onEnterApp, onRealLogin }) => {
+export const MarketingLandingPage: React.FC<MarketingLandingPageProps> = ({ onEnterApp }) => {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isLeadModalOpen, setIsLeadModalOpen] = useState(false);
   const [selectedPlanForLead, setSelectedPlanForLead] = useState('Principal Pro (R 1,850/mo)');
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('annual');
   const [activeInteractiveTab, setActiveInteractiveTab] = useState<'cadastre' | 'deeds' | 'cma' | 'kyc' | 'portals'>('cadastre');
   const [previewCountryCode, setPreviewCountryCode] = useState('ZA');
-  const [selectedPreviewProperty, setSelectedPreviewProperty] = useState(PROPERTIES_DATA[0]);
-  const [isPreviewMapHovered, setIsPreviewMapHovered] = useState(false);
 
   const activeCountry = GLOBAL_COUNTRIES_DATA.find(c => c.id === previewCountryCode) || GLOBAL_COUNTRIES_DATA[0];
 
@@ -229,34 +223,28 @@ export const MarketingLandingPage: React.FC<MarketingLandingPageProps> = ({ onEn
                   </div>
                 </div>
 
-                <div
-                  className="my-6 min-h-[340px] rounded-xl overflow-hidden border border-cyan-500/40 relative shadow-inner"
-                  onMouseEnter={() => setIsPreviewMapHovered(true)}
-                  onMouseLeave={() => setIsPreviewMapHovered(false)}
-                >
-                  {isPreviewMapHovered ? (
-                    <RealCadastreMap
-                      properties={PROPERTIES_DATA}
-                      selectedProperty={selectedPreviewProperty}
-                      hoveredProperty={null}
-                      onSelectProperty={setSelectedPreviewProperty}
-                      onHoverProperty={() => undefined}
-                      showZoningLayer
-                      showRadiusRing={false}
-                      showSurroundingParcels
-                      showHouseNumbers={false}
-                      enableLiveParcels={false}
-                      buildingRenderMode="cadastre_lots"
-                    />
-                  ) : (
-                    <div className="min-h-[340px] flex items-center justify-center bg-slate-950 text-center px-6">
-                      <div>
-                        <Layers className="w-8 h-8 text-cyan-400 mx-auto mb-2" />
-                        <p className="text-sm font-bold text-cyan-200">Interactive GIS Cadastre</p>
-                        <p className="text-[11px] text-slate-400 mt-1">Move your pointer over the map to load live parcels</p>
-                      </div>
+                {/* Vector polygon representation */}
+                <div className="my-6 p-4 rounded-xl bg-slate-900/90 border border-cyan-500/40 relative overflow-hidden shadow-inner">
+                  <div className="flex items-center justify-between mb-3 text-xs">
+                    <span className="font-bold text-cyan-300 flex items-center gap-1.5">
+                      <Layers className="w-4 h-4 text-cyan-400" /> Spatial Cadastral Coordinates & Boundary
+                    </span>
+                    <span className="text-[10px] text-emerald-400 font-mono">GPS: -33.9102, 18.3985</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 text-[11px] font-mono">
+                    <div className="p-2 bg-slate-950 rounded border border-slate-800">
+                      <div className="text-slate-500 text-[9px]">LPI CODE</div>
+                      <div className="text-cyan-200 font-bold">C01600000000104800000</div>
                     </div>
-                  )}
+                    <div className="p-2 bg-slate-950 rounded border border-slate-800">
+                      <div className="text-slate-500 text-[9px]">ZONING CODE</div>
+                      <div className="text-amber-300 font-bold">SR1 (Single Res 1)</div>
+                    </div>
+                    <div className="p-2 bg-slate-950 rounded border border-slate-800">
+                      <div className="text-slate-500 text-[9px]">DEEDS OFFICE</div>
+                      <div className="text-emerald-300 font-bold">Cape Town Registry</div>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Quick Interactive Map Actions */}
@@ -380,7 +368,7 @@ export const MarketingLandingPage: React.FC<MarketingLandingPageProps> = ({ onEn
                 </p>
               </div>
               <div className="pt-4 mt-4 border-t border-slate-100 text-[11px] text-amber-600 font-semibold flex items-center gap-1">
-                <span>Deterministic Erf-Basis Engine</span>
+                <span>RICS & SACPVP Compliant</span>
               </div>
             </div>
 
@@ -408,11 +396,11 @@ export const MarketingLandingPage: React.FC<MarketingLandingPageProps> = ({ onEn
                 </div>
                 <h3 className="text-base font-bold text-slate-900">Multi-Portal Listing Syndication</h3>
                 <p className="text-xs text-slate-600 leading-relaxed">
-                  One-click distribution to Property24 and Private Property with live sync status, view/enquiry counters, and commission tracking.
+                  One-click distribution to Property24, Private Property, Zillow, Rightmove, Realtor.com, and national MLS networks with live sync logs.
                 </p>
               </div>
               <div className="pt-4 mt-4 border-t border-slate-100 text-[11px] text-blue-600 font-semibold flex items-center gap-1">
-                <span>Property24 & Private Property Sync</span>
+                <span>Global API Integrations</span>
               </div>
             </div>
 
@@ -440,7 +428,7 @@ export const MarketingLandingPage: React.FC<MarketingLandingPageProps> = ({ onEn
                 </div>
                 <h3 className="text-base font-bold text-slate-900">AI Copywriting & Media Studio</h3>
                 <p className="text-xs text-slate-600 leading-relaxed">
-                  Generate statutory property descriptions in 11 supported languages, enhanced floorplan visualizers, high-res drone asset managers, and virtual tours.
+                  Generate statutory property descriptions in 15+ languages, enhanced floorplan visualizers, high-res drone asset managers, and virtual tours.
                 </p>
               </div>
               <div className="pt-4 mt-4 border-t border-slate-100 text-[11px] text-pink-600 font-semibold flex items-center gap-1">
@@ -1354,9 +1342,9 @@ export const MarketingLandingPage: React.FC<MarketingLandingPageProps> = ({ onEn
       <LoginModal
         isOpen={isLoginOpen}
         onClose={() => setIsLoginOpen(false)}
-        onLoginSuccess={(user) => {
+        onLoginSuccess={() => {
           setIsLoginOpen(false);
-          onRealLogin(user);
+          onEnterApp();
         }}
         onOpenLeadModal={() => setIsLeadModalOpen(true)}
       />
