@@ -16,8 +16,6 @@ import {
   Share2
 } from 'lucide-react';
 import { PropertyRecord, PortalListingPayload, AIGeneratedCMACopy } from '../../types';
-import { getListingCopy } from '../../services/api';
-import { Property24Brand } from '../Property24Brand';
 
 interface PortalSyncModalProps {
   isOpen: boolean;
@@ -94,7 +92,15 @@ export const PortalSyncModal: React.FC<PortalSyncModalProps> = ({
     if (!property) return;
     setIsGeneratingAi(true);
     try {
-      const data = await getListingCopy(property, 'Property24', property.currentSale?.salePrice || property.property24Listing?.askingPrice);
+      const res = await fetch('/api/ai/listing-copy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          property,
+          tone: 'Luxury'
+        })
+      });
+      const data = await res.json();
       setAiListingCopy(data);
     } catch (err) {
       console.error(err);
@@ -160,7 +166,7 @@ export const PortalSyncModal: React.FC<PortalSyncModalProps> = ({
               <div className="flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-cyan-400" />
                 <span className="font-bold text-slate-100 text-xs uppercase tracking-wide">
-                  Ptah AI Listing Copywriting Assistant
+                  Gemini AI Listing Copywriting Assistant
                 </span>
               </div>
               <button
@@ -195,7 +201,7 @@ export const PortalSyncModal: React.FC<PortalSyncModalProps> = ({
               </div>
             ) : (
               <p className="text-xs text-slate-400">
-                Click above to instantly draft compelling, high-conversion portal copy calibrated for <Property24Brand /> and Private Property algorithms.
+                Click above to instantly draft compelling, high-conversion portal copy calibrated for Property24 and Private Property algorithms.
               </p>
             )}
           </div>
@@ -224,21 +230,21 @@ export const PortalSyncModal: React.FC<PortalSyncModalProps> = ({
                     <div className="flex items-center justify-between">
                       <span className="font-bold text-slate-100 text-xs">{portal.portalName}</span>
                       <span className={`px-2 py-0.5 rounded text-[10px] font-bold flex items-center gap-1 ${
-                        portal.status === 'LIVE' 
+                        portal.syncStatus === 'LIVE' 
                           ? 'bg-emerald-950 text-emerald-300 border border-emerald-700'
-                          : portal.status === 'SYNCING'
+                          : portal.syncStatus === 'SYNCING'
                           ? 'bg-cyan-950 text-cyan-300 border border-cyan-700 animate-pulse'
                           : 'bg-amber-950 text-amber-300 border border-amber-700'
                       }`}>
-                        {portal.status === 'LIVE' && <CheckCircle2 className="w-2.5 h-2.5" />}
-                        {portal.status === 'SYNCING' && <RefreshCw className="w-2.5 h-2.5 animate-spin" />}
-                        {portal.status}
+                        {portal.syncStatus === 'LIVE' && <CheckCircle2 className="w-2.5 h-2.5" />}
+                        {portal.syncStatus === 'SYNCING' && <RefreshCw className="w-2.5 h-2.5 animate-spin" />}
+                        {portal.syncStatus}
                       </span>
                     </div>
 
                     <div className="flex items-center justify-between mt-2 text-[10px] text-slate-400">
-                      <span>Listing ID: {portal.listingIdOnPortal || 'Pending'}</span>
-                      <span>Synced: {portal.lastSyncedAt ? new Date(portal.lastSyncedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Not synced'}</span>
+                      <span>Listing ID: {portal.externalListingId || 'Pending'}</span>
+                      <span>Synced: {new Date(portal.lastSyncTimestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                     </div>
                   </div>
                 );
@@ -251,9 +257,9 @@ export const PortalSyncModal: React.FC<PortalSyncModalProps> = ({
                 <div className="flex items-center justify-between border-b border-slate-700 pb-2">
                   <div className="flex items-center gap-2">
                     <span className="font-bold text-slate-100 text-sm">{selectedPortal.portalName} API Feed</span>
-                    {selectedPortal.liveUrl && (
+                    {selectedPortal.listingUrl && (
                       <a
-                        href={selectedPortal.liveUrl}
+                        href={selectedPortal.listingUrl}
                         target="_blank"
                         rel="noreferrer"
                         className="text-cyan-400 hover:text-cyan-300 flex items-center gap-1 text-[11px] font-semibold"
@@ -284,7 +290,7 @@ export const PortalSyncModal: React.FC<PortalSyncModalProps> = ({
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
                   <div className="bg-slate-900 p-2 rounded border border-slate-700">
                     <span className="text-slate-400 block text-[10px]">Portal State</span>
-                    <span className="font-bold text-emerald-400">{selectedPortal.status}</span>
+                    <span className="font-bold text-emerald-400">{selectedPortal.syncStatus}</span>
                   </div>
                   <div className="bg-slate-900 p-2 rounded border border-slate-700">
                     <span className="text-slate-400 block text-[10px]">Images Included</span>

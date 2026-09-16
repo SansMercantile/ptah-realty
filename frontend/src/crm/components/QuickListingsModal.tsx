@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   X,
   Home,
@@ -22,10 +22,13 @@ import {
   Check,
   Flame,
   Radio,
-  Tag
+  Tag,
+  Calculator,
+  Percent
 } from 'lucide-react';
 import { PropertyListing, Lead } from '../types';
 import { formatCurrency } from '../utils/formatters';
+import { RentalYieldCalculator } from './RentalYieldCalculator';
 
 interface QuickListingsModalProps {
   isOpen: boolean;
@@ -55,16 +58,8 @@ export const QuickListingsModal: React.FC<QuickListingsModalProps> = ({
   leads,
   onStartShowHouseForProperty,
 }) => {
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
-
-  const [activeTab, setActiveTab] = useState<'inventory' | 'create'>('inventory');
+  const [activeTab, setActiveTab] = useState<'inventory' | 'calculator' | 'create'>('inventory');
+  const [selectedListingForCalculator, setSelectedListingForCalculator] = useState<PropertyListing | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'show_house' | 'under_offer' | 'sold'>('all');
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -92,6 +87,18 @@ export const QuickListingsModal: React.FC<QuickListingsModalProps> = ({
     status: 'active' as PropertyListing['status'],
     showHouseDates: 'Sunday 14:00 - 17:00',
   });
+
+  // Close on Escape key
+  React.useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -133,7 +140,7 @@ export const QuickListingsModal: React.FC<QuickListingsModalProps> = ({
       isSyndicatedPrivateProperty: formData.isSyndicatedPrivateProperty,
       isSyndicatedPtahWebsite: formData.isSyndicatedPtahWebsite,
       featuredImage: formData.featuredImage,
-      description: formData.description || 'Exclusive luxury residence listed with Ptah Realty.',
+      description: formData.description || 'Exclusive luxury residence listed with Ptah Real Estate.',
       showHouseDates: formData.status === 'show_house' ? formData.showHouseDates : undefined,
       createdDate: new Date().toISOString(),
     };
@@ -166,11 +173,14 @@ export const QuickListingsModal: React.FC<QuickListingsModalProps> = ({
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-sm overflow-y-auto"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      onClick={onClose}
     >
-      <div className="relative w-full max-w-5xl bg-white dark:bg-black rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden my-6">
+      <div
+        className="relative w-full max-w-5xl bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden my-auto max-h-[92vh] flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/60">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/60 shrink-0">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center text-white shadow-sm">
               <Home className="w-5 h-5" />
@@ -195,7 +205,7 @@ export const QuickListingsModal: React.FC<QuickListingsModalProps> = ({
             <div className="flex bg-slate-200/70 dark:bg-slate-800 p-1 rounded-xl">
               <button
                 onClick={() => setActiveTab('inventory')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
                   activeTab === 'inventory'
                     ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs'
                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -204,8 +214,19 @@ export const QuickListingsModal: React.FC<QuickListingsModalProps> = ({
                 Inventory ({listings.length})
               </button>
               <button
+                onClick={() => setActiveTab('calculator')}
+                className={`flex items-center space-x-1 px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                  activeTab === 'calculator'
+                    ? 'bg-amber-600 text-white shadow-xs'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                <Calculator className="w-3.5 h-3.5" />
+                <span>Rental Yield Calculator</span>
+              </button>
+              <button
                 onClick={() => setActiveTab('create')}
-                className={`flex items-center space-x-1 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+                className={`flex items-center space-x-1 px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
                   activeTab === 'create'
                     ? 'bg-emerald-600 text-white shadow-xs'
                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -227,13 +248,13 @@ export const QuickListingsModal: React.FC<QuickListingsModalProps> = ({
         </div>
 
         {/* Body Content */}
-        <div className="p-6 max-h-[78vh] overflow-y-auto">
+        <div className="p-6 flex-1 overflow-y-auto min-h-0">
           {activeTab === 'inventory' ? (
             <div className="space-y-6">
               {/* Top Banner with Quick Listing card (Screenshot 1 visual motif) */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 {/* Visual card matching Screenshot 1 */}
-                <div className="relative rounded-2xl p-5 bg-gradient-to-br from-cyan-50 to-sky-100 dark:from-slate-800 dark:to-black border border-sky-200 dark:border-slate-700 flex flex-col items-center text-center overflow-hidden">
+                <div className="relative rounded-2xl p-5 bg-gradient-to-br from-cyan-50 to-sky-100 dark:from-slate-800 dark:to-slate-850 border border-sky-200 dark:border-slate-700 flex flex-col items-center text-center overflow-hidden">
                   <div className="absolute top-3 right-3 bg-red-600 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center shadow-xs">
                     {listings.filter((l) => l.status === 'active' || l.status === 'show_house').length}
                   </div>
@@ -338,7 +359,7 @@ export const QuickListingsModal: React.FC<QuickListingsModalProps> = ({
                 {filteredListings.map((listing) => (
                   <div
                     key={listing.id}
-                    className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-black overflow-hidden shadow-xs hover:shadow-md transition flex flex-col group"
+                    className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850 overflow-hidden shadow-xs hover:shadow-md transition flex flex-col group"
                   >
                     {/* Property Image & Badges */}
                     <div className="relative h-44 w-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
@@ -368,7 +389,7 @@ export const QuickListingsModal: React.FC<QuickListingsModalProps> = ({
                         </span>
                       </div>
 
-                      <div className="absolute top-2.5 right-2.5 bg-white/90 dark:bg-black/90 backdrop-blur-xs px-2 py-0.5 rounded text-[10px] font-mono font-semibold text-slate-700 dark:text-slate-300">
+                      <div className="absolute top-2.5 right-2.5 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xs px-2 py-0.5 rounded text-[10px] font-mono font-semibold text-slate-700 dark:text-slate-300">
                         {listing.referenceNumber}
                       </div>
 
@@ -426,12 +447,12 @@ export const QuickListingsModal: React.FC<QuickListingsModalProps> = ({
                           <span className="text-slate-500 dark:text-slate-400">Syndication:</span>
                           <div className="flex items-center space-x-1 font-mono">
                             <span className={`px-1.5 py-0.2 rounded text-[10px] ${
-                              listing.isSyndicatedP24 ? 'bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-400' : 'bg-slate-100 text-slate-400'
+                              listing.isSyndicatedP24 ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400' : 'bg-slate-100 text-slate-400'
                             }`}>
                               P24
                             </span>
                             <span className={`px-1.5 py-0.2 rounded text-[10px] ${
-                              listing.isSyndicatedPrivateProperty ? 'bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-400' : 'bg-slate-100 text-slate-400'
+                              listing.isSyndicatedPrivateProperty ? 'bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-400' : 'bg-slate-100 text-slate-400'
                             }`}>
                               PP
                             </span>
@@ -445,6 +466,18 @@ export const QuickListingsModal: React.FC<QuickListingsModalProps> = ({
 
                         {/* Action Buttons */}
                         <div className="flex items-center space-x-1.5 pt-1">
+                          <button
+                            onClick={() => {
+                              setSelectedListingForCalculator(listing);
+                              setActiveTab('calculator');
+                            }}
+                            className="py-1.5 px-2 rounded-lg bg-amber-50 dark:bg-amber-950/50 hover:bg-amber-100 dark:hover:bg-amber-900/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 text-xs font-semibold transition cursor-pointer flex items-center space-x-1"
+                            title="Calculate Rental Yield & Return"
+                          >
+                            <Calculator className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                            <span>Yield</span>
+                          </button>
+
                           <button
                             onClick={() => handleCopyShareLink(listing)}
                             className="flex-1 py-1.5 px-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold transition cursor-pointer flex items-center justify-center space-x-1"
@@ -488,6 +521,12 @@ export const QuickListingsModal: React.FC<QuickListingsModalProps> = ({
                 ))}
               </div>
             </div>
+          ) : activeTab === 'calculator' ? (
+            <RentalYieldCalculator
+              listings={listings}
+              initialListing={selectedListingForCalculator}
+              onSelectListing={(l) => setSelectedListingForCalculator(l)}
+            />
           ) : (
             /* + New Quick Listing Form */
             <form onSubmit={handleCreateSubmit} className="space-y-6 max-w-3xl mx-auto">
@@ -694,7 +733,7 @@ export const QuickListingsModal: React.FC<QuickListingsModalProps> = ({
                       onChange={(e) => setFormData({ ...formData, isSyndicatedPtahWebsite: e.target.checked })}
                       className="rounded text-emerald-600 focus:ring-emerald-500"
                     />
-                    <span>Ptah Realty Web</span>
+                    <span>Ptah Real Estate Web</span>
                   </label>
                 </div>
               </div>

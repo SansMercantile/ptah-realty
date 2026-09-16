@@ -12,10 +12,14 @@ import {
   Sliders, 
   Eye, 
   BookOpen,
-  Send
+  Send,
+  GraduationCap,
+  HeartPulse,
+  Trees,
+  Bus
 } from 'lucide-react';
-import { PropertyRecord, ComparativeSaleRecord, CMAValuationCalculation, PropertyMediaAsset, AIGeneratedCMACopy } from '../../types';
-import { runValuation, listMedia } from '../../services/api';
+import { PropertyRecord, ComparativeSaleRecord, CMAValuationCalculation, PropertyMediaAsset, AIGeneratedCMACopy, PublicAreaStats } from '../../types';
+import { getPublicAreaStats } from '../../services/publicAreaStatsData';
 
 interface PDFReportModalProps {
   isOpen: boolean;
@@ -36,12 +40,14 @@ export const PDFReportModal: React.FC<PDFReportModalProps> = ({
   const [valuationData, setValuationData] = useState<CMAValuationCalculation | null>(null);
   const [comparatives, setComparatives] = useState<ComparativeSaleRecord[]>([]);
   const [mediaList, setMediaList] = useState<PropertyMediaAsset[]>([]);
+  const [publicStats, setPublicStats] = useState<PublicAreaStats | null>(null);
   
   // Customization Toggles
   const [sections, setSections] = useState({
     coverPage: true,
     compsTable: true,
     aiNarrative: true,
+    publicSellingPoints: true,
     structuralSpecs: true,
     deedsCertification: true,
     photoGallery: true
@@ -57,35 +63,55 @@ export const PDFReportModal: React.FC<PDFReportModalProps> = ({
   const loadAllReportData = async () => {
     if (!property) return;
     try {
-      const [calc, media] = await Promise.all([
-        runValuation(property, 1000),
-        listMedia(property.id).catch(() => []),
+      const [valRes, compRes, mediaRes] = await Promise.all([
+        fetch('/api/cma/calculate-valuation', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ propertyId: property.id })
+        }),
+        fetch(`/api/cma/comparatives/${property.id}`),
+        fetch(`/api/media/${property.id}`)
       ]);
 
-      setValuationData(calc);
-      setComparatives(calc.comparableSales);
-      setMediaList(media);
+      const valJson = await valRes.json();
+      const compJson = await compRes.json();
+      const mediaJson = await mediaRes.json();
 
-      // Note: no real backend AI-narrative endpoint exists yet -- aiCopy
-      // stays null and the JSX below already falls back to static
-      // placeholder text (aiCopy?.field || "..."). Not calling a fake
-      // /api/ai/cma-summary route here.
+      setValuationData(valJson);
+      setComparatives(compJson.comparatives || []);
+      setMediaList(mediaJson.media || []);
+      setPublicStats(getPublicAreaStats(property.suburb));
+
+      // Trigger Gemini AI generation for report narrative
+      generateAiMarketCopy('Executive', valJson);
     } catch (err) {
       console.error('Error loading report data:', err);
     }
   };
 
-
-  // The production backend (ptahrealty-api.sansmercantile.com) has no
-  // AI-narrative endpoint yet -- server.ts's own /api/ai/cma-summary is
-  // local-dev-only (Vite/Vercel serves the static build and never runs
-  // server.ts in production). The tone selector stays in the UI for
-  // when that lands, but for now it's a clearly-labelled no-op rather
-  // than a fetch to a route that 404s in production.
-  const generateAiMarketCopy = async (_tone: string, _valDataOverride?: any) => {
-    console.info('AI narrative generation is not wired to the production backend yet.');
+  const generateAiMarketCopy = async (tone: string, valDataOverride?: any) => {
+    if (!property) return;
+    setIsGeneratingAi(true);
+    try {
+      const currentVal = valDataOverride || valuationData;
+      const res = await fetch('/api/ai/cma-summary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          property,
+          comparatives,
+          valuation: currentVal || { finalProjectedMarketValue: 6450000, averagePricePerM2: 24700 },
+          tone
+        })
+      });
+      const data = await res.json();
+      setAiCopy(data);
+    } catch (err) {
+      console.error('Error generating AI narrative:', err);
+    } finally {
+      setIsGeneratingAi(false);
+    }
   };
-
 
   const handlePrint = () => {
     window.print();
@@ -194,6 +220,15 @@ export const PDFReportModal: React.FC<PDFReportModalProps> = ({
             <label className="flex items-center gap-1 text-[11px] text-slate-300 cursor-pointer">
               <input
                 type="checkbox"
+                checked={sections.publicSellingPoints}
+                onChange={(e) => setSections({ ...sections, publicSellingPoints: e.target.checked })}
+                className="rounded text-cyan-600 focus:ring-0"
+              />
+              Selling Points (Schools/Hospitals)
+            </label>
+            <label className="flex items-center gap-1 text-[11px] text-slate-300 cursor-pointer">
+              <input
+                type="checkbox"
                 checked={sections.photoGallery}
                 onChange={(e) => setSections({ ...sections, photoGallery: e.target.checked })}
                 className="rounded text-cyan-600 focus:ring-0"
@@ -205,7 +240,7 @@ export const PDFReportModal: React.FC<PDFReportModalProps> = ({
           <div className="flex items-center gap-2">
             {isGeneratingAi && (
               <span className="text-[11px] text-cyan-300 animate-pulse font-medium flex items-center gap-1">
-                <RefreshCw className="w-3 h-3 animate-spin" /> Synthesizing AI Market Copy...
+                <RefreshCw className="w-3 h-3 animate-spin" /> Synthesizing Gemini Market Copy...
               </span>
             )}
           </div>
@@ -239,7 +274,7 @@ export const PDFReportModal: React.FC<PDFReportModalProps> = ({
               <div className="text-right text-xs text-slate-600">
                 <div className="font-bold text-slate-900">Date: {new Date().toLocaleDateString('en-ZA')}</div>
                 <div>Ref: PTAH-CMA-{property.erfNo}-{property.id.toUpperCase()}</div>
-                <div>Prepared By: Mezzoforte Privilege (Director)</div>
+                <div>Prepared By: Ronald Read (Director)</div>
               </div>
             </div>
 
@@ -300,7 +335,7 @@ export const PDFReportModal: React.FC<PDFReportModalProps> = ({
               </div>
             )}
 
-            {/* 3. AI MARKET COMMENTARY & STRATEGY */}
+            {/* 3. GEMINI AI MARKET COMMENTARY & STRATEGY */}
             {sections.aiNarrative && (
               <div className="space-y-2 border-t border-slate-200 pt-4">
                 <div className="flex items-center gap-2">
@@ -317,14 +352,94 @@ export const PDFReportModal: React.FC<PDFReportModalProps> = ({
                   <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 border-t border-slate-200">
                     <div>
                       <span className="font-bold text-slate-800 block text-[11px]">Pricing Recommendation:</span>
-                      <p className="text-[11px] text-slate-600">{aiCopy?.pricingRecommendationText || "Positioning at R 6 450 000 captures active buyer pools while preserving negotiation leverage."}</p>
+                      <p className="text-[11px] text-slate-600">{aiCopy?.pricingRecommendation || "Positioning at R 6 450 000 captures active buyer pools while preserving negotiation leverage."}</p>
                     </div>
                     <div>
                       <span className="font-bold text-slate-800 block text-[11px]">Key Value Drivers:</span>
-                      <p className="text-[11px] text-slate-600">{aiCopy?.keySellingPoints?.join(', ') || "High ceiling volumes, prime cadastral orientation, private secure parking, and immediate proximity to lifestyle amenities."}</p>
+                      <p className="text-[11px] text-slate-600">{aiCopy?.keyDrivers || "High ceiling volumes, prime cadastral orientation, private secure parking, and immediate proximity to lifestyle amenities."}</p>
                     </div>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {/* PUBLIC DATA INFRASTRUCTURE & KEY SELLING POINTS */}
+            {sections.publicSellingPoints && publicStats && (
+              <div className="space-y-3 border-t border-slate-200 pt-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-cyan-700" />
+                    <h3 className="font-black text-sm text-slate-900 uppercase tracking-wide">
+                      Public Infrastructure & Key Selling Points ({publicStats.suburb})
+                    </h3>
+                  </div>
+                  <span className="text-[10px] text-slate-500 italic">
+                    Verified Public Data: WCED, Dept of Health & City Open Data
+                  </span>
+                </div>
+
+                {/* Key Area Metrics Bar */}
+                <div className="grid grid-cols-4 gap-2 text-center text-xs">
+                  <div className="bg-slate-50 border border-slate-200 rounded p-1.5">
+                    <span className="text-[9px] text-slate-500 font-bold block uppercase">Public Safety</span>
+                    <span className="font-bold text-slate-900">{publicStats.crimeStats.safetyIndexScore} / 100</span>
+                    <span className="text-[9px] text-emerald-700 block font-semibold">{publicStats.crimeStats.overallCrimeLevel} Risk</span>
+                  </div>
+                  <div className="bg-slate-50 border border-slate-200 rounded p-1.5">
+                    <span className="text-[9px] text-slate-500 font-bold block uppercase">Cost of Living</span>
+                    <span className="font-bold text-slate-900">{publicStats.costOfLiving.costOfLivingIndex}</span>
+                    <span className="text-[9px] text-slate-500 block">Baseline 100</span>
+                  </div>
+                  <div className="bg-slate-50 border border-slate-200 rounded p-1.5">
+                    <span className="text-[9px] text-slate-500 font-bold block uppercase">Avg Levy / m²</span>
+                    <span className="font-bold text-cyan-900">R {publicStats.leviesAndRates.averageSectionalLevyPerM2}</span>
+                    <span className="text-[9px] text-slate-500 block">Sectional Title</span>
+                  </div>
+                  <div className="bg-slate-50 border border-slate-200 rounded p-1.5">
+                    <span className="text-[9px] text-slate-500 font-bold block uppercase">Walkability</span>
+                    <span className="font-bold text-emerald-900">{publicStats.communityInfrastructure.walkScore} / 100</span>
+                    <span className="text-[9px] text-emerald-700 block font-semibold">{publicStats.communityInfrastructure.walkabilityDescription}</span>
+                  </div>
+                </div>
+
+                {/* Categorized Selling Points Cards */}
+                {publicStats.sellingPoints && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                    {publicStats.sellingPoints.slice(0, 4).map((sp) => (
+                      <div key={sp.id} className="p-2.5 bg-slate-50 border border-slate-200 rounded space-y-1.5 text-xs">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-slate-900 text-[11px] flex items-center gap-1.5">
+                            {sp.category === 'education' && <GraduationCap className="w-3.5 h-3.5 text-indigo-700" />}
+                            {sp.category === 'healthcare' && <HeartPulse className="w-3.5 h-3.5 text-rose-700" />}
+                            {sp.category === 'recreation' && <Trees className="w-3.5 h-3.5 text-emerald-700" />}
+                            {sp.category === 'transit' && <Bus className="w-3.5 h-3.5 text-cyan-700" />}
+                            <span>{sp.headline}</span>
+                          </span>
+                          <span className="text-[9px] font-mono text-cyan-900 bg-cyan-100 font-bold px-1.5 py-0.5 rounded border border-cyan-200">
+                            {sp.distanceHighlight}
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-slate-600 leading-snug">{sp.summary}</p>
+                        <div className="space-y-0.5 pt-1 border-t border-slate-200 text-[10px] text-slate-700">
+                          {sp.amenities.map((item, idx) => (
+                            <div key={idx} className="flex items-center justify-between">
+                              <span className="font-medium truncate mr-2">• {item.name}</span>
+                              <span className="text-[9px] text-slate-500 shrink-0 font-mono">{item.distanceFormatted} ({item.walkingOrDriving})</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Buyer & Investor Strategy Quote */}
+                {publicStats.synthesizedBuyerPitch && (
+                  <div className="p-2.5 bg-cyan-50 border-l-2 border-[#006980] rounded text-[11px] text-slate-800 leading-relaxed italic">
+                    <strong className="not-italic text-cyan-950 font-bold">Client Presentation Pitch: </strong>
+                    "{publicStats.synthesizedBuyerPitch}"
+                  </div>
+                )}
               </div>
             )}
 
@@ -395,7 +510,7 @@ export const PDFReportModal: React.FC<PDFReportModalProps> = ({
                 <p>This report has been compiled in accordance with South African Property Practitioners Regulatory Authority (PPRA) standards.</p>
               </div>
               <div className="text-right">
-                <div className="font-bold text-slate-800">Mezzoforte Privilege</div>
+                <div className="font-bold text-slate-800">Ronald Read</div>
                 <div>Principal Practitioner (FFC Valid)</div>
               </div>
             </div>

@@ -20,21 +20,22 @@ import {
   Award,
   AlertCircle,
   Building,
-  RotateCcw
+  RotateCcw,
+  Mic
 } from 'lucide-react';
 import { Lead, ActivityLogItem, ActivityEventType, LeadStatus, CommunicationType, EmailNotificationLog } from '../types';
 import { formatDate, formatRelativeTime, formatCurrency } from '../utils/formatters';
+import { VoiceNoteTranscriber } from './VoiceNoteTranscriber';
 
 interface LeadActivityFeedProps {
+  // Passed by LeadDetailModal; declared here so the two demo
+  // components type-match each other.
+  emailLogs?: EmailNotificationLog[];
   lead: Lead;
   onUpdateLead: (updatedLead: Lead) => void;
-  // Real top-level notification log, pre-filtered to this lead's own
-  // entries by the caller (see LeadDetailModal.tsx) -- lead.emailLogs
-  // itself is never populated by a real backend write.
-  emailLogs?: EmailNotificationLog[];
 }
 
-export const LeadActivityFeed: React.FC<LeadActivityFeedProps> = ({ lead, onUpdateLead, emailLogs = [] }) => {
+export const LeadActivityFeed: React.FC<LeadActivityFeedProps> = ({ lead, onUpdateLead }) => {
   const [filterType, setFilterType] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [newNote, setNewNote] = useState<string>('');
@@ -126,7 +127,7 @@ export const LeadActivityFeed: React.FC<LeadActivityFeedProps> = ({ lead, onUpda
     });
 
     // 5. Automated Email Notifications
-    emailLogs.forEach((emailLog) => {
+    lead.emailLogs.forEach((emailLog) => {
       if (!items.some((i) => i.id === `email-act-${emailLog.id}` || i.id === emailLog.id)) {
         items.push({
           id: `email-act-${emailLog.id}`,
@@ -171,7 +172,7 @@ export const LeadActivityFeed: React.FC<LeadActivityFeedProps> = ({ lead, onUpda
     return Array.from(uniqueMap.values()).sort((a, b) => {
       return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
     });
-  }, [lead, emailLogs]);
+  }, [lead]);
 
   // Filtered list based on search and tab selection
   const filteredActivities = useMemo(() => {
@@ -214,7 +215,7 @@ export const LeadActivityFeed: React.FC<LeadActivityFeedProps> = ({ lead, onUpda
       title: `Added Note: ${noteCategory}`,
       description: newNote.trim(),
       timestamp: now,
-      author: lead.assignedAgent.name || 'Ptah Realty Agent',
+      author: lead.assignedAgent.name || 'Ptah Real Estate Agent',
       metadata: {
         noteContent: newNote.trim(),
         tag: noteCategory
@@ -408,24 +409,44 @@ export const LeadActivityFeed: React.FC<LeadActivityFeedProps> = ({ lead, onUpda
               <textarea
                 value={newNote}
                 onChange={(e) => setNewNote(e.target.value)}
-                placeholder="Type note details here (e.g. 'Buyer confirmed proof of funds ready for Clifton villa, requesting second viewing on Saturday with spouse')..."
+                placeholder="Type or dictate note details here (e.g. 'Buyer confirmed proof of funds ready for Clifton villa, requesting second viewing on Saturday with spouse')..."
                 rows={2}
-                className="w-full bg-white border border-slate-200 rounded-xl p-3 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 resize-none"
+                className="w-full bg-white border border-slate-200 rounded-xl p-3 pr-10 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 resize-none"
               />
+              <div className="absolute top-2.5 right-2.5">
+                <VoiceNoteTranscriber
+                  lead={lead}
+                  buttonOnly={true}
+                  onUpdateLead={onUpdateLead}
+                  onAppendText={(dictated) => {
+                    setNewNote((prev) => (prev ? `${prev} ${dictated}` : dictated));
+                  }}
+                />
+              </div>
             </div>
 
-            <div className="flex items-center justify-between pt-1">
-              <span className="text-[11px] text-slate-400">
-                Author: <strong className="text-slate-600">{lead.assignedAgent.name}</strong>
-              </span>
-              <button
-                type="submit"
-                disabled={!newNote.trim() || isSubmittingNote}
-                className="flex items-center space-x-1.5 px-4 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 disabled:opacity-50 text-white text-xs font-bold transition shadow-xs cursor-pointer"
-              >
-                <Send className="w-3.5 h-3.5" />
-                <span>Save to Activity Feed</span>
-              </button>
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+              <div className="flex items-center space-x-2 text-[11px] text-slate-400">
+                <span>
+                  Author: <strong className="text-slate-600">{lead.assignedAgent.name}</strong>
+                </span>
+                <span>•</span>
+                <span className="text-emerald-700 font-medium flex items-center gap-1">
+                  <Mic className="w-3 h-3 text-emerald-600" />
+                  SpeechRecognition Dictation Ready
+                </span>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <button
+                  type="submit"
+                  disabled={!newNote.trim() || isSubmittingNote}
+                  className="flex items-center space-x-1.5 px-4 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 disabled:opacity-50 text-white text-xs font-bold transition shadow-xs cursor-pointer"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  <span>Save to Activity Feed</span>
+                </button>
+              </div>
             </div>
           </form>
         )}

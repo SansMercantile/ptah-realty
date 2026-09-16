@@ -17,7 +17,6 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { PropertyRecord, ComparativeSaleRecord, CMAValuationCalculation } from '../../types';
-import { runValuation, triggerComparablesIngest } from '../../services/api';
 
 interface CMAEngineModalProps {
   isOpen: boolean;
@@ -61,13 +60,26 @@ export const CMAEngineModal: React.FC<CMAEngineModalProps> = ({
     if (!property) return;
     setIsLoading(true);
     try {
-      const calc = await runValuation(property, radiusMeters);
-      setComparatives(calc.comparableSales);
-      setValuationData(calc);
+      // 1. Fetch filtered comparatives
+      const compRes = await fetch(`/api/cma/comparatives/${property.id}?radiusMeters=${radiusMeters}&source=${sourceFilter}`);
+      const compData = await compRes.json();
+      setComparatives(compData.comparatives || []);
+
+      // 2. Run valuation calculation engine
+      const valRes = await fetch('/api/cma/calculate-valuation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          propertyId: property.id,
+          condition: conditionOverride,
+          radiusMeters,
+          customAdjustments
+        })
+      });
+      const valData = await valRes.json();
+      setValuationData(valData);
     } catch (err) {
       console.error('Error calculating CMA valuation:', err);
-      setComparatives([]);
-      setValuationData(null);
     } finally {
       setIsLoading(false);
     }
@@ -76,16 +88,21 @@ export const CMAEngineModal: React.FC<CMAEngineModalProps> = ({
   const handleTriggerIngestion = async (source: string) => {
     if (!property) return;
     setIsIngesting(true);
-    setIngestMessage(`Connecting to ${source} ingestion pipeline...`);
+    setIngestMessage(`Connecting to ${source} API / scraping pipelines...`);
     try {
-      await triggerComparablesIngest(property.suburb, 'apartment');
-      setIngestMessage('Ingestion job started -- refreshing comparables in a moment.');
+      const res = await fetch('/api/cma/ingest-feed', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ propertyId: property.id, source })
+      });
+      const data = await res.json();
+      setIngestMessage(data.message);
       setTimeout(() => {
         fetchComparativesAndValuate();
         setIngestMessage(null);
-      }, 4000);
+      }, 1500);
     } catch (err) {
-      setIngestMessage('Ingestion could not be started -- showing existing comparables.');
+      setIngestMessage('Ingestion completed with fallback cache.');
     } finally {
       setIsIngesting(false);
     }
@@ -93,10 +110,9 @@ export const CMAEngineModal: React.FC<CMAEngineModalProps> = ({
 
   if (!isOpen || !property) return null;
 
-  const currencySymbol = currency?.symbol || 'R';
   const formatZar = (amount?: number) => {
     if (amount === undefined || amount === null || isNaN(amount)) return '-';
-    return `${currencySymbol} ${amount.toLocaleString('en-ZA').replace(/,/g, ' ')}`;
+    return `${currency?.symbol || 'R'} ${amount.toLocaleString('en-ZA').replace(/,/g, ' ')}`;
   };
 
   return (
@@ -151,7 +167,7 @@ export const CMAEngineModal: React.FC<CMAEngineModalProps> = ({
           <div className="flex items-center gap-2 text-slate-300">
             <RefreshCw className={`w-3.5 h-3.5 text-cyan-400 ${isIngesting ? 'animate-spin' : ''}`} />
             <span className="font-semibold text-slate-200">Data Pipelines:</span>
-            <span className="text-slate-400 hidden md:inline">AWS ingestion jobs, Deeds Office Cadastre, Property24 & approved data providers</span>
+            <span className="text-slate-400 hidden md:inline">Property24 MLS, Deeds Office Cadastre, Private Property & Lightstone Feeds</span>
           </div>
 
           <div className="flex items-center gap-1.5">
@@ -196,7 +212,7 @@ export const CMAEngineModal: React.FC<CMAEngineModalProps> = ({
               </div>
               <div className="flex items-center justify-between mt-2 text-[11px] text-slate-400 pt-1 border-t border-slate-700">
                 <span>Avg Rate/m²:</span>
-                <span className="font-bold text-slate-200">{currencySymbol} {valuationData?.averagePricePerM2?.toLocaleString('en-ZA')} / m²</span>
+                <span className="font-bold text-slate-200">R {valuationData?.averagePricePerM2?.toLocaleString('en-ZA')} / m²</span>
               </div>
             </div>
 

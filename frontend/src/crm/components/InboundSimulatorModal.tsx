@@ -34,7 +34,7 @@ const PRESET_SIMULATIONS = [
     type: 'Villa' as const,
     urgency: 'urgent' as const,
     score: 96,
-    message: 'Hello Ptah Realty, inquiring via Property 24. We are UK cash buyers looking to finalize our Atlantic Seaboard residence this week. Please call me urgently to schedule a private viewing tomorrow.',
+    message: 'Hello Ptah Real Estate, inquiring via Property 24. We are UK cash buyers looking to finalize our Atlantic Seaboard residence this week. Please call me urgently to schedule a private viewing tomorrow.',
   },
   {
     name: 'Private Property Inbound (Sandton Penthouse)',
@@ -53,8 +53,8 @@ const PRESET_SIMULATIONS = [
     message: 'Saw this listing on Private Property. Is the penthouse fully furnished and does it include 4 basement parking bays with direct lift access? Ready to view this Saturday.',
   },
   {
-    name: 'Ptah Realty Website Inbound Contact Form',
-    source: 'Ptah Realty Website' as LeadSource,
+    name: 'Ptah Real Estate Website Inbound Contact Form',
+    source: 'Ptah Real Estate Website' as LeadSource,
     clientName: 'Gareth & Claire Montgomery',
     email: 'gareth@montgomeryvineyards.com',
     phone: '+27 84 219 0041',
@@ -90,17 +90,19 @@ export const InboundSimulatorModal: React.FC<InboundSimulatorModalProps> = ({
   onClose,
   onSimulateLead,
 }) => {
+  const [selectedPresetIndex, setSelectedPresetIndex] = useState<number>(0);
+  const [isSimulating, setIsSimulating] = useState(false);
+  const [simulationResult, setSimulationResult] = useState<any>(null);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') {
+        onClose();
+      }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose]);
-
-  const [selectedPresetIndex, setSelectedPresetIndex] = useState<number>(0);
-  const [isSimulating, setIsSimulating] = useState(false);
-  const [simulationResult, setSimulationResult] = useState<any>(null);
 
   const activePreset = PRESET_SIMULATIONS[selectedPresetIndex];
 
@@ -212,11 +214,11 @@ export const InboundSimulatorModal: React.FC<InboundSimulatorModalProps> = ({
             id: `em-log-2-${Date.now()}`,
             recipientType: 'client',
             recipientEmail: activePreset.email,
-            subject: `Your inquiry on ${activePreset.propertyTitle} - Ptah Realty Luxury Portfolio`,
+            subject: `Your inquiry on ${activePreset.propertyTitle} - Ptah Real Estate Luxury Portfolio`,
             triggerReason: 'Automatic Client Auto-responder',
             timestamp: new Date().toISOString(),
             status: 'delivered',
-            previewSnippet: `Thank you for contacting Ptah Realty. We have received your inquiry...`,
+            previewSnippet: `Thank you for contacting Ptah Real Estate. We have received your inquiry...`,
             propertyTitle: activePreset.propertyTitle,
           },
         ],
@@ -235,9 +237,12 @@ export const InboundSimulatorModal: React.FC<InboundSimulatorModalProps> = ({
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      onClick={onClose}
     >
-      <div className="bg-white border border-slate-200 w-full max-w-2xl rounded-2xl shadow-xl overflow-hidden my-auto">
+      <div
+        className="bg-white border border-slate-200 w-full max-w-2xl rounded-2xl shadow-xl overflow-hidden my-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="bg-slate-50 p-5 border-b border-slate-200 flex justify-between items-center">
           <div className="flex items-center space-x-2.5">

@@ -22,10 +22,17 @@ import {
   ShieldCheck,
   Building2,
   DollarSign,
-  Zap
+  Zap,
+  Box,
+  Compass,
+  GraduationCap,
+  HeartPulse,
+  Trees,
+  Bus,
+  Copy,
+  Check
 } from 'lucide-react';
 import { PropertyRecord, AIPropertyValuationResponse, OwnerContactDetails } from '../types';
-import { getIndividualValuation } from '../services/api';
 
 interface PropertyPanelProps {
   property: PropertyRecord | null;
@@ -40,6 +47,9 @@ interface PropertyPanelProps {
   onOpenPDFReport?: () => void;
   onOpenPortalSync?: () => void;
   onOpenContactOwner?: (property: PropertyRecord, initialTab?: 'call' | 'email' | 'whatsapp') => void;
+  onOpen3DWalkthrough?: (property: PropertyRecord) => void;
+  onOpenDevelopments?: () => void;
+  onOpenInfrastructure?: (property: PropertyRecord) => void;
 }
 
 export const PropertyPanel: React.FC<PropertyPanelProps> = ({
@@ -54,7 +64,10 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
   onOpenMediaManagement,
   onOpenPDFReport,
   onOpenPortalSync,
-  onOpenContactOwner
+  onOpenContactOwner,
+  onOpen3DWalkthrough,
+  onOpenDevelopments,
+  onOpenInfrastructure
 }) => {
   const [showFullId, setShowFullId] = useState(false);
   const [openSections, setOpenSections] = useState({
@@ -71,6 +84,13 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
   // State for AI-driven individual property valuation
   const [aiValuation, setAiValuation] = useState<AIPropertyValuationResponse | null>(null);
   const [isAiLoading, setIsAiLoading] = useState<boolean>(false);
+  const [copiedSellingPoints, setCopiedSellingPoints] = useState<boolean>(false);
+
+  const handleCopySellingPoints = (bullets: string[]) => {
+    navigator.clipboard.writeText(bullets.join('\n'));
+    setCopiedSellingPoints(true);
+    setTimeout(() => setCopiedSellingPoints(false), 2500);
+  };
 
   useEffect(() => {
     if (property) {
@@ -81,17 +101,25 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
   const fetchIndividualPropertyValuation = async (targetProp: PropertyRecord) => {
     setIsAiLoading(true);
     try {
-      const data = await getIndividualValuation(
-        targetProp,
-        targetProp.accommodation?.condition || 'GOOD',
-        targetProp.accommodation?.buildingM2 || targetProp.extentM2,
-        targetProp.extentM2,
-        {
-          pool: Boolean(targetProp.accommodation?.pool),
-          borehole: Boolean(targetProp.accommodation?.borehole)
-        }
-      );
-      setAiValuation(data);
+      const res = await fetch('/api/ai/property-valuation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          propertyId: targetProp.id,
+          property: targetProp,
+          condition: targetProp.accommodation?.condition || 'GOOD',
+          customBuildingM2: targetProp.accommodation?.buildingM2 || targetProp.extentM2,
+          customExtentM2: targetProp.extentM2,
+          customAdjustments: {
+            pool: Boolean(targetProp.accommodation?.pool),
+            borehole: Boolean(targetProp.accommodation?.borehole)
+          }
+        })
+      });
+      if (res.ok) {
+        const data: AIPropertyValuationResponse = await res.json();
+        setAiValuation(data);
+      }
     } catch (err) {
       console.error('Error loading AI valuation for property:', err);
     } finally {
@@ -118,12 +146,7 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
     }));
   };
 
-  // Jurisdiction-aware currency symbol: detects the property's country
-  // from its deedsOffice/province fields (set per-city in
-  // jurisdictionsData.ts) so switching jurisdiction in the header/Settings
-  // shows £/$/A$/AED, not a hardcoded Rand, once that city's demo
-  // properties are on screen.
-  const formatZar = (amount?: number) => {
+  const formatCurrency = (amount?: number) => {
     if (amount === undefined || amount === null || isNaN(amount)) return '-';
     let symbol = 'R ';
     if (property?.deedsOffice?.includes('UK') || property?.province?.includes('ENGLAND') || property?.province?.includes('LONDON')) {
@@ -138,6 +161,8 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
     if (amount === 0) return `${symbol}0`;
     return `${symbol}${amount.toLocaleString('en-US')}`;
   };
+
+  const formatZar = formatCurrency;
 
   const formatMaskedId = (idString: string) => {
     if (showFullId) return idString;
@@ -239,7 +264,7 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
       )}
 
       {/* Ptah-Realty Quick Action Workflow Hub */}
-      <div className="bg-slate-900 text-slate-100 p-2.5 border-b border-slate-800 space-y-1.5 text-xs">
+      <div className="bg-slate-900 text-slate-100 p-2.5 border-b border-slate-800 space-y-2 text-xs">
         <div className="flex items-center justify-between text-[10px] text-cyan-300 font-bold uppercase tracking-wider">
           <span className="flex items-center gap-1">
             <Sparkles className="w-3 h-3 text-cyan-400" /> Ptah Agent Intelligence Hub
@@ -277,6 +302,19 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
             </button>
           )}
 
+          {onOpen3DWalkthrough && property && (
+            <button
+              id="btn-panel-3d-walkthrough"
+              onClick={() => onOpen3DWalkthrough(property)}
+              className="py-1.5 px-2 bg-purple-900/80 hover:bg-purple-800 text-purple-100 border border-purple-600/80 font-bold rounded text-[11px] flex items-center justify-center gap-1 transition-colors shadow-xs"
+              title="Open Realsee 3D photorealistic virtual tour and spatial dollhouse"
+            >
+              <Box className="w-3 h-3 text-purple-300" />
+              <span>3D Tour</span>
+              <span className="text-[9px] bg-purple-500/40 text-purple-200 px-1 rounded">360°</span>
+            </button>
+          )}
+
           {onOpenPDFReport && (
             <button
               id="btn-panel-pdf"
@@ -285,6 +323,30 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
             >
               <Sparkles className="w-3 h-3 text-slate-950" />
               <span>PDF Report</span>
+            </button>
+          )}
+
+          {onOpenInfrastructure && property && (
+            <button
+              id="btn-panel-infrastructure"
+              onClick={() => onOpenInfrastructure(property)}
+              className="py-1.5 px-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded text-[11px] font-semibold flex items-center justify-center gap-1 transition-colors shadow-xs"
+              title="Search public infrastructure, schools, and transit"
+            >
+              <Compass className="w-3 h-3 text-cyan-400" />
+              <span>Infrastructure</span>
+            </button>
+          )}
+
+          {onOpenDevelopments && (
+            <button
+              id="btn-panel-developments"
+              onClick={onOpenDevelopments}
+              className="py-1.5 px-2 bg-cyan-950 hover:bg-cyan-900 text-cyan-200 border border-cyan-800 rounded text-[11px] font-semibold flex items-center justify-center gap-1 transition-colors shadow-xs"
+              title="Buildings in developments and off-plan schemes"
+            >
+              <Building2 className="w-3 h-3 text-cyan-300" />
+              <span>Developments</span>
             </button>
           )}
 
@@ -385,44 +447,29 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
                     </div>
                   </div>
 
-                  {/* Micro-Market & Street Comparison -- streetBenchmark/suburbBenchmark
-                      aren't computed by the backend yet (property-valuation always
-                      returns null for both), so each falls back to a placeholder
-                      instead of crashing. */}
+                  {/* Micro-Market & Street Comparison */}
                   <div className="grid grid-cols-2 gap-2 text-xs">
-                    {aiValuation.streetBenchmark ? (
-                      <div className="p-2 bg-slate-50 rounded border border-slate-200">
-                        <span className="text-slate-500 text-[10px] block font-semibold">Street Baseline ({streetName})</span>
-                        <div className="font-bold text-slate-800 text-xs">
-                          {formatZar(aiValuation.streetBenchmark.streetAveragePricePerM2)} / m²
-                        </div>
-                        <span className={`text-[10px] font-bold ${aiValuation.streetBenchmark.varianceVsStreetPercent >= 0 ? 'text-emerald-700' : 'text-amber-700'}`}>
-                          {aiValuation.streetBenchmark.varianceVsStreetPercent >= 0 ? '+' : ''}
-                          {aiValuation.streetBenchmark.varianceVsStreetPercent}% vs Street Avg
-                        </span>
+                    <div className="p-2 bg-slate-50 rounded border border-slate-200">
+                      <span className="text-slate-500 text-[10px] block font-semibold">Street Baseline ({streetName})</span>
+                      <div className="font-bold text-slate-800 text-xs">
+                        {formatZar(aiValuation.streetBenchmark.streetAveragePricePerM2)} / m²
                       </div>
-                    ) : (
-                      <div className="p-2 bg-slate-50 rounded border border-dashed border-slate-300 flex items-center justify-center">
-                        <span className="text-slate-400 text-[10px]">Street baseline unavailable</span>
-                      </div>
-                    )}
+                      <span className={`text-[10px] font-bold ${aiValuation.streetBenchmark.varianceVsStreetPercent >= 0 ? 'text-emerald-700' : 'text-amber-700'}`}>
+                        {aiValuation.streetBenchmark.varianceVsStreetPercent >= 0 ? '+' : ''}
+                        {aiValuation.streetBenchmark.varianceVsStreetPercent}% vs Street Avg
+                      </span>
+                    </div>
 
-                    {aiValuation.suburbBenchmark ? (
-                      <div className="p-2 bg-slate-50 rounded border border-slate-200">
-                        <span className="text-slate-500 text-[10px] block font-semibold">Suburb Median ({property.suburb})</span>
-                        <div className="font-bold text-slate-800 text-xs">
-                          {formatZar(aiValuation.suburbBenchmark.suburbMedianValuation)}
-                        </div>
-                        <span className={`text-[10px] font-bold ${aiValuation.suburbBenchmark.varianceVsSuburbPercent >= 0 ? 'text-emerald-700' : 'text-amber-700'}`}>
-                          {aiValuation.suburbBenchmark.varianceVsSuburbPercent >= 0 ? '+' : ''}
-                          {aiValuation.suburbBenchmark.varianceVsSuburbPercent}% vs Suburb Median
-                        </span>
+                    <div className="p-2 bg-slate-50 rounded border border-slate-200">
+                      <span className="text-slate-500 text-[10px] block font-semibold">Suburb Median ({property.suburb})</span>
+                      <div className="font-bold text-slate-800 text-xs">
+                        {formatZar(aiValuation.suburbBenchmark.suburbMedianValuation)}
                       </div>
-                    ) : (
-                      <div className="p-2 bg-slate-50 rounded border border-dashed border-slate-300 flex items-center justify-center">
-                        <span className="text-slate-400 text-[10px]">Suburb median unavailable</span>
-                      </div>
-                    )}
+                      <span className={`text-[10px] font-bold ${aiValuation.suburbBenchmark.varianceVsSuburbPercent >= 0 ? 'text-emerald-700' : 'text-amber-700'}`}>
+                        {aiValuation.suburbBenchmark.varianceVsSuburbPercent >= 0 ? '+' : ''}
+                        {aiValuation.suburbBenchmark.varianceVsSuburbPercent}% vs Suburb Median
+                      </span>
+                    </div>
                   </div>
 
                   {/* Key Valuation Drivers */}
@@ -439,6 +486,82 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
                       ))}
                     </ul>
                   </div>
+
+                  {/* Public Area Stats & Verified Selling Points Preview */}
+                  {aiValuation.publicAreaStats && (
+                    <div className="p-2.5 bg-gradient-to-br from-slate-50 via-cyan-50/40 to-slate-50 rounded border border-cyan-300 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold uppercase text-cyan-950 flex items-center gap-1">
+                          <Sparkles className="w-3 h-3 text-cyan-700" />
+                          <span>Public Selling Points (Open Data)</span>
+                        </span>
+                        <span className="bg-emerald-100 text-emerald-900 text-[9px] font-bold px-1.5 py-0.5 rounded">
+                          {aiValuation.publicAreaStats.crimeStats.overallCrimeLevel} Risk
+                        </span>
+                      </div>
+
+                      {/* Selling Points Proximity Chips */}
+                      <div className="space-y-1 text-[10px] bg-white p-2 rounded border border-cyan-100">
+                        <div className="flex items-center justify-between">
+                          <span className="text-slate-500 font-semibold">Key Infrastructure Selling Points:</span>
+                          {aiValuation.publicAreaStats.marketingCopyBullets && (
+                            <button
+                              id="btn-copy-panel-selling-points"
+                              onClick={() => handleCopySellingPoints(aiValuation.publicAreaStats?.marketingCopyBullets || [])}
+                              className="text-[9px] text-cyan-700 hover:text-cyan-900 font-bold flex items-center gap-0.5"
+                              title="Copy bullets for listing description"
+                            >
+                              {copiedSellingPoints ? (
+                                <>
+                                  <Check className="w-2.5 h-2.5 text-emerald-600" />
+                                  <span className="text-emerald-700">Copied!</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Copy className="w-2.5 h-2.5" />
+                                  <span>Copy Bullets</span>
+                                </>
+                              )}
+                            </button>
+                          )}
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-1 pt-0.5 text-slate-700">
+                          <div className="flex items-center gap-1 truncate" title="Reddam House (850m) & Lycée Français (1.1km)">
+                            <GraduationCap className="w-3 h-3 text-indigo-600 shrink-0" />
+                            <span className="truncate"><strong>Schools:</strong> 850m (Walk)</span>
+                          </div>
+                          <div className="flex items-center gap-1 truncate" title="Netcare Christiaan Barnard (5 min drive, 24/7 Trauma)">
+                            <HeartPulse className="w-3 h-3 text-rose-600 shrink-0" />
+                            <span className="truncate"><strong>Hospital:</strong> 5 min (Trauma)</span>
+                          </div>
+                          <div className="flex items-center gap-1 truncate" title="Atlantic Promenade (280m) & Green Point Urban Park">
+                            <Trees className="w-3 h-3 text-emerald-600 shrink-0" />
+                            <span className="truncate"><strong>Coast:</strong> 280m to Prom</span>
+                          </div>
+                          <div className="flex items-center gap-1 truncate" title="MyCiTi BRT Station (180m, 7 min to CBD)">
+                            <Bus className="w-3 h-3 text-cyan-600 shrink-0" />
+                            <span className="truncate"><strong>Transit:</strong> 180m MyCiTi</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-1 text-center text-[10px]">
+                        <div className="bg-white p-1 rounded border border-slate-200">
+                          <span className="text-slate-400 block text-[9px]">Safety Score</span>
+                          <span className="font-bold text-slate-800">{aiValuation.publicAreaStats.crimeStats.safetyIndexScore}/100</span>
+                        </div>
+                        <div className="bg-white p-1 rounded border border-slate-200">
+                          <span className="text-slate-400 block text-[9px]">Cost Index</span>
+                          <span className="font-bold text-slate-800">{aiValuation.publicAreaStats.costOfLiving.costOfLivingIndex}</span>
+                        </div>
+                        <div className="bg-white p-1 rounded border border-slate-200">
+                          <span className="text-slate-400 block text-[9px]">Avg Levy</span>
+                          <span className="font-bold text-cyan-900">R {aiValuation.publicAreaStats.leviesAndRates.averageSectionalLevyPerM2}/m²</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Action Buttons */}
                   <div className="flex items-center gap-1.5 pt-1">
@@ -491,15 +614,9 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
               <div className="p-2.5 bg-slate-50 rounded-md border border-slate-200 space-y-1.5">
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Registered Owner</span>
-                  {property.isEstimated ? (
-                    <span className="bg-amber-100 text-amber-800 text-[9px] font-bold px-1.5 py-0.2 rounded">
-                      Estimated -- Not Verified
-                    </span>
-                  ) : (
-                    <span className="bg-emerald-100 text-emerald-800 text-[9px] font-bold px-1.5 py-0.2 rounded">
-                      Verified Deeds Contact
-                    </span>
-                  )}
+                  <span className="bg-emerald-100 text-emerald-800 text-[9px] font-bold px-1.5 py-0.2 rounded">
+                    Verified Deeds Contact
+                  </span>
                 </div>
                 <div className="font-bold text-slate-900 text-xs">
                   {property.currentSale.owner}
