@@ -38,9 +38,13 @@ import { LeadCaptureModal } from './LeadCaptureModal';
 
 interface MarketingLandingPageProps {
   onEnterApp: () => void;
+  // Passed by App.tsx as part of the real-login wiring (replacing the old
+  // fake setTimeout login) -- forwarded to LoginModal below so a genuine
+  // authenticated session propagates up instead of just closing the modal.
+  onRealLogin?: (loggedInUser: any) => void;
 }
 
-export const MarketingLandingPage: React.FC<MarketingLandingPageProps> = ({ onEnterApp }) => {
+export const MarketingLandingPage: React.FC<MarketingLandingPageProps> = ({ onEnterApp, onRealLogin }) => {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isLeadModalOpen, setIsLeadModalOpen] = useState(false);
   const [selectedPlanForLead, setSelectedPlanForLead] = useState('Principal Pro (R 1,850/mo)');
@@ -1342,9 +1346,15 @@ export const MarketingLandingPage: React.FC<MarketingLandingPageProps> = ({ onEn
       <LoginModal
         isOpen={isLoginOpen}
         onClose={() => setIsLoginOpen(false)}
-        onLoginSuccess={() => {
+        onLoginSuccess={(user) => {
           setIsLoginOpen(false);
-          onEnterApp();
+          // Forward the real authenticated user up to App.tsx (real-login
+          // wiring) before entering the app, so the session isn't dropped.
+          if (onRealLogin) {
+            onRealLogin(user);
+          } else {
+            onEnterApp();
+          }
         }}
         onOpenLeadModal={() => setIsLeadModalOpen(true)}
       />

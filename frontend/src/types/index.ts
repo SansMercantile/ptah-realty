@@ -625,3 +625,254 @@ export interface PortalListingPayload {
   selectedMediaAssetUrls: string[];
   agentRefCode: string;
 }
+
+// ---- Added from the updated AI Studio demo export (new main-app feature set: public area stats, building developments, infrastructure search, 3D virtual tours). Appended, not replacing. ----
+
+export interface PublicDataAmenityItem {
+  name: string;
+  type: string;
+  distanceMeters: number;
+  distanceFormatted: string;
+  walkingOrDriving: string;
+  rating?: number;
+  highlight: string;
+  address?: string;
+}
+
+export interface PublicDataSellingPoint {
+  id: string;
+  category: 'education' | 'healthcare' | 'recreation' | 'transit' | 'safety' | 'shopping';
+  categoryLabel: string;
+  badge: string;
+  title: string;
+  headline: string;
+  summary: string;
+  distanceHighlight: string;
+  verifiedSource: string;
+  amenities: PublicDataAmenityItem[];
+  buyerPitchText: string;
+  marketingCopySnippet: string;
+}
+
+export interface PublicAreaStats {
+  suburb: string;
+  municipality: string;
+  province: string;
+  country: string;
+
+  // Public data selling points (Nearby schools, hospitals, amenities, transit, parks)
+  sellingPoints?: PublicDataSellingPoint[];
+  synthesizedBuyerPitch?: string;
+  marketingCopyBullets?: string[];
+
+  crimeStatistics: {
+    safetyIndex: number; // 0 - 100 score, higher = safer
+    crimeRateLevel: 'Very Low' | 'Low' | 'Moderate' | 'High';
+    propertyCrimeScore: number; // e.g. 21.3 vs metro 52.0
+    violentCrimeScore: number; // e.g. 7.4 vs metro 36.0
+    neighborhoodWatchStatus: string;
+    policeStationPrecinct: string;
+    precinctClearanceRatePercent: number;
+    cctvMonitoringCoveragePercent: number;
+    trendsYearOverYearPercent: number; // e.g. -14.5%
+    securityPatrolDetails: string;
+  };
+  crimeStats?: {
+    overallCrimeLevel: 'Very Low' | 'Low' | 'Moderate' | 'High';
+    safetyIndexScore: number;
+    violentCrimeVsMetroAveragePercent: number;
+    propertyCrimeVsMetroAveragePercent: number;
+    clearanceRatePercent: number;
+    cctvCoveragePercent: number;
+    yoyCrimeTrendPercent: number;
+    nearestPoliceStation: string;
+    cidPatrolNet: string;
+  };
+  costOfLiving: {
+    costOfLivingIndex: number; // 100 = base metro
+    groceriesIndex: number;
+    utilitiesAverageMonthly: number;
+    diningAndLifestyleIndex: number;
+    ratesAndTaxesBand: string;
+    ratesTariffRate: number; // Rand per Rand of municipal value
+    electricityTariffDomesticPerKWh: number;
+    waterTariffDomesticPerKL: number;
+    refuseTariffMonthly: number;
+    averageHouseholdIncomeMonthly: number;
+    purchasingPowerRating: 'Very High' | 'High' | 'Moderate' | 'Emerging';
+  };
+  leviesAndDues: {
+    averageSectionalLevyPerM2: number;
+    estimatedMonthlyBodyCorpLevy: number;
+    reserveFundLevyPercent: number; // STSMA mandate 15% - 25%
+    csosMonthlyLevy: number; // Community Schemes Ombud Service
+    municipalRatesMonthly: number;
+    refuseCollectionMonthly: number;
+    specialLeviesRiskRating: 'Low' | 'Medium' | 'High';
+    averageBuildingReserveFundHealthPercent: number;
+    statutoryComplianceScore: number;
+  };
+  leviesAndRates?: {
+    averageSectionalLevyPerM2: number;
+    reserveFundLevyPercent: number;
+    csosStatutoryLevyPerMonth: number;
+    specialLeviesRiskRating: string;
+    reserveFundHealthPercent: number;
+  };
+  communityAndEnvironment: {
+    walkScore: number; // 0 - 100
+    transitScore: number; // 0 - 100
+    airQualityIndex: number;
+    airQualityLabel: string;
+    greenSpaceRatioPercent: number;
+    fiberBroadbandGigabitReady: boolean;
+    serviceDeliveryRating: number; // 0 - 10
+    nearestHospitalKm: number;
+    nearestFireStationKm: number;
+  };
+  communityInfrastructure?: {
+    walkScore: number;
+    walkabilityDescription: string;
+    transitScore: number;
+    airQualityIndex: number;
+    greenSpaceRatioPercent: number;
+  };
+  dataSources: string[];
+  lastUpdated: string;
+}
+
+export type DevelopmentStatus = 'LAUNCHING_OFF_PLAN' | 'UNDER_CONSTRUCTION' | 'COMPLETED_NEW' | 'ESTABLISHED';
+
+export interface DevelopmentUnit {
+  id: string;
+  developmentId: string;
+  developmentName: string;
+  unitNumber: string;
+  floor: number;
+  layout: 'Studio' | '1 Bedroom' | '2 Bedroom' | '3 Bedroom' | 'Penthouse' | 'Duplex Loft';
+  bedrooms: number;
+  bathrooms: number;
+  internalM2: number;
+  balconyM2: number;
+  totalM2: number;
+  parkingBays: number;
+  storeroomM2?: number;
+  askingPrice: number;
+  pricePerM2: number;
+  status: 'AVAILABLE' | 'RESERVED' | 'UNDER_OFFER' | 'SOLD';
+  monthlyLevy: number;
+  monthlyRates: number;
+  projectedRentalMonthly: number;
+  projectedGrossYield: number;
+  views: string;
+  floorPlanUrl?: string;
+  features: string[];
+}
+
+export interface BuildingDevelopment {
+  id: string;
+  name: string;
+  developerName: string;
+  architect: string;
+  suburb: string;
+  address: string;
+  postalCode: string;
+  coordinates: { lat: number; lng: number };
+  zoning: string;
+  completionYear: number;
+  status: DevelopmentStatus;
+  totalUnitsCount: number;
+  availableUnitsCount: number;
+  floorsCount: number;
+  startingPrice: number;
+  priceRange: { min: number; max: number };
+  averagePricePerM2: number;
+  cmaMetrics: {
+    projectedAppreciationPercent: number;
+    suburbComparativeVariancePercent: number;
+    grossYieldAveragePercent: number;
+    airbnbEstimatedOccupancyPercent: number;
+    airbnbProjectedDailyRate: number;
+    historicalSalesCount: number;
+    offPlanDiscountRatePercent?: number;
+  };
+  buildingAmenities: string[];
+  petFriendly: boolean;
+  airbnbAllowed: boolean;
+  greenStarRating: string;
+  heroImageUrl: string;
+  galleryImages: string[];
+  description: string;
+  units: DevelopmentUnit[];
+}
+
+export type InfrastructureCategory = 'education' | 'recreation' | 'healthcare' | 'transit' | 'safety' | 'shopping';
+
+export interface InfrastructureItem {
+  id: string;
+  name: string;
+  category: InfrastructureCategory;
+  type: string;
+  suburb: string;
+  address: string;
+  distanceMeters: number;
+  walkingMinutes: number;
+  drivingMinutes: number;
+  rating: number; // 0 - 5
+  reviewCount: number;
+  coordinates: { lat: number; lng: number };
+  description: string;
+  tags: string[];
+  contactPhone?: string;
+  websiteUrl?: string;
+  operationalHours?: string;
+  publicAccess: boolean;
+}
+
+export interface VirtualTourHotspot {
+  id: string;
+  targetRoomId: string;
+  targetRoomName: string;
+  pitch: number;
+  yaw: number;
+  label: string;
+}
+
+export interface VirtualTourPin {
+  id: string;
+  pitch: number;
+  yaw: number;
+  title: string;
+  description: string;
+  type: 'feature' | 'dimension' | 'spec' | 'material';
+}
+
+export interface VirtualTourRoom {
+  id: string;
+  name: string;
+  tag: string;
+  panoramaUrl: string;
+  dimensionsM: { length: number; width: number; height: number };
+  extentM2: number;
+  cameraPosition: { x: number; y: number; z: number };
+  hotspots: VirtualTourHotspot[];
+  interactivePins: VirtualTourPin[];
+}
+
+export interface Virtual3DTour {
+  id: string;
+  propertyId: string;
+  propertyAddress: string;
+  title: string;
+  createdAt: string;
+  totalRooms: number;
+  totalAreaM2: number;
+  dollhouseMeshGenerated: boolean;
+  floorPlan2DUrl?: string;
+  rooms: VirtualTourRoom[];
+  initialRoomId: string;
+  aiReconstructionStatus: 'COMPLETED' | 'PROCESSING' | 'EXTRACTING_DEPTH' | 'SYNTHESIZING_MESH';
+  spatialAccuracyCm: number;
+  reconstructionSource: 'uploaded_photos' | 'mobile_video_sweep' | 'matterport_realsee_scan';
+}
+

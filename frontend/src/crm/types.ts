@@ -18,7 +18,7 @@ export type LeadStatus =
 
 export type UrgencyLevel = 'urgent' | 'high' | 'medium' | 'low';
 
-export type CommunicationType = 'whatsapp' | 'email' | 'call' | 'sms' | 'meeting' | 'portal_inquiry';
+export type CommunicationType = 'whatsapp' | 'email' | 'call' | 'sms' | 'meeting' | 'portal_inquiry' | 'zoom_video' | 'skype_call';
 
 export type ConnectorCategory =
   | 'portals'
@@ -106,6 +106,8 @@ export interface ActivityLogItem {
     duration?: string;
     scoreChange?: { from: number; to: number };
     noteContent?: string;
+    documentType?: string;
+    fileName?: string;
     tag?: string;
   };
 }
@@ -211,6 +213,13 @@ export interface Lead {
   portalListingUrl?: string;
   birthday?: string; // e.g. "1988-08-28"
   ageBracket?: string; // e.g. "35-49"
+  // Added from the updated demo export -- back the new document
+  // parsing/conversion, client request portal, and call recording
+  // components. All optional, so existing Lead records stay valid.
+  documents?: LeadDocument[];
+  parseHistory?: DocumentParseEvent[];
+  documentRequests?: ClientDocumentRequestSession[];
+  callRecordings?: CallRecording[];
   qualityScoreData?: LeadQualityScoreData;
   storyPoints?: number; // 1, 2, 3, 5, 8 story points based on transaction complexity
   sprintId?: string;
@@ -395,4 +404,345 @@ export interface MarketingCampaign {
   createdAt: string;
 }
 
+
+
+// ---- Added from the updated AI Studio demo export (new CRM feature set: document parsing/conversion, client request portal, call recordings, business plan, deals hub, CDPA bank programs, billing leaderboard, resource centre, virtual reports, automated lead assignment). Appended rather than replacing this file, so the existing session work above (Lead.birthday/ageBracket etc.) is preserved. ----
+
+export interface DocumentExtractedSchema {
+  documentType: string;
+  documentSummary: string;
+  confidenceScore: number;
+  extractedFields: {
+    buyerName?: string;
+    buyerEmail?: string;
+    buyerPhone?: string;
+    buyerIdNumber?: string;
+    buyerType?: 'Cash Buyer' | 'Pre-approved Mortgage' | 'Investor' | 'First-Time Buyer' | 'Tenant';
+    propertyTitle?: string;
+    propertyRef?: string;
+    propertyLocation?: string;
+    propertyPrice?: number;
+    budget?: string;
+    depositAmount?: number;
+    bondAmountRequired?: number;
+    timeframe?: 'Immediate (< 30 days)' | '1 - 3 Months' | '3 - 6 Months' | 'Browsing / Curious';
+    conveyancerAttorney?: string;
+    transferDateEstimated?: string;
+    suspensiveConditions?: string[];
+    keyClauses?: string[];
+  };
+  fieldConfidenceScores?: Record<string, number>;
+  suspensiveConditions?: string[];
+  lowConfidenceFields?: string[];
+  suggestedTasks?: {
+    title: string;
+    dueDate?: string;
+    priority: UrgencyLevel;
+    type: 'call' | 'email' | 'viewing' | 'brochure' | 'contract' | 'followup';
+  }[];
+  suggestedNotes?: string[];
+  suggestedStatus?: LeadStatus;
+}
+
+export interface DocumentParseEvent {
+  id: string;
+  timestamp: string;
+  leadId: string;
+  fileName: string;
+  fileType: string;
+  fileSizeKb: number;
+  documentType: string;
+  confidenceScore: number;
+  fieldConfidenceScores?: Record<string, number>;
+  extractedFields: DocumentExtractedSchema['extractedFields'];
+  schema: DocumentExtractedSchema;
+  rawTextPreview: string;
+  sourceType: 'upload' | 'batch' | 'vision_photo' | 'client_portal';
+  isApplied: boolean;
+  appliedAt?: string;
+}
+
+export interface ClientDocumentRequestItem {
+  id: string;
+  title: string;
+  category: 'fica' | 'address' | 'banking' | 'tax' | 'mandate' | 'other';
+  description: string;
+  required: boolean;
+  status: 'pending' | 'uploaded' | 'accepted' | 'rejected';
+  uploadedFileName?: string;
+  uploadedAt?: string;
+}
+
+export interface ClientDocumentRequestSession {
+  id: string;
+  leadId: string;
+  leadName: string;
+  leadEmail: string;
+  leadPhone: string;
+  requestedAt: string;
+  requestedBy: string;
+  status: 'pending' | 'partial' | 'completed';
+  shareUrl: string;
+  items: ClientDocumentRequestItem[];
+  notes?: string;
+}
+
+export interface LeadDocument {
+  id: string;
+  fileName: string;
+  fileType: string;
+  fileSizeKb: number;
+  uploadedAt: string;
+  uploadedBy: string;
+  category: 'otp_contract' | 'bond_approval' | 'fica_id' | 'deeds_search' | 'floor_plan' | 'financial' | 'inspection' | 'other';
+  rawTextPreview?: string;
+  imageUrl?: string;
+  schema?: DocumentExtractedSchema;
+  isPopulated: boolean;
+  populatedAt?: string;
+}
+
+export interface CallRecording {
+  id: string;
+  timestamp: string; // ISO string
+  durationSeconds: number;
+  durationFormatted: string; // e.g. "02:45"
+  audioUrl?: string; // audio blob URL or synthesized stream
+  caller: string; // agent name
+  recipient: string; // client name
+  phoneNumber: string;
+  provider: 'Twilio WebRTC' | 'Browser VoIP' | 'Telviva SA' | 'Ptah Voice Gateway';
+  status: 'completed' | 'recorded' | 'failed';
+  transcription?: string;
+  summary?: string;
+  actionItems?: string[];
+  sentiment?: 'positive' | 'neutral' | 'negotiating' | 'urgent';
+  callType?: 'outbound_voip' | 'inbound_voip' | 'virtual_viewing_audio' | 'voice_note';
+}
+
+export interface BusinessExpenseItem {
+  id: string;
+  name: string;
+  amount: number;
+  isTaxDeductible: boolean;
+}
+
+export interface SuburbTargetItem {
+  id: string;
+  suburbName: string;
+  historicalUnits: number;
+  averagePrice: number;
+  targetUnits: number;
+  projectedValue: number;
+}
+
+export interface BusinessPlanConfig {
+  year: number;
+  monthlyNetTakeHome: number;
+  salesVsRentalSplit: {
+    salesPercent: number;
+    rentalPercent: number;
+  };
+  incomeTaxRatePercent: number;
+  salesCommissionSplit: {
+    agentSharePercent: number;
+    officeSharePercent: number;
+  };
+  rentalCommissionSplit: {
+    agentSharePercent: number;
+    officeSharePercent: number;
+  };
+  rentalCommissionTargetAnnual: number;
+  actualCommissionRateYtd: number;
+  employmentType: 'independent_contractor' | 'employee';
+  monthlyExpenses: BusinessExpenseItem[];
+  suburbTargets: SuburbTargetItem[];
+  ytdActuals: {
+    unitsSold: number;
+    targetUnits: number;
+    salesVolume: number;
+    targetSalesVolume: number;
+    totalCommissionEarned: number;
+    commissionRatePercent: number;
+    targetCommissionRatePercent: number;
+  };
+  clubStatus: {
+    currentClub: string;
+    targetClub: string;
+    targetClubThreshold: number;
+    ytdCommission: number;
+    percentOfTarget: number;
+  };
+}
+
+export interface RealEstateDeal {
+  id: string;
+  dealNumber: string;
+  propertyTitle: string;
+  address: string;
+  suburb: string;
+  salesDate: string;
+  transferDate?: string;
+  salePrice: number;
+  grossCommission: number;
+  agentCommission: number;
+  officeCommission: number;
+  status: 'active' | 'under_offer' | 'registered' | 'collapsed' | 'pending';
+  sellerName: string;
+  buyerName: string;
+  attorney: string;
+  deedsOffice: string;
+  isSelectedForScheduleE?: boolean;
+  listingAgent: string;
+}
+
+export interface CdpaBankProgram {
+  id: string;
+  bankName: string;
+  programName: string;
+  badgeColor: string;
+  shortDescription: string;
+  benefits: string[];
+  sellerCommissionPaidPercent: number;
+  debtWriteOffEligible: boolean;
+  typicalTurnaroundDays: number;
+  mandatedPropertiesCount: number;
+  // Referenced by CdpaBankProgramsModal.tsx, missing from the demo's own
+  // type (same pre-existing demo mismatch pattern).
+  status?: string;
+  description?: string;
+  keyBenefits?: string[];
+  contactPerson?: string;
+  contactEmail?: string;
+}
+
+export interface CurrenciesDirectReferral {
+  id: string;
+  clientName?: string;
+  clientFirstName?: string;
+  clientLastName?: string;
+  clientEmail: string;
+  clientPhone: string;
+  direction?: 'inflow_purchase' | 'outflow_emigration' | 'expat_landlord';
+  transactionType?: string;
+  currencyPair?: string;
+  estimatedAmountZar?: number;
+  estimatedTransferAmountZar?: number;
+  agentName?: string;
+  agentEmail?: string;
+  agentPhone?: string;
+  referralCommissionZar?: number;
+  dateReferred?: string;
+  notes: string;
+  status: 'submitted' | 'under_compliance' | 'funds_cleared' | 'completed' | 'pending_contact';
+  submittedAt?: string;
+}
+
+export interface LeaderboardEntry {
+  id: string;
+  rank: number;
+  agentName: string;
+  roleTitle: string;
+  avatar: string;
+  office: string;
+  region: string;
+  clubStatus: 'Double Diamond' | 'Diamond Club' | "Chairman's Club" | "Millionaire's Club" | 'Bronze Club' | 'Silver Club' | 'Gold Club';
+  previousClubStatus: string;
+  ytdCommission: number;
+  dealsCount: number;
+  reachedMillionaireMilestone: boolean;
+  milestoneMonth?: string;
+  nationalRank: number;
+  // The five below are referenced by BillingLeaderboardModal.tsx but were
+  // missing from the demo's own LeaderboardEntry -- a real pre-existing
+  // mismatch in the demo export (components use fields its types don't
+  // declare). Added as optional so nothing already building breaks.
+  transactionsCount?: number;
+  totalBillingZar?: number;
+  avatarUrl?: string;
+  officeName?: string;
+  clubTier?: string;
+  officeRank: number;
+}
+
+export interface ResourceFileItem {
+  id: string;
+  folderId: string;
+  title: string;
+  fileType: 'pdf' | 'docx' | 'xlsx' | 'zip' | 'png';
+  sizeKb: number;
+  updatedAt: string;
+  downloadsCount: number;
+  // Referenced by ResourceCentreModal.tsx, missing from the demo's own
+  // type (same pre-existing demo mismatch pattern as LeaderboardEntry).
+  fileSize?: string;
+  downloadCount?: number;
+  folderCategory?: string;
+  description?: string;
+  tags?: string[];
+  isNew?: boolean;
+}
+
+export interface VirtualPropertyReport {
+  id: string;
+  schemeOrEstateName?: string;
+  propertyAddress?: string;
+  suburb: string;
+  deedsOffice?: string;
+  propertyCategory?: 'Complex' | 'Sectional Scheme' | 'Estate' | 'Suburb' | 'Street';
+  unitsInScheme?: number;
+  averageSalesPrice?: number;
+  annualTurnoverPercent?: number;
+  lastTransferDate: string;
+  lastTransferPrice?: number;
+  erfNumber: string;
+  streetName?: string;
+  municipalValuation?: number;
+  municipalValuationZar?: number;
+  estimatedMarketValueZar?: number;
+  valuationLowZar?: number;
+  valuationHighZar?: number;
+  lastDeedsTransferPriceZar?: number;
+  comparableSalesRecent?: { address: string; soldPrice: number; saleDate: string; beds: number }[];
+  suburbGrowthRateAnnualPercent?: number;
+  amenitiesNearby?: string[];
+  generatedDate?: string;
+  demographicProfile?: {
+    averageAgeOwners: number;
+    periodOfOwnershipYears: number;
+    priceGrowth5YrPercent: number;
+  };
+}
+
+export interface AgentAssignmentRuleConfig {
+  capacityWeight: number; // 0 - 100
+  dealWonWeight: number; // 0 - 100
+  expertiseWeight: number; // 0 - 100
+  strategy: 'hybrid' | 'performance_first' | 'capacity_balancer' | 'suburb_specialist';
+  maxActiveLeadsPerAgent: number;
+  minVipLeadScoreThreshold: number;
+  autoAssignNewInbound: boolean;
+}
+
+export interface AgentAssignmentScore {
+  agentName: string;
+  agentEmail: string;
+  agentAvatar: string;
+  role: string;
+  suburbs: string[];
+  activeLeadsCount: number;
+  maxCapacity: number;
+  capacityUtilizationPercent: number;
+  dealsWonCount: number;
+  totalSalesVolumeZar: number;
+  winRatePercent: number;
+  scores: {
+    capacityScore: number;
+    dealWonScore: number;
+    expertiseScore: number;
+    compositeScore: number;
+  };
+  reasoning: string[];
+  isRecommended: boolean;
+}
 
