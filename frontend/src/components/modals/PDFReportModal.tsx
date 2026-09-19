@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { PropertyRecord, ComparativeSaleRecord, CMAValuationCalculation, PropertyMediaAsset, AIGeneratedCMACopy, PublicAreaStats } from '../../types';
 import { getPublicAreaStats } from '../../services/publicAreaStatsData';
+import { runValuation, listMedia, generateCmaSummary } from '../../services/api';
 
 interface PDFReportModalProps {
   isOpen: boolean;
@@ -63,27 +64,20 @@ export const PDFReportModal: React.FC<PDFReportModalProps> = ({
   const loadAllReportData = async () => {
     if (!property) return;
     try {
-      const [valRes, compRes, mediaRes] = await Promise.all([
-        fetch('/api/cma/calculate-valuation', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ propertyId: property.id })
-        }),
-        fetch(`/api/cma/comparatives/${property.id}`),
-        fetch(`/api/media/${property.id}`)
+      const [calc, media] = await Promise.all([
+        runValuation(property, 1000),
+        listMedia(property.id).catch(() => []),
       ]);
 
-      const valJson = await valRes.json();
-      const compJson = await compRes.json();
-      const mediaJson = await mediaRes.json();
-
-      setValuationData(valJson);
-      setComparatives(compJson.comparatives || []);
-      setMediaList(mediaJson.media || []);
+      setValuationData(calc);
+      setComparatives(calc.comparableSales);
+      setMediaList(media);
       setPublicStats(getPublicAreaStats(property.suburb));
 
-      // Trigger Gemini AI generation for report narrative
-      generateAiMarketCopy('Executive', valJson);
+      // Real Bedrock-backed narrative generation (api/ai.py's
+      // /ai/cma-summary), now that valuation data actually exists to
+      // ground it in.
+      generateAiMarketCopy('Executive', calc);
     } catch (err) {
       console.error('Error loading report data:', err);
     }
@@ -91,21 +85,20 @@ export const PDFReportModal: React.FC<PDFReportModalProps> = ({
 
   const generateAiMarketCopy = async (tone: string, valDataOverride?: any) => {
     if (!property) return;
+    const currentVal = valDataOverride || valuationData;
+    if (!currentVal) {
+      // No real valuation yet -- don't send a fabricated placeholder
+      // value to the AI as if it were real data.
+      return;
+    }
     setIsGeneratingAi(true);
     try {
-      const currentVal = valDataOverride || valuationData;
-      const res = await fetch('/api/ai/cma-summary', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          property,
-          comparatives,
-          valuation: currentVal || { finalProjectedMarketValue: 6450000, averagePricePerM2: 24700 },
-          tone
-        })
-      });
-      const data = await res.json();
-      setAiCopy(data);
+      const result = await generateCmaSummary(property as any, currentVal, comparatives as any, tone);
+      setAiCopy({
+        executiveSummary: result.executiveSummary,
+        pricingRecommendationText: result.pricingRecommendation,
+        keySellingPoints: result.keyDrivers ? [result.keyDrivers] : [],
+      } as any);
     } catch (err) {
       console.error('Error generating AI narrative:', err);
     } finally {

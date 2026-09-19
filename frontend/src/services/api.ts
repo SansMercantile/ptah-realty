@@ -649,6 +649,71 @@ export async function deleteMedia(mediaId: string): Promise<void> {
 }
 
 // ---------------------------------------------------------------------
+// Bedrock-backed AI copy/valuation (api/ai.py) -- mounted at
+// /api/v1/realty/ai/*, not the bare /api/ai/* some components used to
+// call directly (which both missed the real path AND the required auth
+// header). authJson already prefixes /api/v1/realty and attaches the
+// Bearer token, so routing through it here fixes both at once.
+// ---------------------------------------------------------------------
+
+export interface CmaSummaryCopy {
+  executiveSummary: string;
+  pricingRecommendation: string;
+  keyDrivers: string;
+}
+
+export async function generateCmaSummary(
+  property: Record<string, unknown>,
+  valuation: Record<string, unknown>,
+  comparableSales: Record<string, unknown>[],
+  tone = 'Executive'
+): Promise<CmaSummaryCopy> {
+  return authJson<CmaSummaryCopy>('/ai/cma-summary', {
+    method: 'POST',
+    body: JSON.stringify({ property, valuation, comparable_sales: comparableSales, tone }),
+  });
+}
+
+export interface ListingCopyResult {
+  headline: string;
+  description: string;
+  features: string[];
+}
+
+export async function generateListingCopy(
+  property: Record<string, unknown>,
+  askingPrice: number | undefined,
+  highlights: string[],
+  targetPortal = 'Property24'
+): Promise<ListingCopyResult> {
+  return authJson<ListingCopyResult>('/ai/listing-copy', {
+    method: 'POST',
+    body: JSON.stringify({ property, asking_price: askingPrice, highlights, target_portal: targetPortal }),
+  });
+}
+
+export async function generateIndividualValuation(
+  propertyId: string,
+  property: Record<string, unknown>,
+  condition = 'GOOD',
+  customBuildingM2?: number,
+  customExtentM2?: number,
+  customAdjustments: Record<string, unknown> = {}
+): Promise<any> {
+  return authJson('/ai/property-valuation', {
+    method: 'POST',
+    body: JSON.stringify({
+      propertyId,
+      property,
+      condition,
+      customBuildingM2,
+      customExtentM2,
+      customAdjustments,
+    }),
+  });
+}
+
+// ---------------------------------------------------------------------
 // Reports
 // ---------------------------------------------------------------------
 

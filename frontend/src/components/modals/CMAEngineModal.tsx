@@ -17,6 +17,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { PropertyRecord, ComparativeSaleRecord, CMAValuationCalculation } from '../../types';
+import { runValuation, triggerComparablesIngest } from '../../services/api';
 
 interface CMAEngineModalProps {
   isOpen: boolean;
@@ -60,26 +61,13 @@ export const CMAEngineModal: React.FC<CMAEngineModalProps> = ({
     if (!property) return;
     setIsLoading(true);
     try {
-      // 1. Fetch filtered comparatives
-      const compRes = await fetch(`/api/cma/comparatives/${property.id}?radiusMeters=${radiusMeters}&source=${sourceFilter}`);
-      const compData = await compRes.json();
-      setComparatives(compData.comparatives || []);
-
-      // 2. Run valuation calculation engine
-      const valRes = await fetch('/api/cma/calculate-valuation', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          propertyId: property.id,
-          condition: conditionOverride,
-          radiusMeters,
-          customAdjustments
-        })
-      });
-      const valData = await valRes.json();
-      setValuationData(valData);
+      const calc = await runValuation(property, radiusMeters);
+      setComparatives(calc.comparableSales);
+      setValuationData(calc);
     } catch (err) {
       console.error('Error calculating CMA valuation:', err);
+      setComparatives([]);
+      setValuationData(null);
     } finally {
       setIsLoading(false);
     }
@@ -88,21 +76,16 @@ export const CMAEngineModal: React.FC<CMAEngineModalProps> = ({
   const handleTriggerIngestion = async (source: string) => {
     if (!property) return;
     setIsIngesting(true);
-    setIngestMessage(`Connecting to ${source} API / scraping pipelines...`);
+    setIngestMessage(`Connecting to ${source} ingestion pipeline...`);
     try {
-      const res = await fetch('/api/cma/ingest-feed', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ propertyId: property.id, source })
-      });
-      const data = await res.json();
-      setIngestMessage(data.message);
+      await triggerComparablesIngest(property.suburb, 'apartment');
+      setIngestMessage('Ingestion job started -- refreshing comparables in a moment.');
       setTimeout(() => {
         fetchComparativesAndValuate();
         setIngestMessage(null);
-      }, 1500);
+      }, 4000);
     } catch (err) {
-      setIngestMessage('Ingestion completed with fallback cache.');
+      setIngestMessage('Ingestion could not be started -- showing existing comparables.');
     } finally {
       setIsIngesting(false);
     }
