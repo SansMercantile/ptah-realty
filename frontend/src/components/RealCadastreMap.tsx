@@ -201,7 +201,8 @@ export const RealCadastreMap: React.FC<RealCadastreMapProps> = ({
   onCursorCoordsChange,
   enableLiveParcels = true,
   showStreetFilters = false,
-  onToggleStreetFilters
+  onToggleStreetFilters,
+  liveLocation,
 }) => {
   const canvasRef = useRef<HTMLDivElement>(null);
 
@@ -814,6 +815,34 @@ export const RealCadastreMap: React.FC<RealCadastreMapProps> = ({
                 >
                   {radiusMeters >= 1000 ? `${(radiusMeters / 1000).toFixed(1)} km` : `${radiusMeters}m`} CMA Radius
                 </text>
+              </g>
+            );
+          })()
+        )}
+
+        {/* 2A-2. CANVASS MODE: AGENT'S OWN LIVE GPS POSITION -- "you are
+            here" marker + accuracy ring, same projectGeoToScreen used
+            for every other coordinate on this canvas. Accuracy ring
+            radius mirrors the CMA radius ring's edge-point technique
+            above (project a point accuracy-meters north, measure the
+            resulting pixel distance) so it scales correctly with zoom. */}
+        {liveLocation && (
+          (() => {
+            const pCenter = projectGeoToScreen(liveLocation.lat, liveLocation.lng);
+            const pAccuracyEdge = projectGeoToScreen(liveLocation.lat + liveLocation.accuracy / 111139, liveLocation.lng);
+            const rPx = Math.min(Math.abs(pAccuracyEdge.y - pCenter.y) || 24, 200);
+            return (
+              <g pointerEvents="none">
+                <circle
+                  cx={pCenter.x}
+                  cy={pCenter.y}
+                  r={rPx}
+                  fill="rgba(66, 133, 244, 0.12)"
+                  stroke="rgba(66, 133, 244, 0.4)"
+                  strokeWidth="1"
+                />
+                <circle cx={pCenter.x} cy={pCenter.y} r="9" fill="rgba(66, 133, 244, 0.35)" className="animate-ping" />
+                <circle cx={pCenter.x} cy={pCenter.y} r="7" fill="#4285F4" stroke="white" strokeWidth="2.5" />
               </g>
             );
           })()

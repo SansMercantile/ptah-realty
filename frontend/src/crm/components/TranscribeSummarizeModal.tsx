@@ -19,6 +19,7 @@ import {
   Save
 } from 'lucide-react';
 import { Lead, TaskItem, ActivityLogItem, CallRecording } from '../types';
+import { authHeaders } from '../../services/api';
 
 interface TranscribeSummarizeModalProps {
   isOpen: boolean;
@@ -263,22 +264,22 @@ export const TranscribeSummarizeModal: React.FC<TranscribeSummarizeModalProps> =
     setIsRecording(false);
   };
 
-  // Transcribe & Summarize using Gemini API
+  // Transcribe & Summarize using the backend's AI call-summarization endpoint
   const handleTranscribeAndSummarize = async () => {
     const textToSummarize = transcript.trim() || interimTranscript.trim();
     if (!textToSummarize) return;
 
     setIsSummarizing(true);
     try {
-      const response = await fetch('/api/gemini/transcribe-summarize-call', {
+      const response = await fetch('/api/ptah/transcribe-summarize-call', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify({
           transcript: textToSummarize,
           lead,
           audioDuration: formatDuration(recordingSeconds),
           callType: 'Voice Recording & Transcription',
-          provider: 'Ptah Voice & Gemini AI',
+          provider: 'Ptah Voice AI',
           agentName: lead.assignedAgent?.name || 'Ptah Broker',
         }),
       });
@@ -292,7 +293,7 @@ export const TranscribeSummarizeModal: React.FC<TranscribeSummarizeModalProps> =
         setFormattedNote(data.formattedNote || data.summary);
       }
     } catch (err) {
-      console.error('Gemini summarization error:', err);
+      console.error('Call summarization error:', err);
     } finally {
       setIsSummarizing(false);
     }
@@ -342,7 +343,7 @@ export const TranscribeSummarizeModal: React.FC<TranscribeSummarizeModalProps> =
     const newActivity: ActivityLogItem = {
       id: `act-ai-call-${Date.now()}`,
       type: 'communication',
-      title: `Voice Call Transcribed & Summarized by Gemini AI`,
+      title: `Voice Call Transcribed & Summarized by Ptah AI`,
       description: summary || transcript.slice(0, 120),
       timestamp: now,
       author: lead.assignedAgent?.name || 'Ptah Real Estate Broker',
@@ -350,7 +351,7 @@ export const TranscribeSummarizeModal: React.FC<TranscribeSummarizeModalProps> =
         commType: 'call',
         duration: durationFormatted,
         outcome: `Extracted ${actionItems.length} action items`,
-        tag: 'Gemini Voice AI',
+        tag: 'Ptah Voice AI',
       },
     };
 
@@ -405,7 +406,7 @@ export const TranscribeSummarizeModal: React.FC<TranscribeSummarizeModalProps> =
               <div className="flex items-center space-x-2">
                 <h3 className="text-base font-bold">Transcribe & Summarize Call</h3>
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-purple-400/20 border border-purple-400/30 text-purple-200 font-bold">
-                  Gemini 3.8 Flash
+                  Ptah AI
                 </span>
               </div>
               <p className="text-xs text-purple-200/80">
@@ -554,8 +555,8 @@ export const TranscribeSummarizeModal: React.FC<TranscribeSummarizeModalProps> =
             <Sparkles className={`w-4 h-4 ${isSummarizing ? 'animate-spin' : ''}`} />
             <span>
               {isSummarizing
-                ? 'Gemini 3.8 Flash is Analyzing Call & Extracting Insights...'
-                : 'Extract Key Action Items & Insights with Gemini AI'}
+                ? 'Analyzing Call & Extracting Insights...'
+                : 'Extract Key Action Items & Insights with AI'}
             </span>
           </button>
 

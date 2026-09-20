@@ -11,7 +11,8 @@ import {
   Search,
   Filter,
   Wifi,
-  Loader2
+  Loader2,
+  Building2
 } from 'lucide-react';
 import { 
   LineChart, 
@@ -33,12 +34,20 @@ interface SuburbAnalyticsModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSelectSuburbForMap?: (suburbName: string) => void;
+  // Suburb-scoped quick actions -- distinct signature from the
+  // PropertyRecord-based onOpenInfrastructure used in PropertyPanel /
+  // CadastralMap, since there's no single selected property here, just
+  // whichever suburb is currently browsed in this modal. See App.tsx.
+  onOpenDevelopments?: () => void;
+  onOpenInfrastructureForSuburb?: (suburbName: string) => void;
 }
 
 export const SuburbAnalyticsModal: React.FC<SuburbAnalyticsModalProps> = ({
   isOpen,
   onClose,
-  onSelectSuburbForMap
+  onSelectSuburbForMap,
+  onOpenDevelopments,
+  onOpenInfrastructureForSuburb
 }) => {
   const [activeTab, setActiveTab] = useState<'Statistical' | 'Demographics' | 'Province'>('Statistical');
   const [selectedSuburb, setSelectedSuburb] = useState<string>('GREEN POINT, CITY OF CAPE TOWN');
@@ -235,6 +244,39 @@ export const SuburbAnalyticsModal: React.FC<SuburbAnalyticsModalProps> = ({
                   <span className="font-bold text-indigo-700">{currentStats.sectionalTitleCount.toLocaleString()}</span>
                 </div>
               </div>
+
+              {/* Suburb-scoped quick actions -- Developments is a
+                  buildings/off-plan-scheme search naturally scoped to a
+                  suburb (not a single property), so it lives here rather
+                  than on the property popup card. Infrastructure is
+                  offered here too since an agent farming this suburb may
+                  want the amenity picture before opening any one property. */}
+              {(onOpenDevelopments || onOpenInfrastructureForSuburb) && (
+                <div className="flex items-center gap-1.5 w-full sm:w-auto">
+                  {onOpenDevelopments && (
+                    <button
+                      type="button"
+                      onClick={onOpenDevelopments}
+                      className="flex-1 sm:flex-initial py-1.5 px-2.5 bg-cyan-950 hover:bg-cyan-900 text-cyan-200 border border-cyan-800 rounded text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-colors"
+                      title="Search buildings in developments & off-plan schemes"
+                    >
+                      <Building2 className="w-3.5 h-3.5 text-cyan-300" />
+                      <span>Developments</span>
+                    </button>
+                  )}
+                  {onOpenInfrastructureForSuburb && (
+                    <button
+                      type="button"
+                      onClick={() => onOpenInfrastructureForSuburb(selectedSuburb)}
+                      className="flex-1 sm:flex-initial py-1.5 px-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-colors"
+                      title="Schools, healthcare, transit & civic infrastructure in this suburb"
+                    >
+                      <Wifi className="w-3.5 h-3.5 text-cyan-400" />
+                      <span>Infrastructure</span>
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* TAB 1: STATISTICAL ANALYSIS */}

@@ -17,6 +17,9 @@ import { CMAEngineModal } from './components/modals/CMAEngineModal';
 import { MediaManagementModal } from './components/modals/MediaManagementModal';
 import { PDFReportModal } from './components/modals/PDFReportModal';
 import { PortalSyncModal } from './components/modals/PortalSyncModal';
+import { DevelopmentsModal } from './components/modals/DevelopmentsModal';
+import { InfrastructureSearchModal } from './components/modals/InfrastructureSearchModal';
+import { Walkthrough3DModal } from './components/modals/Walkthrough3DModal';
 import { MyListingsModal, INITIAL_MY_LISTINGS, type ListingDealRecord } from './components/modals/MyListingsModal';
 import { QuickListingModal } from './components/dealView/QuickListingModal';
 import { UserSettingsModal, SettingsTabType, LANGUAGES_DATA } from './components/modals/UserSettingsModal';
@@ -161,6 +164,22 @@ export function App() {
   const [isPDFReportOpen, setIsPDFReportOpen] = usePersistedState('isPDFReportOpen', false);
   const [isPortalSyncOpen, setIsPortalSyncOpen] = usePersistedState('isPortalSyncOpen', false);
   const [isMyListingsOpen, setIsMyListingsOpen] = usePersistedState('isMyListingsOpen', false);
+  // Developments, Infrastructure & 3D Walkthrough modals (demo v2.7.0).
+  // Open flags follow the usePersistedState pattern above so an F5 keeps
+  // the current view; the two property refs stay plain useState -- they're
+  // re-derivable from selectedProperty on reload and shouldn't pin a
+  // stale record into sessionStorage.
+  const [isDevelopmentsModalOpen, setIsDevelopmentsModalOpen] = usePersistedState('isDevelopmentsModalOpen', false);
+  const [isInfrastructureModalOpen, setIsInfrastructureModalOpen] = usePersistedState('isInfrastructureModalOpen', false);
+  const [isWalkthrough3DModalOpen, setIsWalkthrough3DModalOpen] = usePersistedState('isWalkthrough3DModalOpen', false);
+  const [walkthroughProperty, setWalkthroughProperty] = useState<PropertyRecord | null>(null);
+  const [infrastructureProperty, setInfrastructureProperty] = useState<PropertyRecord | null>(null);
+  // Set when Infrastructure is opened from a suburb-scoped surface (Suburb
+  // & Demographic Analytics) rather than a single property -- takes
+  // priority over infrastructureProperty's address when present. Cleared
+  // whenever a property-scoped open happens instead, so a stale suburb
+  // search doesn't linger and override a specific property's address.
+  const [infrastructureSuburb, setInfrastructureSuburb] = useState<string | null>(null);
   // Listings pipeline data now lives here (not inside MyListingsModal) so
   // the Quick Listing shortcut -- CRM header only, see chat -- can add to
   // it from the CRM tab without My Listings needing to be open.
@@ -418,6 +437,10 @@ export function App() {
     setIsBalanceDetailsOpen(false);
     setIsCreditsTopUpOpen(false);
     setIsSearchHistoryOpen(false);
+    setIsDevelopmentsModalOpen(false);
+    setIsInfrastructureModalOpen(false);
+    setIsWalkthrough3DModalOpen(false);
+    setInfrastructureSuburb(null);
   };
 
   const handleSelectProperty = (prop: PropertyRecord) => {
@@ -553,6 +576,15 @@ export function App() {
           onOpenContactOwner={handleOpenContactOwner}
           onOpenPortalSync={() => setIsPortalSyncOpen(true)}
           onLivePropertiesAdded={handleLivePropertiesAdded}
+          onOpen3DWalkthrough={(prop) => {
+            setWalkthroughProperty(prop);
+            setIsWalkthrough3DModalOpen(true);
+          }}
+          onOpenInfrastructure={(prop) => {
+            setInfrastructureSuburb(null);
+            setInfrastructureProperty(prop);
+            setIsInfrastructureModalOpen(true);
+          }}
         />
 
         {/* Right Collapsible Property & Title Information Sidebar */}
@@ -573,6 +605,16 @@ export function App() {
             onOpenPDFReport={() => setIsPDFReportOpen(true)}
             onOpenPortalSync={() => setIsPortalSyncOpen(true)}
             onOpenContactOwner={handleOpenContactOwner}
+            onOpen3DWalkthrough={(prop) => {
+              setWalkthroughProperty(prop);
+              setIsWalkthrough3DModalOpen(true);
+            }}
+            onOpenDevelopments={() => setIsDevelopmentsModalOpen(true)}
+            onOpenInfrastructure={(prop) => {
+              setInfrastructureSuburb(null);
+              setInfrastructureProperty(prop);
+              setIsInfrastructureModalOpen(true);
+            }}
           />
         )}
           </>
@@ -587,6 +629,11 @@ export function App() {
         onSelectSuburbForMap={(suburb) => {
           const match = properties.find(p => p.suburb.toLowerCase().includes(suburb.toLowerCase().split(',')[0]));
           if (match) setSelectedProperty(match);
+        }}
+        onOpenDevelopments={() => setIsDevelopmentsModalOpen(true)}
+        onOpenInfrastructureForSuburb={(suburb) => {
+          setInfrastructureSuburb(suburb);
+          setIsInfrastructureModalOpen(true);
         }}
       />
 
@@ -604,6 +651,10 @@ export function App() {
         onClose={handleCloseNavModal}
         properties={properties}
         onSelectProperty={handleSelectProperty}
+        onOpen3DWalkthrough={(prop) => {
+          setWalkthroughProperty(prop);
+          setIsWalkthrough3DModalOpen(true);
+        }}
       />
 
       {/* 4. Prospecting & Lead Generation Engine Modal */}
@@ -783,6 +834,36 @@ export function App() {
       <SearchHistoryModal
         isOpen={isSearchHistoryOpen}
         onClose={() => setIsSearchHistoryOpen(false)}
+      />
+
+      {/* 20. Buildings in Developments & Off-plan Schemes Modal */}
+      <DevelopmentsModal
+        isOpen={isDevelopmentsModalOpen}
+        onClose={() => setIsDevelopmentsModalOpen(false)}
+        onListingAdded={(newListing) => {
+          setProperties(prev => [newListing, ...prev]);
+          setSelectedProperty(newListing);
+        }}
+        onSelectProperty={(prop) => {
+          setSelectedProperty(prop);
+          setIsDevelopmentsModalOpen(false);
+        }}
+      />
+
+      {/* 21. Spatial Infrastructure & Civic Proximity Search Modal */}
+      <InfrastructureSearchModal
+        isOpen={isInfrastructureModalOpen}
+        onClose={() => setIsInfrastructureModalOpen(false)}
+        propertyAddress={infrastructureSuburb ? undefined : (infrastructureProperty?.address || selectedProperty?.address)}
+        suburbName={infrastructureSuburb || infrastructureProperty?.suburb || selectedProperty?.suburb}
+      />
+
+      {/* 22. Photorealistic 3D Walkthrough & Spatial Reconstruction Modal (Realsee / Sphere) */}
+      <Walkthrough3DModal
+        isOpen={isWalkthrough3DModalOpen}
+        onClose={() => setIsWalkthrough3DModalOpen(false)}
+        propertyId={walkthroughProperty?.id || selectedProperty?.id}
+        propertyAddress={walkthroughProperty?.address || selectedProperty?.address}
       />
     </div>
   );

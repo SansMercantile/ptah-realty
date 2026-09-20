@@ -8,7 +8,8 @@ import {
   Building2, 
   Calendar, 
   Coins, 
-  FileSpreadsheet 
+  FileSpreadsheet,
+  Box
 } from 'lucide-react';
 import { PropertyRecord } from '../../types';
 
@@ -17,6 +18,10 @@ interface SalesTransfersModalProps {
   onClose: () => void;
   properties: PropertyRecord[];
   onSelectProperty: (property: PropertyRecord) => void;
+  // Jump straight to this registered transfer's 3D walkthrough without
+  // leaving the transfers table -- the row itself still opens the
+  // property on the map via onSelectProperty. See App.tsx.
+  onOpen3DWalkthrough?: (property: PropertyRecord) => void;
 }
 
 type SalesTab = 
@@ -31,7 +36,8 @@ export const SalesTransfersModal: React.FC<SalesTransfersModalProps> = ({
   isOpen,
   onClose,
   properties,
-  onSelectProperty
+  onSelectProperty,
+  onOpen3DWalkthrough
 }) => {
   const [activeTab, setActiveTab] = useState<SalesTab>('Sales');
   const [propertyTypeFilter, setPropertyTypeFilter] = useState<'All' | 'Full Title' | 'Sectional Title'>('All');
@@ -251,11 +257,26 @@ export const SalesTransfersModal: React.FC<SalesTransfersModalProps> = ({
                         <td className="p-2 text-right text-emerald-800 font-medium">{item.extentM2} m²</td>
                         <td className="p-2 font-mono text-slate-600">{item.currentSale.titleDeed}</td>
                         <td className="p-2">
-                          <button
-                            className="px-2 py-0.5 bg-[#006980] text-white rounded text-[10px] font-semibold hover:bg-teal-700"
-                          >
-                            View
-                          </button>
+                          <div className="flex items-center gap-1">
+                            <button
+                              className="px-2 py-0.5 bg-[#006980] text-white rounded text-[10px] font-semibold hover:bg-teal-700"
+                            >
+                              View
+                            </button>
+                            {onOpen3DWalkthrough && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onOpen3DWalkthrough(item);
+                                }}
+                                className="px-1.5 py-0.5 bg-purple-900/80 hover:bg-purple-800 text-purple-100 border border-purple-600/80 rounded text-[10px] font-semibold flex items-center gap-1"
+                                title="Photorealistic 3D walkthrough of this registered transfer"
+                              >
+                                <Box className="w-3 h-3" />
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))}

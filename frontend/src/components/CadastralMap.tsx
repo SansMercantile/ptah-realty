@@ -7,7 +7,8 @@ import {
   Navigation, 
   SlidersHorizontal,
   RefreshCw,
-  Loader2
+  Loader2,
+  LocateFixed
 } from 'lucide-react';
 import { APIProvider, Map, AdvancedMarker, Pin, InfoWindow } from '@vis.gl/react-google-maps';
 import { PropertyRecord } from '../types';
@@ -20,6 +21,7 @@ import { CompassTool } from './CompassTool';
 import { Property24Brand } from './Property24Brand';
 import { CADASTRAL_STREETS, filterPropertiesByStreet, formatWGS84 } from '../utils/cadastralFilters';
 import { pullProperty24RadiusListings, radiusListingToPropertyRecord, createPropertyFromRadiusListing, Property24RadiusResponse } from '../services/api';
+import { useLiveGeolocation } from '../hooks/useLiveGeolocation';
 
 interface CadastralMapProps {
   properties: PropertyRecord[];
@@ -36,6 +38,11 @@ interface CadastralMapProps {
   // handlePullRadiusListings only showed a "Pulled N listings" toast and
   // discarded the results, so the button did nothing visible beyond that.
   onLivePropertiesAdded?: (properties: PropertyRecord[]) => void;
+  // Same quick actions PropertyPanel already exposes -- forwarded to the
+  // popup card so they're reachable straight off a map pin, no sidebar
+  // needed. See App.tsx.
+  onOpen3DWalkthrough?: (property: PropertyRecord) => void;
+  onOpenInfrastructure?: (property: PropertyRecord) => void;
 }
 
 export const CadastralMap: React.FC<CadastralMapProps> = ({
@@ -48,7 +55,9 @@ export const CadastralMap: React.FC<CadastralMapProps> = ({
   onOpenPDFReport,
   onOpenContactOwner,
   onOpenPortalSync,
-  onLivePropertiesAdded
+  onLivePropertiesAdded,
+  onOpen3DWalkthrough,
+  onOpenInfrastructure
 }) => {
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
   // Only pass a mapId to the Google Map when one is explicitly configured --
@@ -67,6 +76,12 @@ export const CadastralMap: React.FC<CadastralMapProps> = ({
   const [mapEngine, setMapEngine] = useState<'google' | 'vector'>('vector');
   const [googleMapsError, setGoogleMapsError] = useState<string | null>(null);
   const [googleMapType, setGoogleMapType] = useState<'roadmap' | 'satellite' | 'hybrid' | 'terrain'>('satellite');
+  // Canvass Mode: the agent's own live GPS position while door-knocking a
+  // street, rendered as a "you are here" marker + accuracy ring on the
+  // vector cadastre canvas. Only meaningful in vector engine mode -- the
+  // watch is started/stopped by the toggle button below, and always
+  // stopped on unmount (see the hook itself).
+  const { position: liveLocation, isTracking: isCanvassMode, error: liveLocationError, start: startLiveLocation, stop: stopLiveLocation } = useLiveGeolocation();
   const [showRadiusRing, setShowRadiusRing] = useState(true);
   const [radiusMeters, setRadiusMeters] = useState(500);
   const [showZoningLayer, setShowZoningLayer] = useState(true);
@@ -457,6 +472,8 @@ export const CadastralMap: React.FC<CadastralMapProps> = ({
           onOpenPDF={onOpenPDFReport}
           onOpenContact={() => onOpenContactOwner?.(selectedProperty)}
           onOpenPortalSync={onOpenPortalSync}
+          onOpen3DWalkthrough={onOpen3DWalkthrough ? () => onOpen3DWalkthrough(selectedProperty) : undefined}
+          onOpenInfrastructure={onOpenInfrastructure ? () => onOpenInfrastructure(selectedProperty) : undefined}
         />
       )}
 
@@ -671,6 +688,7 @@ export const CadastralMap: React.FC<CadastralMapProps> = ({
           onCursorCoordsChange={setCursorCoords}
           showStreetFilters={showStreetFilters}
           onToggleStreetFilters={() => setShowStreetFilters((prev) => !prev)}
+          liveLocation={mapEngine === 'vector' && isCanvassMode ? liveLocation : null}
         />
       )}
 
@@ -696,6 +714,34 @@ export const CadastralMap: React.FC<CadastralMapProps> = ({
             top-left Engine Switcher) per explicit request -- was down here
             stacked with the (now-removed) redundant zoom buttons, out of
             the way of the map's other bottom-right controls. */}
+
+        {/* Canvass Mode: live self-location while door-knocking a street.
+            Vector engine only -- Google Maps mode has no consumer for
+            liveLocation (RealCadastreMap is the only renderer of the "you
+            are here" marker), so the toggle is hidden there rather than
+            silently doing nothing. */}
+        {mapEngine === 'vector' && (
+          <div className="flex flex-col items-end gap-1.5 pointer-events-auto">
+            <button
+              type="button"
+              onClick={() => (isCanvassMode ? stopLiveLocation() : startLiveLocation())}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[11px] font-semibold shadow-lg backdrop-blur-md transition ${
+                isCanvassMode
+                  ? 'bg-cyan-600 border-cyan-400 text-white'
+                  : 'bg-slate-900/90 border-slate-700 text-slate-300 hover:bg-slate-800'
+              }`}
+              title={isCanvassMode ? 'Stop sharing your live location' : 'Track your live location on the cadastre while canvassing'}
+            >
+              <LocateFixed className={`w-3.5 h-3.5 ${isCanvassMode ? 'text-white animate-pulse' : 'text-cyan-400'}`} />
+              <span>{isCanvassMode ? 'Canvass Mode: On' : 'Canvass Mode'}</span>
+            </button>
+            {isCanvassMode && liveLocationError && (
+              <span className="bg-red-950/90 border border-red-700 text-red-300 text-[10px] px-2 py-1 rounded-lg max-w-[220px] text-right">
+                {liveLocationError}
+              </span>
+            )}
+          </div>
+        )}
 
       </div>
 

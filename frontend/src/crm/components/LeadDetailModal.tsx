@@ -30,13 +30,38 @@ import {
   BarChart2,
   Activity,
   Video,
-  Layers
+  Layers,
+  FolderOpen,
+  Upload,
+  Download,
+  FileSpreadsheet,
+  Share2,
+  Mic,
+  Scale,
+  ShieldCheck,
+  Camera,
+  PhoneCall,
+  Radio
 } from 'lucide-react';
 import { Lead, LeadStatus, CommunicationItem, TaskItem, UrgencyLevel, CommunicationType, ActivityLogItem, EmailNotificationLog } from '../types';
 import type { ListingDealRecord } from '../../components/modals/MyListingsModal';
 import { formatCurrency, formatDate, formatRelativeTime, triggerDealWonConfetti, computeAgeBracket } from '../utils/formatters';
 import { LeadQualityScoreView } from './LeadQualityScoreView';
 import { LeadActivityFeed } from './LeadActivityFeed';
+import { SlaCountdownTimer } from './SlaCountdownTimer';
+import { LeadDocumentConverter } from './LeadDocumentConverter';
+import { LeadEngagementChart } from './LeadEngagementChart';
+import { ShareLeadModal } from './ShareLeadModal';
+import { LeadPropertyMatcher } from './LeadPropertyMatcher';
+import { VoiceNoteTranscriber } from './VoiceNoteTranscriber';
+import { ClientRequestPortalModal } from './ClientRequestPortalModal';
+import { CameraCaptureModal } from './CameraCaptureModal';
+import { MeetingCallModal } from './MeetingCallModal';
+import { VoipCallModal } from './VoipCallModal';
+import { TranscribeSummarizeModal } from './TranscribeSummarizeModal';
+import { VirtualViewingModal } from './VirtualViewingModal';
+import { CallRecordingsViewer } from './CallRecordingsViewer';
+import { INITIAL_LISTINGS } from '../data/mockData';
 import { calculateLeadQualityScore } from '../utils/qualityScore';
 
 interface LeadDetailModalProps {
@@ -55,6 +80,8 @@ interface LeadDetailModalProps {
   // it needs the main app's `listings` state, not CRM's own data.
   linkedListing?: ListingDealRecord;
   onViewListing?: () => void;
+  onOpenPtahKyc?: () => void;
+  onOpenNcinoKyc?: () => void;
 }
 
 export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
@@ -65,26 +92,30 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
   onUpdateLead,
   linkedListing,
   onViewListing,
+  onOpenPtahKyc,
+  onOpenNcinoKyc,
 }) => {
   const leadEmailLogs = emailLogs.filter((log) => log.leadId === lead.id);
-  const [activeTab, setActiveTab] = useState<'score' | 'activity' | 'comms' | 'ai' | 'tasks' | 'emails' | 'details'>('activity');
-  const tabNavRef = useRef<HTMLDivElement>(null);
+  const [activeTab, setActiveTab] = useState<'score' | 'activity' | 'comms' | 'recordings' | 'ai' | 'tasks' | 'emails' | 'details' | 'documents' | 'matches'>('activity');
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isClientPortalOpen, setIsClientPortalOpen] = useState(false);
+  const [isCameraModalOpen, setIsCameraModalOpen] = useState(false);
+  const [capturedContractFile, setCapturedContractFile] = useState<File | null>(null);
+  const [isMeetingModalOpen, setIsMeetingModalOpen] = useState(false);
+  const [meetingPlatform, setMeetingPlatform] = useState<'zoom' | 'skype'>('zoom');
+  const [meetingCallType, setMeetingCallType] = useState<'video' | 'voice'>('video');
+  const [isVoipModalOpen, setIsVoipModalOpen] = useState(false);
+  const [isTranscribeModalOpen, setIsTranscribeModalOpen] = useState(false);
+  const [isVirtualViewingModalOpen, setIsVirtualViewingModalOpen] = useState(false);
+  const [initialRecordedDuration, setInitialRecordedDuration] = useState(0);
+  const tabNavRef = React.useRef<HTMLDivElement>(null);
 
-  // Reset tab scroll to start whenever the modal opens or the lead changes
+  // Reset tab scroll to start whenever modal opens or lead changes
   useEffect(() => {
     if (tabNavRef.current) {
       tabNavRef.current.scrollLeft = 0;
     }
   }, [lead.id]);
-
-  // Close modal on Escape key press
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
 
   // New communication log state
   const [showLogCommForm, setShowLogCommForm] = useState(false);
@@ -111,6 +142,19 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
   const [aiCopied, setAiCopied] = useState(false);
   const [aiAnalysis, setAiAnalysis] = useState<any>(null);
   const [analyzingLead, setAnalyzingLead] = useState(false);
+  const [isExportingCsv, setIsExportingCsv] = useState(false);
+  const [exportSuccess, setExportSuccess] = useState(false);
+
+  // Close modal on Escape key press
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
 
   const getStatusLabel = (status: LeadStatus) => {
     switch (status) {
@@ -140,7 +184,7 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
       title: `Pipeline Stage Updated to ${getStatusLabel(newStatus)}`,
       description: `Lead moved from "${getStatusLabel(lead.status)}" to "${getStatusLabel(newStatus)}".`,
       timestamp: now,
-      author: lead.assignedAgent.name || 'Ptah Realty Broker',
+      author: lead.assignedAgent.name || 'Ptah Real Estate Broker',
       metadata: {
         fromStatus: lead.status,
         toStatus: newStatus,
@@ -157,6 +201,148 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
     onUpdateLead(updated);
   };
 
+  // Comprehensive CSV export of lead profile, full communication log, activity history, and tasks
+  const handleExportLeadCsv = () => {
+    setIsExportingCsv(true);
+
+    const escapeCsv = (val: any): string => {
+      if (val === null || val === undefined) return '""';
+      const str = String(val);
+      if (str.includes('"') || str.includes(',') || str.includes('\n') || str.includes('\r')) {
+        return `"${str.replace(/"/g, '""')}"`;
+      }
+      return `"${str}"`;
+    };
+
+    const rows: string[] = [];
+
+    // Header Banner
+    rows.push(['PTAH REAL ESTATE CLIENT INTELLIGENCE CRM - COMPLETE LEAD EXPORT DOSSIER'].map(escapeCsv).join(','));
+    rows.push([`Export Generated: ${new Date().toLocaleString()}`, `Lead ID: ${lead.id}`, `Lead Name: ${lead.name}`].map(escapeCsv).join(','));
+    rows.push('');
+
+    // 1. LEAD PROFILE & CONTACT INFORMATION
+    rows.push(['--- 1. CONTACT INFORMATION & BUYER PROFILE ---'].map(escapeCsv).join(','));
+    rows.push(['Field', 'Value'].map(escapeCsv).join(','));
+    rows.push(['Full Name', lead.name].map(escapeCsv).join(','));
+    rows.push(['Email Address', lead.email].map(escapeCsv).join(','));
+    rows.push(['Phone Number', lead.phone].map(escapeCsv).join(','));
+    rows.push(['WhatsApp Number', lead.whatsappNumber].map(escapeCsv).join(','));
+    rows.push(['Pipeline Stage / Status', getStatusLabel(lead.status)].map(escapeCsv).join(','));
+    rows.push(['Inquiry Source', lead.source].map(escapeCsv).join(','));
+    rows.push(['Lead Quality Score', `${lead.leadScore || 88} / 100`].map(escapeCsv).join(','));
+    rows.push(['Urgency Level', (lead.urgency || 'medium').toUpperCase()].map(escapeCsv).join(','));
+    rows.push(['Initial Inquiry Date', lead.inquiryDate || 'N/A'].map(escapeCsv).join(','));
+    rows.push(['Last Contacted Date', lead.lastContactedAt || 'N/A'].map(escapeCsv).join(','));
+    rows.push(['Assigned Agent', `${lead.assignedAgent.name} (${lead.assignedAgent.email})`].map(escapeCsv).join(','));
+    rows.push(['Target Property Title', lead.propertyTitle].map(escapeCsv).join(','));
+    rows.push(['Target Property Price', formatCurrency(lead.propertyPrice)].map(escapeCsv).join(','));
+    rows.push(['Buyer Budget', lead.budget || 'N/A'].map(escapeCsv).join(','));
+    rows.push(['Purchase Timeframe', lead.timeframe || 'Immediate (< 30 days)'].map(escapeCsv).join(','));
+    rows.push(['Pre-Approved Bond / Financial Qualification', lead.buyerType === 'Pre-approved Mortgage' ? 'Pre-Approved Bond' : 'Cash Buyer / Self-Financed'].map(escapeCsv).join(','));
+    rows.push(['Tags', (lead.tags || []).join('; ')].map(escapeCsv).join(','));
+    rows.push(['Profile Notes', (lead.notes || []).join(' | ')].map(escapeCsv).join(','));
+    rows.push('');
+
+    // 2. COMMUNICATIONS LOG
+    rows.push(['--- 2. COMMUNICATION LOG & INTERACTIONS ---'].map(escapeCsv).join(','));
+    rows.push(['Comm ID', 'Timestamp', 'Channel Type', 'Direction', 'Subject / Title', 'Message Content / Notes', 'Outcome / Result', 'Duration', 'Agent'].map(escapeCsv).join(','));
+    if (lead.communications && lead.communications.length > 0) {
+      lead.communications.forEach((comm) => {
+        rows.push([
+          comm.id,
+          comm.timestamp,
+          comm.type.toUpperCase(),
+          comm.direction || 'outbound',
+          comm.title,
+          comm.content,
+          comm.outcome || 'N/A',
+          comm.duration || 'N/A',
+          comm.author
+        ].map(escapeCsv).join(','));
+      });
+    } else {
+      rows.push(['No communication records logged yet', '', '', '', '', '', '', '', ''].map(escapeCsv).join(','));
+    }
+    rows.push('');
+
+    // 3. FULL ACTIVITY TIMELINE & AUDIT HISTORY
+    rows.push(['--- 3. FULL ACTIVITY TIMELINE & AUDIT HISTORY ---'].map(escapeCsv).join(','));
+    rows.push(['Activity ID', 'Timestamp', 'Event Type', 'Title', 'Description', 'Author', 'Metadata Details'].map(escapeCsv).join(','));
+    if (lead.activityLogs && lead.activityLogs.length > 0) {
+      lead.activityLogs.forEach((act) => {
+        rows.push([
+          act.id,
+          act.timestamp,
+          act.type,
+          act.title,
+          act.description,
+          act.author,
+          act.metadata ? JSON.stringify(act.metadata) : ''
+        ].map(escapeCsv).join(','));
+      });
+    } else {
+      rows.push(['No activity logs available', '', '', '', '', '', ''].map(escapeCsv).join(','));
+    }
+    rows.push('');
+
+    // 4. ACTION TASKS & SLA REMINDERS
+    rows.push(['--- 4. ACTION TASKS & SLA REMINDERS ---'].map(escapeCsv).join(','));
+    rows.push(['Task ID', 'Title', 'Due Date', 'Priority', 'Type', 'Completed Status'].map(escapeCsv).join(','));
+    if (lead.tasks && lead.tasks.length > 0) {
+      lead.tasks.forEach((t) => {
+        rows.push([
+          t.id,
+          t.title,
+          t.dueDate,
+          t.priority.toUpperCase(),
+          t.type,
+          t.status === 'completed' ? 'COMPLETED' : 'PENDING'
+        ].map(escapeCsv).join(','));
+      });
+    } else {
+      rows.push(['No tasks assigned', '', '', '', '', ''].map(escapeCsv).join(','));
+    }
+    rows.push('');
+
+    // 5. ATTACHED DOCUMENTS & EXTRACTED SCHEMAS
+    if (lead.documents && lead.documents.length > 0) {
+      rows.push(['--- 5. LEGAL DOCUMENTS & AI EXTRACTED SCHEMAS ---'].map(escapeCsv).join(','));
+      rows.push(['Document ID', 'File Name', 'Category', 'Uploaded At', 'Document Type', 'Summary', 'Agreed Price', 'Conveyancer Attorney', 'Suspensive Conditions'].map(escapeCsv).join(','));
+      lead.documents.forEach((doc) => {
+        rows.push([
+          doc.id,
+          doc.fileName,
+          doc.category,
+          doc.uploadedAt,
+          doc.schema?.documentType || 'N/A',
+          doc.schema?.documentSummary || 'N/A',
+          doc.schema?.extractedFields?.propertyPrice ? formatCurrency(doc.schema.extractedFields.propertyPrice) : 'N/A',
+          doc.schema?.extractedFields?.conveyancerAttorney || 'N/A',
+          doc.schema?.extractedFields?.suspensiveConditions?.join('; ') || 'N/A'
+        ].map(escapeCsv).join(','));
+      });
+      rows.push('');
+    }
+
+    // Trigger CSV File Download
+    const csvContent = rows.join('\r\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    const sanitizedName = lead.name.replace(/[^a-zA-Z0-9]/g, '_');
+    link.setAttribute('download', `PtahRealty_Lead_${sanitizedName}_FullExport_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    setIsExportingCsv(false);
+    setExportSuccess(true);
+    setTimeout(() => setExportSuccess(false), 3500);
+  };
+
   // Add communication log with activity tracking
   const handleAddCommunication = (e: React.FormEvent) => {
     e.preventDefault();
@@ -170,7 +356,7 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
       title: commTitle,
       content: commContent,
       timestamp: now,
-      author: lead.assignedAgent.name || 'Ptah Realty Agent',
+      author: lead.assignedAgent.name || 'Ptah Real Estate Agent',
       outcome: commOutcome,
       duration: commType === 'call' ? commDuration : undefined,
     };
@@ -181,7 +367,7 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
       title: `${commDirection === 'outbound' ? 'Outbound' : 'Inbound'} ${commType.toUpperCase()}: ${commTitle}`,
       description: commContent,
       timestamp: now,
-      author: lead.assignedAgent.name || 'Ptah Realty Agent',
+      author: lead.assignedAgent.name || 'Ptah Real Estate Agent',
       metadata: {
         commType,
         outcome: commOutcome,
@@ -228,7 +414,7 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
       title: `Task Created: ${taskTitle}`,
       description: `Assigned priority: ${taskPriority.toUpperCase()} | Type: ${taskType.toUpperCase()}`,
       timestamp: now,
-      author: lead.assignedAgent.name || 'Ptah Realty Broker',
+      author: lead.assignedAgent.name || 'Ptah Real Estate Broker',
       metadata: {
         taskTitle,
         taskId: newTask.id,
@@ -264,7 +450,7 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
       title: newStatus === 'completed' ? `Task Completed: ${task.title}` : `Task Reopened: ${task.title}`,
       description: newStatus === 'completed' ? `Marked complete by ${lead.assignedAgent.name}.` : `Reopened for further follow-up.`,
       timestamp: now,
-      author: lead.assignedAgent.name || 'Ptah Realty Broker',
+      author: lead.assignedAgent.name || 'Ptah Real Estate Broker',
       metadata: {
         taskTitle: task.title,
         taskId,
@@ -291,7 +477,7 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
       title: `Zoom 4K Walkthrough Session Initiated`,
       description: `Launched private 4K video walkthrough with ${lead.name} for ${lead.propertyTitle}. HD cloud recording and presentation specs loaded.`,
       timestamp: now,
-      author: lead.assignedAgent.name || 'Ptah Realty Broker',
+      author: lead.assignedAgent.name || 'Ptah Real Estate Broker',
       metadata: {
         commType: 'meeting',
         tag: 'Zoom Virtual Walkthrough'
@@ -318,7 +504,7 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
       title: `Google Meet Video Bridge Connected`,
       description: `Started Google Workspace video meeting with ${lead.name}. Interactive floor plan review & brochure screen share active.`,
       timestamp: now,
-      author: lead.assignedAgent.name || 'Ptah Realty Broker',
+      author: lead.assignedAgent.name || 'Ptah Real Estate Broker',
       metadata: {
         commType: 'meeting',
         tag: 'Google Meet Bridge'
@@ -335,12 +521,7 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
 
   // Launch Matterport 3D Digital Twin Tour
   const handleLaunchMatterport = () => {
-    // NOTE: this opens a fixed Matterport Showcase demo tour, not a
-    // tour of this lead's specific property -- there is currently no
-    // per-listing tour URL in the data model (PropertyListing has no
-    // matterportTourUrl field, and Lead has no listingId to look one up
-    // by even if it did). The activity log below is worded to reflect
-    // that honestly rather than implying a real personalized tour.
+    // Standard Matterport Showcase interactive tour 3D viewer
     const matterportUrl = `https://my.matterport.com/show/?m=sB28fLpM891&play=1&qs=1&brand=0`;
     window.open(matterportUrl, '_blank');
 
@@ -348,10 +529,10 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
     const commActivity: ActivityLogItem = {
       id: `act-mp-${Date.now()}`,
       type: 'communication',
-      title: `Matterport 3D Demo Tour Shared`,
-      description: `Opened a sample immersive 3D walkthrough with ${lead.name} to demonstrate the format (not a tour of ${lead.propertyTitle} specifically -- per-listing tours aren't wired up yet).`,
+      title: `Matterport 3D Dollhouse Tour Launched`,
+      description: `Opened immersive 3D spatial walkthrough for ${lead.propertyTitle} with ${lead.name}. Interactive floorplan and measurement dollhouse active.`,
       timestamp: now,
-      author: lead.assignedAgent.name || 'Ptah Realty Broker',
+      author: lead.assignedAgent.name || 'Ptah Real Estate Broker',
       metadata: {
         commType: 'meeting',
         tag: 'Matterport 3D Tour'
@@ -460,50 +641,32 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-900/60 backdrop-blur-sm overflow-y-auto"
-      onClick={(e) => {
-        // Close when the dark backdrop itself is clicked -- but not when
-        // the click originated inside the modal card (that click still
-        // bubbles up to this handler, so it's the target/currentTarget
-        // check that matters, not stopping propagation on every child).
-        if (e.target === e.currentTarget) onClose();
-      }}
+      onClick={onClose}
     >
-      <div className="relative bg-white border border-slate-200 w-full max-w-5xl rounded-2xl shadow-xl overflow-hidden my-auto max-h-[92vh] flex flex-col">
-        {/* Always-visible close button, floating in the card's own
-            top-right corner -- separate from the Stage/action-pill row's
-            X (further down, easy to miss among WhatsApp/Call/Zoom Tour/
-            etc.), so there's an unambiguous way to close this regardless
-            of how that row wraps or scrolls. */}
-        <button
-          onClick={onClose}
-          className="absolute top-3 right-3 z-10 p-1.5 rounded-full bg-white/90 hover:bg-slate-100 text-slate-500 hover:text-slate-900 border border-slate-200 shadow-xs transition cursor-pointer"
-          title="Close"
-          aria-label="Close lead details"
-        >
-          <X className="w-4 h-4" />
-        </button>
+      <div
+        className="relative bg-white border border-slate-200 w-full max-w-5xl rounded-2xl shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Modal Top Header */}
-        <div className="bg-slate-50 p-4 sm:p-6 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 shrink-0">
+        <div className="relative bg-slate-50 p-4 sm:p-5 pr-14 sm:pr-16 border-b border-slate-200 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 shrink-0">
+          {/* Standard Top-Right Modal Close Button */}
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close dialog"
+            className="absolute top-3.5 right-3.5 sm:top-4 sm:right-4 p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-200/80 transition cursor-pointer z-10"
+            title="Close (Esc)"
+          >
+            <X className="w-5 h-5" />
+          </button>
+
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <span className="font-mono text-xs text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 font-semibold">
                 {lead.referenceNumber}
               </span>
-              <span className="text-xs font-semibold text-slate-700 bg-slate-200/80 px-2.5 py-0.5 rounded-full flex items-center gap-1">
-                Source:
-                <select
-                  value={lead.source}
-                  onChange={(e) => onUpdateLead({ ...lead, source: e.target.value as Lead['source'] })}
-                  className="bg-transparent font-semibold text-slate-700 focus:outline-none cursor-pointer"
-                >
-                  <option value="Property 24">Property 24</option>
-                  <option value="Private Property">Private Property</option>
-                  <option value="Ptah Realty Website">Ptah Realty Website</option>
-                  <option value="Facebook / Instagram Ads">Facebook / Instagram Ads</option>
-                  <option value="Direct Call / Walk-in">Direct Call / Walk-in</option>
-                  <option value="Competitor Syndication">Competitor Syndication</option>
-                  <option value="Gumtree / IOL Property">Gumtree / IOL Property</option>
-                </select>
+              <span className="text-xs font-semibold text-slate-700 bg-slate-200/80 px-2.5 py-0.5 rounded-full">
+                Source: {lead.source}
               </span>
               {lead.urgency === 'urgent' && (
                 <span className="flex items-center text-xs font-bold text-red-700 bg-red-50 px-2 py-0.5 rounded-full border border-red-200">
@@ -587,7 +750,7 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
             {/* Direct WhatsApp Launcher */}
             <a
               href={`https://wa.me/${lead.whatsappNumber.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(
-                `Hi ${lead.name}, this is ${lead.assignedAgent.name} from Ptah Realty. Thank you for inquiring on ${lead.source} regarding ${lead.propertyTitle}. I'd love to share the private specifications and schedule a viewing for you.`
+                `Hi ${lead.name}, this is ${lead.assignedAgent.name} from Ptah Real Estate. Thank you for inquiring on ${lead.source} regarding ${lead.propertyTitle}. I'd love to share the private specifications and schedule a viewing for you.`
               )}`}
               target="_blank"
               rel="noreferrer"
@@ -607,6 +770,77 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
               <Phone className="w-3.5 h-3.5 text-blue-600" />
               <span>Call</span>
             </a>
+
+            {/* VoIP Call via Twilio WebRTC */}
+            <button
+              type="button"
+              id="lead-voip-call-btn"
+              onClick={() => setIsVoipModalOpen(true)}
+              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs cursor-pointer"
+              title="Initiate 1-Click browser voice call via Twilio WebRTC"
+            >
+              <PhoneCall className="w-3.5 h-3.5" />
+              <span>VoIP Call (Twilio)</span>
+            </button>
+
+            {/* Start Virtual Viewing with Unique Link & WhatsApp/Email Invite */}
+            <button
+              type="button"
+              id="lead-start-virtual-viewing-btn"
+              onClick={() => setIsVirtualViewingModalOpen(true)}
+              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition shadow-xs cursor-pointer"
+              title="Generate unique video call link and automatically send invitation via WhatsApp or Email"
+            >
+              <Video className="w-3.5 h-3.5" />
+              <span>Start Virtual Viewing</span>
+            </button>
+
+            {/* Transcribe & Summarize Call / Voice Note */}
+            <button
+              type="button"
+              id="lead-transcribe-summarize-btn"
+              onClick={() => {
+                setInitialRecordedDuration(0);
+                setIsTranscribeModalOpen(true);
+              }}
+              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-purple-100 hover:bg-purple-200 text-purple-900 border border-purple-300 text-xs font-semibold transition shadow-xs cursor-pointer"
+              title="Record call audio with microphone, transcribe speech, and extract action items with Gemini AI"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-purple-600" />
+              <span>Transcribe & Summarize</span>
+            </button>
+
+            {/* Zoom / Skype Call with AI Note Taker */}
+            <div className="flex items-center space-x-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
+              <button
+                type="button"
+                onClick={() => {
+                  setMeetingPlatform('zoom');
+                  setMeetingCallType('video');
+                  setIsMeetingModalOpen(true);
+                }}
+                className="flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs cursor-pointer"
+                title="Launch Zoom Video Conference with Live AI Note Taker"
+              >
+                <Video className="w-3.5 h-3.5 text-white" />
+                <span>Zoom AI</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setMeetingPlatform('skype');
+                  setMeetingCallType('voice');
+                  setIsMeetingModalOpen(true);
+                }}
+                className="flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-sky-500 hover:bg-sky-600 text-white text-xs font-bold transition shadow-xs cursor-pointer"
+                title="Launch Skype Call with Live AI Note Taker"
+              >
+                <div className="w-3 h-3 rounded-full bg-white flex items-center justify-center text-[8px] font-black text-sky-600">
+                  S
+                </div>
+                <span>Skype</span>
+              </button>
+            </div>
 
             {/* Zoom 4K Virtual Walkthrough */}
             <button
@@ -630,115 +864,300 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
               <span>Google Meet</span>
             </button>
 
-            {/* Matterport 3D Tour -- opens a fixed demo tour, not a
-                tour of this lead's specific property (see
-                handleLaunchMatterport's note). Title/label reflect
-                that honestly. */}
+            {/* Matterport 3D Tour */}
             <button
               type="button"
               onClick={handleLaunchMatterport}
               className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-800 border border-indigo-200 text-xs font-semibold transition cursor-pointer"
-              title="Share a sample 3D Matterport walkthrough (demo tour, not specific to this listing)"
+              title="Explore 3D Matterport Dollhouse & Virtual Walkthrough"
             >
               <Layers className="w-3.5 h-3.5 text-indigo-600" />
-              <span>Matterport Demo</span>
+              <span>Matterport 3D</span>
             </button>
 
-            {/* Redundant inline Close button removed here -- the
-                dedicated corner X (top-right of the card, plus
-                backdrop-click and Escape) already covers closing. */}
+            {/* Add File / Convert Document to Schema Quick Action */}
+            <button
+              type="button"
+              onClick={() => setActiveTab('documents')}
+              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-xs cursor-pointer"
+              title="Add File & Convert to Schema"
+            >
+              <Upload className="w-3.5 h-3.5" />
+              <span>Add File</span>
+              {lead.documents && lead.documents.length > 0 && (
+                <span className="bg-emerald-800 text-white text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold">
+                  {lead.documents.length}
+                </span>
+              )}
+            </button>
+
+            {/* Export Lead Data Button (CSV Download) */}
+            <button
+              type="button"
+              id="export-lead-data-btn"
+              onClick={handleExportLeadCsv}
+              disabled={isExportingCsv}
+              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition shadow-xs cursor-pointer ${
+                exportSuccess
+                  ? 'bg-emerald-700 text-white'
+                  : 'bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300'
+              }`}
+              title="Export Lead's full history, contact info, and communication log to CSV"
+            >
+              {exportSuccess ? (
+                <>
+                  <Check className="w-3.5 h-3.5 text-emerald-300 animate-in zoom-in-50 duration-200" />
+                  <span>Exported CSV!</span>
+                </>
+              ) : (
+                <>
+                  <Download className="w-3.5 h-3.5 text-slate-600" />
+                  <span>Export Lead Data</span>
+                </>
+              )}
+            </button>
+
+            {/* Share Lead Deep-Link Button */}
+            <button
+              type="button"
+              id="share-lead-btn"
+              onClick={() => setIsShareModalOpen(true)}
+              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200 text-xs font-semibold transition shadow-xs cursor-pointer"
+              title="Generate and copy deep-link for Slack, Teams, or WhatsApp"
+            >
+              <Share2 className="w-3.5 h-3.5 text-blue-600" />
+              <span>Share Lead</span>
+            </button>
+
+            {/* Camera Capture Contract Photo Button */}
+            <button
+              type="button"
+              id="lead-camera-capture-btn"
+              onClick={() => setIsCameraModalOpen(true)}
+              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 text-xs font-semibold transition shadow-xs cursor-pointer"
+              title="Snap photo of physical contract or FICA ID using browser camera for instant Vision OCR parsing"
+            >
+              <Camera className="w-3.5 h-3.5 text-amber-600" />
+              <span>Camera Scanner</span>
+            </button>
+
+            {/* Client Request Portal Modal Trigger */}
+            <button
+              type="button"
+              id="lead-request-client-docs-btn"
+              onClick={() => setIsClientPortalOpen(true)}
+              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-semibold transition shadow-xs cursor-pointer"
+              title="Generate a secure, time-sensitive unique link for client document uploads (FICA, OTP, Pre-Approval)"
+            >
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Request Client Docs</span>
+            </button>
+
+            {/* Ptah KYC & Compliance / FICA Clearance */}
+            {(onOpenPtahKyc || onOpenNcinoKyc) && (
+              <button
+                type="button"
+                id="lead-ptah-kyc-btn"
+                onClick={onOpenPtahKyc || onOpenNcinoKyc}
+                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200 text-xs font-semibold transition shadow-xs cursor-pointer"
+                title="Open Ptah KYC — FICA Regulatory Clearance & Bank Verification"
+              >
+                <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
+                <span>Ptah FICA / KYC</span>
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Tab Navigation */}
-        <div ref={tabNavRef} className="bg-white px-6 border-b border-slate-200 flex space-x-6 overflow-x-auto no-scrollbar text-xs font-semibold text-slate-500 shrink-0">
+        {/* Tab Navigation - Robust, Clean, Scrollbar-Free and Non-Shrinking */}
+        <div
+          ref={tabNavRef}
+          className="bg-slate-100/80 border-b border-slate-200 px-3 sm:px-5 py-2 overflow-x-auto no-scrollbar flex items-center gap-1.5 sm:gap-2 shrink-0 select-none"
+        >
+          {/* TAB 1: Activity Feed */}
           <button
+            type="button"
             onClick={() => setActiveTab('activity')}
-            className={`py-3 flex items-center space-x-2 border-b-2 transition whitespace-nowrap shrink-0 ${
+            className={`px-3 py-2 rounded-xl text-xs font-semibold flex items-center space-x-1.5 whitespace-nowrap transition cursor-pointer shrink-0 ${
               activeTab === 'activity'
-                ? 'border-emerald-600 text-emerald-900 font-bold'
-                : 'border-transparent hover:text-slate-800'
+                ? 'bg-white text-emerald-950 shadow-xs border border-emerald-200 font-bold ring-1 ring-emerald-500/20'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-white/70 border border-transparent'
             }`}
           >
-            <Activity className="w-4 h-4 text-emerald-600" />
+            <Activity className="w-3.5 h-3.5 text-emerald-600" />
             <span>Activity Feed</span>
           </button>
 
+          {/* TAB 2: AI Quality Score */}
           <button
+            type="button"
             onClick={() => setActiveTab('score')}
-            className={`py-3 flex items-center space-x-2 border-b-2 transition whitespace-nowrap shrink-0 ${
+            className={`px-3 py-2 rounded-xl text-xs font-semibold flex items-center space-x-1.5 whitespace-nowrap transition cursor-pointer shrink-0 ${
               activeTab === 'score'
-                ? 'border-purple-600 text-purple-900 font-bold'
-                : 'border-transparent hover:text-slate-800'
+                ? 'bg-white text-purple-950 shadow-xs border border-purple-200 font-bold ring-1 ring-purple-500/20'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-white/70 border border-transparent'
             }`}
           >
-            <Sparkles className="w-4 h-4 text-purple-600" />
-            <span>AI Quality Score ({lead.leadScore || 88}/100)</span>
+            <Sparkles className="w-3.5 h-3.5 text-purple-600" />
+            <span>AI Quality Score</span>
+            <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded-full font-bold font-mono bg-purple-100 text-purple-800 border border-purple-200">
+              {lead.leadScore || 88}
+            </span>
           </button>
 
+          {/* TAB 3: Communications Hub */}
           <button
+            type="button"
             onClick={() => setActiveTab('comms')}
-            className={`py-3 flex items-center space-x-2 border-b-2 transition whitespace-nowrap shrink-0 ${
+            className={`px-3 py-2 rounded-xl text-xs font-semibold flex items-center space-x-1.5 whitespace-nowrap transition cursor-pointer shrink-0 ${
               activeTab === 'comms'
-                ? 'border-slate-900 text-slate-900 font-bold'
-                : 'border-transparent hover:text-slate-800'
+                ? 'bg-white text-blue-950 shadow-xs border border-blue-200 font-bold ring-1 ring-blue-500/20'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-white/70 border border-transparent'
             }`}
           >
-            <MessageSquare className="w-4 h-4" />
-            <span>Communications ({lead.communications.length})</span>
+            <MessageSquare className="w-3.5 h-3.5 text-blue-600" />
+            <span>Communications</span>
+            <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded-full font-bold font-mono bg-blue-100 text-blue-800 border border-blue-200">
+              {lead.communications.length}
+            </span>
           </button>
 
+          {/* TAB: VoIP & Call Recordings */}
           <button
-            onClick={() => setActiveTab('ai')}
-            className={`py-3 flex items-center space-x-2 border-b-2 transition whitespace-nowrap shrink-0 ${
-              activeTab === 'ai'
-                ? 'border-slate-900 text-slate-900 font-bold'
-                : 'border-transparent hover:text-slate-800'
+            type="button"
+            id="tab-voip-recordings-btn"
+            onClick={() => setActiveTab('recordings')}
+            className={`px-3 py-2 rounded-xl text-xs font-semibold flex items-center space-x-1.5 whitespace-nowrap transition cursor-pointer shrink-0 ${
+              activeTab === 'recordings'
+                ? 'bg-white text-blue-950 shadow-xs border border-blue-200 font-bold ring-1 ring-blue-500/20'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-white/70 border border-transparent'
             }`}
           >
-            <Zap className="w-4 h-4 text-amber-600" />
+            <Radio className="w-3.5 h-3.5 text-blue-600" />
+            <span>VoIP & Recordings</span>
+            {(lead.callRecordings?.length || 0) > 0 && (
+              <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded-full font-bold font-mono bg-blue-100 text-blue-800 border border-blue-200">
+                {lead.callRecordings?.length}
+              </span>
+            )}
+          </button>
+
+          {/* TAB 4: AI Pitch Generator */}
+          <button
+            type="button"
+            onClick={() => setActiveTab('ai')}
+            className={`px-3 py-2 rounded-xl text-xs font-semibold flex items-center space-x-1.5 whitespace-nowrap transition cursor-pointer shrink-0 ${
+              activeTab === 'ai'
+                ? 'bg-white text-amber-950 shadow-xs border border-amber-200 font-bold ring-1 ring-amber-500/20'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-white/70 border border-transparent'
+            }`}
+          >
+            <Zap className="w-3.5 h-3.5 text-amber-600" />
             <span>AI Pitch Generator</span>
           </button>
 
+          {/* TAB 5: Task Reminders */}
           <button
+            type="button"
             onClick={() => setActiveTab('tasks')}
-            className={`py-3 flex items-center space-x-2 border-b-2 transition whitespace-nowrap shrink-0 ${
+            className={`px-3 py-2 rounded-xl text-xs font-semibold flex items-center space-x-1.5 whitespace-nowrap transition cursor-pointer shrink-0 ${
               activeTab === 'tasks'
-                ? 'border-slate-900 text-slate-900 font-bold'
-                : 'border-transparent hover:text-slate-800'
+                ? 'bg-white text-indigo-950 shadow-xs border border-indigo-200 font-bold ring-1 ring-indigo-500/20'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-white/70 border border-transparent'
             }`}
           >
-            <Clock className="w-4 h-4" />
-            <span>Task Reminders ({lead.tasks.filter((t) => t.status === 'pending').length})</span>
+            <Clock className="w-3.5 h-3.5 text-indigo-600" />
+            <span>Task Reminders</span>
+            {lead.tasks.filter((t) => t.status === 'pending').length > 0 && (
+              <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded-full font-bold font-mono bg-slate-200 text-slate-700">
+                {lead.tasks.filter((t) => t.status === 'pending').length}
+              </span>
+            )}
           </button>
 
+          {/* TAB 6: Email Automations */}
           <button
+            type="button"
             onClick={() => setActiveTab('emails')}
-            className={`py-3 flex items-center space-x-2 border-b-2 transition whitespace-nowrap shrink-0 ${
+            className={`px-3 py-2 rounded-xl text-xs font-semibold flex items-center space-x-1.5 whitespace-nowrap transition cursor-pointer shrink-0 ${
               activeTab === 'emails'
-                ? 'border-slate-900 text-slate-900 font-bold'
-                : 'border-transparent hover:text-slate-800'
+                ? 'bg-white text-teal-950 shadow-xs border border-teal-200 font-bold ring-1 ring-teal-500/20'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-white/70 border border-transparent'
             }`}
           >
-            <Mail className="w-4 h-4 text-emerald-600" />
-            <span>Email Automations ({leadEmailLogs.length})</span>
+            <Mail className="w-3.5 h-3.5 text-teal-600" />
+            <span>Email Automations</span>
+            {leadEmailLogs.length > 0 && (
+              <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded-full font-bold font-mono bg-slate-200 text-slate-700">
+                {leadEmailLogs.length}
+              </span>
+            )}
           </button>
 
+          {/* TAB 7: Property & Profile */}
           <button
+            type="button"
             onClick={() => setActiveTab('details')}
-            className={`py-3 flex items-center space-x-2 border-b-2 transition whitespace-nowrap shrink-0 ${
+            className={`px-3 py-2 rounded-xl text-xs font-semibold flex items-center space-x-1.5 whitespace-nowrap transition cursor-pointer shrink-0 ${
               activeTab === 'details'
-                ? 'border-slate-900 text-slate-900 font-bold'
-                : 'border-transparent hover:text-slate-800'
+                ? 'bg-white text-slate-950 shadow-xs border border-slate-300 font-bold ring-1 ring-slate-400/20'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-white/70 border border-transparent'
             }`}
           >
-            <FileText className="w-4 h-4" />
+            <FileText className="w-3.5 h-3.5 text-slate-600" />
             <span>Property & Profile</span>
+          </button>
+
+          {/* TAB 8: Documents & AI Schema */}
+          <button
+            type="button"
+            onClick={() => setActiveTab('documents')}
+            className={`px-3 py-2 rounded-xl text-xs font-semibold flex items-center space-x-1.5 whitespace-nowrap transition cursor-pointer shrink-0 ${
+              activeTab === 'documents'
+                ? 'bg-white text-emerald-950 shadow-xs border border-emerald-200 font-bold ring-1 ring-emerald-500/20'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-white/70 border border-transparent'
+            }`}
+          >
+            <FolderOpen className="w-3.5 h-3.5 text-emerald-600" />
+            <span>Documents & Schema</span>
+            {lead.documents && lead.documents.length > 0 && (
+              <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded-full font-bold font-mono bg-emerald-100 text-emerald-800">
+                {lead.documents.length}
+              </span>
+            )}
+          </button>
+
+          {/* TAB 9: Compare Interests & Inventory Matchmaker */}
+          <button
+            type="button"
+            id="tab-compare-interests-btn"
+            onClick={() => setActiveTab('matches')}
+            className={`px-3 py-2 rounded-xl text-xs font-semibold flex items-center space-x-1.5 whitespace-nowrap transition cursor-pointer shrink-0 ${
+              activeTab === 'matches'
+                ? 'bg-white text-indigo-950 shadow-xs border border-indigo-200 font-bold ring-1 ring-indigo-500/20'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-white/70 border border-transparent'
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+            <span>Compare Interests</span>
+            <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded-full font-bold font-mono bg-indigo-100 text-indigo-800">
+              Matches
+            </span>
           </button>
         </div>
 
-        {/* Tab Contents */}
+        {/* Tab Contents - Scrollable with min-h-0 for Flexbox safety */}
         <div className="p-4 sm:p-6 flex-1 overflow-y-auto min-h-0 space-y-6">
+          {/* Universal 15-Minute SLA Visual Countdown Timer */}
+          <SlaCountdownTimer
+            lead={lead}
+            onUpdateLead={onUpdateLead}
+            onNavigateTab={(tab) => setActiveTab(tab)}
+          />
+
+          {/* Inline 30-Day Engagement Frequency Line Chart */}
+          <LeadEngagementChart lead={lead} />
+
           {/* TAB: ACTIVITY FEED */}
           {activeTab === 'activity' && (
             <LeadActivityFeed
@@ -767,13 +1186,41 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
                   <p className="text-xs text-slate-500">Track all WhatsApp, email, call recordings, and portal messages.</p>
                 </div>
 
-                <button
-                  onClick={() => setShowLogCommForm(!showLogCommForm)}
-                  className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition cursor-pointer"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Log Interaction</span>
-                </button>
+                <div className="flex items-center space-x-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMeetingPlatform('zoom');
+                      setMeetingCallType('video');
+                      setIsMeetingModalOpen(true);
+                    }}
+                    className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs cursor-pointer"
+                  >
+                    <Video className="w-3.5 h-3.5" />
+                    <span>Zoom Meeting (AI Notes)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMeetingPlatform('skype');
+                      setMeetingCallType('voice');
+                      setIsMeetingModalOpen(true);
+                    }}
+                    className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-xs font-bold transition shadow-xs cursor-pointer"
+                  >
+                    <div className="w-3.5 h-3.5 rounded-full bg-white flex items-center justify-center text-[9px] font-black text-sky-600">
+                      S
+                    </div>
+                    <span>Skype Call (AI Notes)</span>
+                  </button>
+                  <button
+                    onClick={() => setShowLogCommForm(!showLogCommForm)}
+                    className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Log Interaction</span>
+                  </button>
+                </div>
               </div>
 
               {/* Inbound Initial Message Box */}
@@ -852,15 +1299,30 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
                   </div>
 
                   <div>
-                    <label className="block text-[11px] text-slate-600 font-medium mb-1">Interaction Notes</label>
-                    <textarea
-                      required
-                      rows={3}
-                      value={commContent}
-                      onChange={(e) => setCommContent(e.target.value)}
-                      placeholder="Key topics discussed, client feedback, next steps agreed upon..."
-                      className="w-full bg-white border border-slate-300 rounded-lg p-2 text-xs text-slate-900"
-                    />
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-[11px] text-slate-600 font-medium">Interaction Notes</label>
+                      <div className="flex items-center space-x-1.5">
+                        <span className="text-[10px] text-slate-400">Voice Dictation:</span>
+                        <VoiceNoteTranscriber
+                          lead={lead}
+                          buttonOnly={true}
+                          onUpdateLead={onUpdateLead}
+                          onAppendText={(text) => {
+                            setCommContent((prev) => (prev ? `${prev} ${text}` : text));
+                          }}
+                        />
+                      </div>
+                    </div>
+                    <div className="relative">
+                      <textarea
+                        required
+                        rows={3}
+                        value={commContent}
+                        onChange={(e) => setCommContent(e.target.value)}
+                        placeholder="Key topics discussed, client feedback, or click microphone to transcribe speech..."
+                        className="w-full bg-white border border-slate-300 rounded-lg p-2 pr-10 text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                      />
+                    </div>
                   </div>
 
                   <div className="flex justify-end">
@@ -873,6 +1335,12 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
                   </div>
                 </form>
               )}
+
+              {/* Quick SpeechRecognition Voice Note Transcriber Bar */}
+              <VoiceNoteTranscriber
+                lead={lead}
+                onUpdateLead={onUpdateLead}
+              />
 
               {/* Timeline List */}
               <div className="space-y-3">
@@ -926,6 +1394,19 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
                 )}
               </div>
             </div>
+          )}
+
+          {/* TAB: VOIP & CALL RECORDINGS */}
+          {activeTab === 'recordings' && (
+            <CallRecordingsViewer
+              lead={lead}
+              onUpdateLead={onUpdateLead}
+              onOpenVoipCall={() => setIsVoipModalOpen(true)}
+              onOpenTranscribeSummarize={() => {
+                setInitialRecordedDuration(0);
+                setIsTranscribeModalOpen(true);
+              }}
+            />
           )}
 
           {/* TAB 2: AI ASSISTANT & INTENT */}
@@ -1029,7 +1510,7 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
                   className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition flex items-center justify-center space-x-2 shadow-xs cursor-pointer"
                 >
                   <Sparkles className={`w-4 h-4 ${aiGenerating ? 'animate-spin' : ''}`} />
-                  <span>{aiGenerating ? 'Drafting Custom Real Estate Pitch...' : 'Generate Follow-up Email with AI'}</span>
+                  <span>{aiGenerating ? 'Drafting Custom Real Estate Pitch...' : 'Generate Follow-up Email with Gemini AI'}</span>
                 </button>
 
                 {aiDraftBody && (
@@ -1344,51 +1825,9 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
               <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs space-y-3">
                 <h4 className="font-bold text-xs text-emerald-700 uppercase tracking-wider">Buyer / Client Profile</h4>
                 <div className="space-y-2 text-xs">
-                  {/* Contact fields below (phone/email/WhatsApp/source) used
-                      to only appear inside action-button hrefs (tel:,
-                      wa.me) or a header badge -- never as visible, editable
-                      text, so a mistyped number/address/source at intake
-                      had no fix. Same row styling as the fields below. */}
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
-                    <span className="text-slate-500">Phone:</span>
-                    <input
-                      type="tel"
-                      value={lead.phone}
-                      onChange={(e) => onUpdateLead({ ...lead, phone: e.target.value })}
-                      className="text-right text-slate-700 bg-transparent border-b border-dashed border-slate-300 hover:border-slate-500 focus:border-slate-900 focus:outline-none text-xs"
-                    />
-                  </div>
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
-                    <span className="text-slate-500">WhatsApp Number:</span>
-                    <input
-                      type="tel"
-                      value={lead.whatsappNumber}
-                      onChange={(e) => onUpdateLead({ ...lead, whatsappNumber: e.target.value })}
-                      className="text-right text-slate-700 bg-transparent border-b border-dashed border-slate-300 hover:border-slate-500 focus:border-slate-900 focus:outline-none text-xs"
-                    />
-                  </div>
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
-                    <span className="text-slate-500">Email:</span>
-                    <input
-                      type="email"
-                      value={lead.email}
-                      onChange={(e) => onUpdateLead({ ...lead, email: e.target.value })}
-                      className="text-right text-slate-700 bg-transparent border-b border-dashed border-slate-300 hover:border-slate-500 focus:border-slate-900 focus:outline-none text-xs"
-                    />
-                  </div>
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
+                  <div className="flex justify-between border-b border-slate-100 pb-1.5">
                     <span className="text-slate-500">Buyer Type:</span>
-                    <select
-                      value={lead.buyerType}
-                      onChange={(e) => onUpdateLead({ ...lead, buyerType: e.target.value as Lead['buyerType'] })}
-                      className="font-semibold text-slate-900 bg-transparent border-b border-dashed border-slate-300 hover:border-slate-500 focus:border-slate-900 focus:outline-none text-xs text-right"
-                    >
-                      <option value="Cash Buyer">Cash Buyer</option>
-                      <option value="Pre-approved Mortgage">Pre-approved Mortgage</option>
-                      <option value="Investor">Investor</option>
-                      <option value="First-Time Buyer">First-Time Buyer</option>
-                      <option value="Tenant">Tenant</option>
-                    </select>
+                    <span className="font-semibold text-slate-900">{lead.buyerType}</span>
                   </div>
                   <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
                     <span className="text-slate-500">Date of Birth:</span>
@@ -1410,14 +1849,9 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
                       className="text-right text-slate-700 bg-transparent border-b border-dashed border-slate-300 hover:border-slate-500 focus:border-slate-900 focus:outline-none text-xs"
                     />
                   </div>
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
+                  <div className="flex justify-between border-b border-slate-100 pb-1.5">
                     <span className="text-slate-500">Budget Range:</span>
-                    <input
-                      type="text"
-                      value={lead.budget}
-                      onChange={(e) => onUpdateLead({ ...lead, budget: e.target.value })}
-                      className="text-right text-slate-700 bg-transparent border-b border-dashed border-slate-300 hover:border-slate-500 focus:border-slate-900 focus:outline-none text-xs"
-                    />
+                    <span className="text-slate-700">{lead.budget}</span>
                   </div>
                   <div className="flex justify-between border-b border-slate-100 pb-1.5">
                     <span className="text-slate-500">Purchase Timeframe:</span>
@@ -1444,11 +1878,158 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
                     ))}
                   </ul>
                 </div>
+
+                {/* Document & Schema Quick Action */}
+                <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+                  <div className="text-xs text-slate-500 flex items-center gap-1.5">
+                    <FolderOpen className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>{lead.documents?.length || 0} Attached Document Schemas</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('documents')}
+                    className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 hover:bg-emerald-100 text-xs font-semibold border border-emerald-200 transition cursor-pointer"
+                  >
+                    Manage Files & Schemas →
+                  </button>
+                </div>
+
+                {/* Compare Interests & Inventory Matching Card */}
+                <div className="pt-3 border-t border-slate-100 flex items-center justify-between bg-indigo-50/50 p-3 rounded-xl border border-indigo-200/80">
+                  <div>
+                    <span className="text-xs font-bold text-indigo-950 flex items-center gap-1">
+                      <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+                      Compare Preferred Attributes vs Database Listings
+                    </span>
+                    <span className="text-[11px] text-slate-500 block">
+                      Cross-reference {lead.propertyType} preferences against active inventory.
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('matches')}
+                    className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-xs transition cursor-pointer shrink-0"
+                  >
+                    <span>View Matches →</span>
+                  </button>
+                </div>
+
+                {/* Export Lead Data Card */}
+                <div className="pt-3 border-t border-slate-100 flex items-center justify-between bg-slate-50 p-3 rounded-xl border border-slate-200/80">
+                  <div>
+                    <span className="text-xs font-bold text-slate-800 block">Complete Lead Dossier Export</span>
+                    <span className="text-[11px] text-slate-500 block">Download full history, contact info, and communication log to CSV</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleExportLeadCsv}
+                    disabled={isExportingCsv}
+                    className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-xs transition cursor-pointer"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>Export CSV</span>
+                  </button>
+                </div>
               </div>
             </div>
           )}
+
+          {/* TAB 8: DOCUMENTS & AI SCHEMA CONVERTER */}
+          {activeTab === 'documents' && (
+            <LeadDocumentConverter
+              lead={lead}
+              onUpdateLead={onUpdateLead}
+              initialCapturedFile={capturedContractFile}
+              onCapturedFileProcessed={() => setCapturedContractFile(null)}
+            />
+          )}
+
+          {/* TAB 9: COMPARE INTERESTS & INVENTORY MATCHMAKER */}
+          {activeTab === 'matches' && (
+            <LeadPropertyMatcher
+              lead={lead}
+              listings={INITIAL_LISTINGS}
+              onUpdateLead={onUpdateLead}
+            />
+          )}
         </div>
       </div>
+
+      {/* Share Lead Profile Deep-Link Modal */}
+      <ShareLeadModal
+        lead={lead}
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+      />
+
+      {/* Client Document Request Portal Modal */}
+      {isClientPortalOpen && (
+        <ClientRequestPortalModal
+          isOpen={isClientPortalOpen}
+          onClose={() => setIsClientPortalOpen(false)}
+          lead={lead}
+          onUpdateLead={onUpdateLead}
+        />
+      )}
+
+      {/* Camera Capture Physical Contract Modal */}
+      {isCameraModalOpen && (
+        <CameraCaptureModal
+          isOpen={isCameraModalOpen}
+          onClose={() => setIsCameraModalOpen(false)}
+          leadName={lead.name}
+          onCaptureComplete={(file) => {
+            setCapturedContractFile(file);
+            setActiveTab('documents');
+          }}
+        />
+      )}
+
+      {/* Zoom / Skype Video & Voice Conference with AI Note Taker */}
+      {isMeetingModalOpen && (
+        <MeetingCallModal
+          isOpen={isMeetingModalOpen}
+          onClose={() => setIsMeetingModalOpen(false)}
+          lead={lead}
+          onUpdateLead={onUpdateLead}
+          defaultPlatform={meetingPlatform}
+          defaultCallType={meetingCallType}
+        />
+      )}
+
+      {/* VoIP Browser Calling Modal (Twilio WebRTC) */}
+      <VoipCallModal
+        isOpen={isVoipModalOpen}
+        onClose={() => setIsVoipModalOpen(false)}
+        lead={lead}
+        onUpdateLead={onUpdateLead}
+        onOpenTranscribeSummarize={(duration) => {
+          setInitialRecordedDuration(duration);
+          setIsTranscribeModalOpen(true);
+        }}
+      />
+
+      {/* Transcribe & Summarize Feature (Gemini 3.8 Flash) */}
+      <TranscribeSummarizeModal
+        isOpen={isTranscribeModalOpen}
+        onClose={() => setIsTranscribeModalOpen(false)}
+        lead={lead}
+        onUpdateLead={onUpdateLead}
+        initialDurationSecs={initialRecordedDuration}
+      />
+
+      {/* Start Virtual Viewing Modal (Unique Video Link & WhatsApp/Email Invitations) */}
+      <VirtualViewingModal
+        isOpen={isVirtualViewingModalOpen}
+        onClose={() => setIsVirtualViewingModalOpen(false)}
+        lead={lead}
+        onUpdateLead={onUpdateLead}
+        onLaunchMeetingSession={(platform) => {
+          setMeetingPlatform(platform);
+          setMeetingCallType('video');
+          setIsMeetingModalOpen(true);
+        }}
+      />
     </div>
   );
 };

@@ -19,7 +19,9 @@ import {
   Layers,
   Camera,
   CheckCircle2,
-  AlertTriangle
+  AlertTriangle,
+  Box,
+  Compass
 } from 'lucide-react';
 import { PropertyRecord } from '../types';
 import { INITIAL_PROPERTY_MEDIA } from '../services/mockData';
@@ -34,6 +36,11 @@ interface PropertyPopupCardProps {
   onOpenPDF?: () => void;
   onOpenContact?: () => void;
   onOpenPortalSync?: () => void;
+  // Quick actions for this specific property -- same handlers PropertyPanel
+  // uses, just reachable from the compact map popup too so an agent
+  // doesn't need to open the sidebar first. See App.tsx / CadastralMap.tsx.
+  onOpen3DWalkthrough?: () => void;
+  onOpenInfrastructure?: () => void;
 }
 
 export const PropertyPopupCard: React.FC<PropertyPopupCardProps> = ({
@@ -43,7 +50,9 @@ export const PropertyPopupCard: React.FC<PropertyPopupCardProps> = ({
   onOpenCMA,
   onOpenPDF,
   onOpenContact,
-  onOpenPortalSync
+  onOpenPortalSync,
+  onOpen3DWalkthrough,
+  onOpenInfrastructure
 }) => {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [realMediaUrls, setRealMediaUrls] = useState<string[] | null>(null);
@@ -418,6 +427,29 @@ export const PropertyPopupCard: React.FC<PropertyPopupCardProps> = ({
             >
               <Phone className="w-3.5 h-3.5 text-emerald-400" />
               <span>Owner</span>
+            </button>
+          )}
+
+          {onOpen3DWalkthrough && (
+            <button
+              id="btn-popup-3d-walkthrough"
+              onClick={onOpen3DWalkthrough}
+              className="py-2 px-2.5 bg-purple-900/80 hover:bg-purple-800 text-purple-100 border border-purple-600/80 font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-1.5"
+              title="Photorealistic 3D virtual tour (Realsee / Sphere)"
+            >
+              <Box className="w-3.5 h-3.5 text-purple-300" />
+              <span>3D Tour</span>
+            </button>
+          )}
+
+          {onOpenInfrastructure && (
+            <button
+              id="btn-popup-infrastructure"
+              onClick={onOpenInfrastructure}
+              className="py-2 px-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white font-bold text-xs rounded-xl border border-slate-700 transition-all flex items-center justify-center gap-1.5"
+              title="Nearby schools, healthcare, transit & civic infrastructure"
+            >
+              <Compass className="w-3.5 h-3.5 text-cyan-400" />
             </button>
           )}
         </div>

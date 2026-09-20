@@ -213,6 +213,10 @@ export interface Lead {
   portalListingUrl?: string;
   birthday?: string; // e.g. "1988-08-28"
   ageBracket?: string; // e.g. "35-49"
+  // Free-form broker labels (e.g. "Atlantic Seaboard", "Repeat Client").
+  // From the demo export's CSV dossier / lead segmentation -- no live
+  // equivalent existed, so added optional rather than backfilled.
+  tags?: string[];
   // Added from the updated demo export -- back the new document
   // parsing/conversion, client request portal, and call recording
   // components. All optional, so existing Lead records stay valid.
