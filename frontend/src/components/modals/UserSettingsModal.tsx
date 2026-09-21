@@ -375,26 +375,46 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
   const [otpCountdown, setOtpCountdown] = useState(60);
   const [otpError, setOtpError] = useState<string | null>(null);
   const [otpSuccessToast, setOtpSuccessToast] = useState<string | null>(null);
+  // Exact E.164 number the last code was sent to -- displayed in the modal
+  // so the UI never implies an SMS went somewhere it didn't.
+  const [otpSentTo, setOtpSentTo] = useState<string | null>(null);
+
+  // Countdown ticks down once the modal is open; resend unlocks at zero.
+  useEffect(() => {
+    if (!showOtpModal || otpCountdown <= 0) return;
+    const t = setTimeout(() => setOtpCountdown((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [showOtpModal, otpCountdown]);
 
   const handleSendOtp = async () => {
-    const fullNumber = `${activeCountry.phoneDialCode}${(profile.cellPhone || '').replace(/\D/g, '')}`;
+    const national = (profile.cellPhone || '').replace(/\D/g, '').replace(/^0+/, '');
+    if (!national) {
+      setOtpError('Enter your mobile number in Profile first, then request an SMS code.');
+      setShowOtpModal(true);
+      setOtpSentTo(null);
+      return;
+    }
+    const fullNumber = `${activeCountry.phoneDialCode}${national}`;
     setIsOtpSending(true);
     setOtpError(null);
     try {
       await sendMobileVerification(fullNumber);
+      setOtpSentTo(fullNumber);
       setShowOtpModal(true);
       setOtpCountdown(60);
       setOtpCode('');
     } catch (err: any) {
       setOtpError(err?.message || 'Failed to send verification SMS.');
+      setShowOtpModal(true);
+      setOtpSentTo(null);
     } finally {
       setIsOtpSending(false);
     }
   };
 
   const handleVerifyOtp = async () => {
-    if (!otpCode || otpCode.length < 4) {
-      setOtpError('Please enter a valid verification code.');
+    if (!otpCode || otpCode.length !== 6) {
+      setOtpError('Enter the 6-digit code from the SMS.');
       return;
     }
     setOtpError(null);
@@ -706,23 +726,11 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
 
   const completeness = calculateCompleteness();
 
-  const handleOpenOtpModal = () => {
-    setOtpCode('');
-    setOtpError(null);
-    setOtpCountdown(60);
-    setShowOtpModal(true);
-  };
-
-  const handleConfirmOtp = () => {
-    if (!otpCode || otpCode.trim().length < 4) {
-      setOtpError('Please enter a valid 6-digit SMS verification OTP code.');
-      return;
-    }
-    setIsPhoneOtpVerified(true);
-    setShowOtpModal(false);
-      setOtpSuccessToast(`Mobile verification successful (${activeCountry.phoneDialCode} ${profile.cellPhone}). Verified in ${activeCountry.name}!`);
-    setTimeout(() => setOtpSuccessToast(null), 4000);
-  };
+  // NOTE: there is deliberately no local-only verify path -- a number is
+  // marked verified only after POST /mobile/confirm succeeds
+  // (handleVerifyOtp above). The previous handleOpenOtpModal /
+  // handleConfirmOtp pair opened the modal without sending an SMS and
+  // flipped the badge locally; both removed.
 
   const handleAutoPopulateCitySuburbs = () => {
     if (activeCity && activeCity.suburbs.length > 0) {
@@ -968,9 +976,9 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
           </div>
         </div>
 
-        {/* Navigation Tabs Header: 5 Core Tabs */}
-        <div className="bg-slate-100 border-b border-slate-200 px-4 flex items-center justify-start text-xs overflow-x-auto select-none pt-1">
-          <div className="flex items-center gap-1 shrink-0 -mb-px">
+        {/* Navigation Tabs Header: 5 Core Tabs -- wraps, never scrolls. */}
+        <div className="bg-slate-100 border-b border-slate-200 px-4 flex items-center justify-start text-xs select-none pt-1 overflow-hidden">
+          <div className="flex flex-wrap items-center gap-1 -mb-px">
             <button
               id="tab-settings-profile"
               onClick={() => setActiveTab('profile')}
@@ -980,8 +988,8 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
                   : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
               }`}
             >
-              <User className="w-4 h-4 text-[#00bcd4]" />
-              <span>PROFILE</span>
+              <User className="w-4 h-4 shrink-0 text-[#00bcd4]" />
+              <span className="whitespace-nowrap">PROFILE</span>
             </button>
 
             <button
@@ -993,8 +1001,8 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
                   : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
               }`}
             >
-              <Lock className="w-4 h-4 text-amber-600" />
-              <span>CHANGE PASSWORD</span>
+              <Lock className="w-4 h-4 shrink-0 text-amber-600" />
+              <span className="whitespace-nowrap">CHANGE PASSWORD</span>
             </button>
 
             <button
@@ -1006,9 +1014,9 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
                   : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
               }`}
             >
-              <CreditCard className="w-4 h-4 text-emerald-600" />
-              <span>BILLING & CREDITS</span>
-              <span className="bg-amber-100 text-amber-900 text-[9px] font-bold px-1.5 py-0.2 rounded font-mono">
+              <CreditCard className="w-4 h-4 shrink-0 text-emerald-600" />
+              <span className="whitespace-nowrap">BILLING & CREDITS</span>
+              <span className="bg-amber-100 text-amber-900 text-[9px] font-bold px-1.5 py-0.5 rounded font-mono leading-none self-center shrink-0">
                 {totalCredits}
               </span>
             </button>
@@ -1022,8 +1030,8 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
                   : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
               }`}
             >
-              <Layers className="w-4 h-4 text-emerald-600" />
-              <span>APPS & EXTENSIONS</span>
+              <Layers className="w-4 h-4 shrink-0 text-emerald-600" />
+              <span className="whitespace-nowrap">APPS & EXTENSIONS</span>
             </button>
 
             <button
@@ -1035,8 +1043,8 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
                   : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
               }`}
             >
-              <Sliders className="w-4 h-4 text-cyan-700" />
-              <span>PREFERENCES</span>
+              <Sliders className="w-4 h-4 shrink-0 text-cyan-700" />
+              <span className="whitespace-nowrap">PREFERENCES</span>
             </button>
           </div>
 
@@ -1310,10 +1318,11 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
                       ) : (
                         <button
                           type="button"
-                          onClick={handleOpenOtpModal}
-                          className="text-amber-700 hover:text-amber-800 font-bold text-[10px] underline flex items-center gap-0.5 cursor-pointer"
+                          onClick={handleSendOtp}
+                          disabled={isOtpSending}
+                          className="text-amber-700 hover:text-amber-800 font-bold text-[10px] underline flex items-center gap-0.5 cursor-pointer disabled:opacity-50"
                         >
-                          <Smartphone className="w-3 h-3" /> Verify via OTP
+                          <Smartphone className="w-3 h-3" /> {isOtpSending ? 'Sending SMS…' : 'Verify via OTP'}
                         </button>
                       )}
                     </div>
@@ -3782,15 +3791,25 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
               </div>
             </div>
 
-            {/* Explanatory Banner */}
+            {/* Explanatory Banner -- shows the exact number the code went to,
+                or the send error state; never a placeholder look-alike. */}
             <div className="bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-1">
-              <div className="text-[11px] text-slate-600">
-                A 6-digit authentication token has been dispatched via SMS to:
-              </div>
-              <div className="font-mono font-bold text-slate-900 text-xs flex items-center gap-1.5">
-                <Phone className="w-3.5 h-3.5 text-cyan-600" />
-                <span>{activeCountry.phoneDialCode} {profile.cellPhone || activeCountry.phonePlaceholder}</span>
-              </div>
+              {otpSentTo ? (
+                <>
+                  <div className="text-[11px] text-slate-600">
+                    A 6-digit authentication token has been dispatched via SMS to:
+                  </div>
+                  <div className="font-mono font-bold text-slate-900 text-xs flex items-center gap-1.5">
+                    <Phone className="w-3.5 h-3.5 text-cyan-600" />
+                    <span>{otpSentTo}</span>
+                  </div>
+                </>
+              ) : (
+                <div className="text-[11px] text-slate-600">
+                  No SMS has been sent yet. Enter your mobile number in Profile,
+                  then use Resend below to request a code.
+                </div>
+              )}
             </div>
 
             {/* 6-Digit OTP Code Input */}
@@ -3806,8 +3825,10 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
                   setOtpError(null);
                   setOtpCode(e.target.value.replace(/[^0-9]/g, ''));
                 }}
-                placeholder="123456"
-                className="w-full text-center tracking-[0.4em] font-mono text-xl font-extrabold py-2.5 bg-slate-50 border-2 border-cyan-400 focus:border-cyan-600 rounded-lg text-slate-900 shadow-inner"
+                placeholder="••••••"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                className="w-full text-center tracking-[0.4em] font-mono text-xl font-extrabold py-2.5 bg-slate-50 border-2 border-cyan-400 focus:border-cyan-600 rounded-lg text-slate-900 shadow-inner placeholder:text-slate-300"
               />
               <div className="text-[10px] text-slate-400 text-center">
                 Enter the 6-digit code sent to your phone.
