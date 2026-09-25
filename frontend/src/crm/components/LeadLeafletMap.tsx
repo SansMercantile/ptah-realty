@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { Lead, LeadSource } from '../types';
 import { formatCurrency, formatShortCurrency } from '../utils/formatters';
+import { LiveAgentLocation } from '../../services/api';
 
 // CARTO's basemaps.cartocdn.com raster tiles now require an API key (else
 // tiles render with a repeated "API key required" watermark -- see

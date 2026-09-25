@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   ComposableMap,
   Geographies,
@@ -25,11 +25,14 @@ import {
   Users,
   Target,
   Sparkles,
-  Map as MapIcon
+  Map as MapIcon,
+  Navigation,
+  Loader2
 } from 'lucide-react';
 import { Lead } from '../types';
 import { formatCurrency, formatShortCurrency } from '../utils/formatters';
 import { LeadLeafletMap } from './LeadLeafletMap';
+import { updateMyLocation, listLiveAgentLocations, LiveAgentLocation } from '../../services/api';
 
 interface LeadGeoHeatmapProps {
   leads: Lead[];
@@ -367,6 +370,88 @@ export const LeadGeoHeatmap: React.FC<LeadGeoHeatmapProps> = ({ leads, onSelectL
     zoom: 1
   });
 
+  // Live agent geolocation (door-knocking / canvassing) -- see
+  // api/crm.py's update_agent_location / list_agent_locations. Sharing
+  // is opt-in (never starts automatically) since watchPosition keeps
+  // the GPS radio active and drains battery, and because the browser
+  // requires an explicit permission prompt anyway.
+  const [isSharingLocation, setIsSharingLocation] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
+  const [liveAgents, setLiveAgents] = useState<LiveAgentLocation[]>([]);
+  const watchIdRef = useRef<number | null>(null);
+  const lastSentAtRef = useRef<number>(0);
+
+  const handleToggleShareLocation = () => {
+    if (isSharingLocation) {
+      if (watchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+        watchIdRef.current = null;
+      }
+      setIsSharingLocation(false);
+      return;
+    }
+
+    if (!('geolocation' in navigator)) {
+      setLocationError('This browser does not support location sharing.');
+      return;
+    }
+
+    setLocationError(null);
+    watchIdRef.current = navigator.geolocation.watchPosition(
+      (pos) => {
+        // Throttled to roughly once every 15s -- watchPosition can fire
+        // far more often than that (every few meters of movement), and
+        // there's no need to hit the API that frequently for a
+        // door-knocking pace of movement.
+        const now = Date.now();
+        if (now - lastSentAtRef.current < 15000) return;
+        lastSentAtRef.current = now;
+        updateMyLocation(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy).catch((err) => {
+          console.error('Failed to send location update:', err);
+        });
+      },
+      (err) => {
+        setLocationError(
+          err.code === err.PERMISSION_DENIED
+            ? 'Location permission denied -- enable it in your browser settings to share your position.'
+            : 'Could not get your location.'
+        );
+        setIsSharingLocation(false);
+      },
+      { enableHighAccuracy: true, maximumAge: 10000 }
+    );
+    setIsSharingLocation(true);
+  };
+
+  // Stop watching on unmount so a closed tab doesn't keep the GPS radio
+  // running -- teammates will simply see this agent's pin go stale
+  // after _AGENT_LOCATION_STALE_AFTER_MINUTES (backend-side), same as
+  // if they'd toggled sharing off themselves.
+  useEffect(() => {
+    return () => {
+      if (watchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+      }
+    };
+  }, []);
+
+  // Poll teammates' live positions regardless of whether this viewer is
+  // currently sharing their own -- a manager checking the map wants to
+  // see canvassing agents even if they themselves aren't out in the
+  // field. 20s cadence matches the ~15s send throttle above closely
+  // enough that positions feel current without over-polling.
+  useEffect(() => {
+    let cancelled = false;
+    const poll = () => {
+      listLiveAgentLocations()
+        .then((agents) => { if (!cancelled) setLiveAgents(agents); })
+        .catch((err) => console.error('Failed to load live agent locations:', err));
+    };
+    poll();
+    const interval = setInterval(poll, 20000);
+    return () => { cancelled = true; clearInterval(interval); };
+  }, []);
+
   // Filter leads based on portal and province selection
   const filteredLeads = useMemo(() => {
     return leads.filter((lead) => {
@@ -584,6 +669,35 @@ export const LeadGeoHeatmap: React.FC<LeadGeoHeatmapProps> = ({ leads, onSelectL
             </button>
           </div>
 
+          {/* Share My Location -- for door-knocking / canvassing agents.
+              Opt-in only; visible regardless of map engine since a
+              manager may toggle to the Leaflet view afterward to check
+              live positions. */}
+          <button
+            onClick={handleToggleShareLocation}
+            title={isSharingLocation ? 'Stop sharing your live location' : 'Share your live location while canvassing'}
+            className={`px-3 py-1.5 rounded-xl border text-xs font-semibold shadow-2xs transition cursor-pointer flex items-center space-x-1.5 ${
+              isSharingLocation
+                ? 'bg-rose-600 border-rose-600 text-white hover:bg-rose-700'
+                : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
+            }`}
+          >
+            {isSharingLocation ? (
+              <>
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-white" />
+                </span>
+                <span>Sharing Location</span>
+              </>
+            ) : (
+              <>
+                <Navigation className="w-3.5 h-3.5" />
+                <span>Share My Location</span>
+              </>
+            )}
+          </button>
+
           {mapEngine === 'choropleth' && (
             <>
           {/* Metric mode toggle */}
@@ -641,9 +755,15 @@ export const LeadGeoHeatmap: React.FC<LeadGeoHeatmapProps> = ({ leads, onSelectL
         </div>
       </div>
 
+      {locationError && (
+        <div className="mx-4 sm:mx-6 mb-2 p-2.5 rounded-lg bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs">
+          {locationError}
+        </div>
+      )}
+
       {mapEngine === 'leaflet' ? (
         <div className="p-4 sm:p-6 bg-slate-950">
-          <LeadLeafletMap leads={leads} onSelectLead={onSelectLead} />
+          <LeadLeafletMap leads={leads} onSelectLead={onSelectLead} liveAgents={liveAgents} />
         </div>
       ) : (
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 divide-y lg:divide-y-0 lg:divide-x divide-slate-200 dark:divide-slate-800">

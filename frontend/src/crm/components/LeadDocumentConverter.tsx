@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { authHeaders } from '../../services/api';
 import { 
   FileText, 
   Upload, 
@@ -569,12 +570,12 @@ FEEDBACK DEADLINE: 14 Days from allocation.`,
     const localStructuredSchema = parseTextToStructuredData(extractedText, lead, fileName);
     setExtractedSchema(localStructuredSchema);
 
-    // 2. Enhance with server-side Gemini AI if available
+    // 2. Enhance with server-side AI if available
     try {
       setProcessingStep('AI underwriter analyzing clauses & JSON schema...');
-      const response = await fetch('/api/gemini/convert-document-schema', {
+      const response = await fetch('/api/ptah/convert-document-schema', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify({
           fileName,
           fileType,
@@ -614,7 +615,7 @@ FEEDBACK DEADLINE: 14 Days from allocation.`,
         }
       }
     } catch (err) {
-      console.warn('Gemini endpoint offline or error, utilizing local deterministic extractor:', err);
+      console.warn('AI schema endpoint offline or error, utilizing local deterministic extractor:', err);
     } finally {
       setIsProcessing(false);
       setProcessingStep('');

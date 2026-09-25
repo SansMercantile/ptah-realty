@@ -597,11 +597,6 @@ export type PortalPlatformId = 'property24' | 'privateproperty' | 'gumtree' | 'p
 export type PortalSyncStatus = 'LIVE' | 'SYNCING' | 'DRAFT' | 'NEEDS_REVIEW' | 'SYNC_FAILED' | 'PAUSED';
 
 export interface PortalListingPayload {
-  // Used by PortalSyncModal but never declared in the demo's own type.
-  syncStatus?: string;
-  externalListingId?: string;
-  lastSyncTimestamp?: string;
-  listingUrl?: string;
   id?: string;
   portalId: PortalPlatformId;
   portalName: string;

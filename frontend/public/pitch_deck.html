@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ptah Real Estate — Investor Pitch Deck</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            dark: '#0a0f1d',
+                            card: '#111827',
+                            border: '#1f293d',
+                            gold: '#c5a059',
+                            goldlight: '#e2be78',
+                            accent: '#3b82f6',
+                            emerald: '#10b981'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* PDF Print Formatting */
+        @media print {
+            body {
+                background-color: #0a0f1d !important;
+                color: white !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .slide-container {
+                height: auto !important;
+                min-height: 100vh !important;
+                overflow: visible !important;
+            }
+            .slide {
+                display: flex !important;
+                opacity: 1 !important;
+                page-break-after: always !important;
+                break-after: page !important;
+                height: 100vh !important;
+                box-sizing: border-box !important;
+                padding: 2rem !important;
+            }
+        }
+
+        /* Presentation Mode Slide Animations */
+        .slide {
+            transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+        }
+        .slide.hidden-slide {
+            display: none;
+            opacity: 0;
+            transform: scale(0.98);
+        }
+        .slide.active-slide {
+            display: flex;
+            opacity: 1;
+            transform: scale(1);
+        }
+    </style>
+</head>
+<body class="bg-brand-dark text-slate-100 font-sans min-h-screen flex flex-col justify-between antialiased selection:bg-amber-500 selection:text-black">
+
+    <!-- Top Navigation Bar (No Print) -->
+    <header class="no-print bg-slate-900/90 backdrop-blur border-b border-slate-800 px-6 py-3 flex items-center justify-between sticky top-0 z-50">
+        <div class="flex items-center gap-3">
+            <span class="text-xs font-black tracking-widest text-amber-400 uppercase bg-amber-500/10 px-2.5 py-1 rounded border border-amber-500/20">Ptah Real Estate</span>
+            <span class="text-xs text-slate-400 hidden sm:inline">| Executive Investor Pitch Deck ($250k Pre-Seed)</span>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <!-- Slide Counter -->
+            <span class="text-xs font-mono text-slate-400 mr-2">Slide <span id="currentSlideNum" class="text-amber-400 font-bold">1</span> / <span id="totalSlidesNum">12</span></span>
+            
+            <!-- Jump Menu -->
+            <select id="slideSelect" onchange="goToSlide(parseInt(this.value))" class="bg-slate-800 text-xs text-slate-200 border border-slate-700 rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-amber-500">
+                <option value="0">1. Cover & Overview</option>
+                <option value="1">2. Market Problem</option>
+                <option value="2">3. The Solution</option>
+                <option value="3">4. Technology Engine</option>
+                <option value="4">5. Product Capabilities</option>
+                <option value="5">6. Market Opportunity</option>
+                <option value="6">7. Business Model</option>
+                <option value="7">8. Traction & Go-To-Market</option>
+                <option value="8">9. Competitive Moat</option>
+                <option value="9">10. Executive Leadership</option>
+                <option value="10">11. Financials & Ask</option>
+                <option value="11">12. Vision & Contact</option>
+            </select>
+
+            <!-- Export PDF Button -->
+            <button onclick="window.print()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-3 py-1.5 rounded text-xs transition flex items-center gap-1.5 shadow">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                Export / Print PDF
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Slide Canvas -->
+    <main class="slide-container flex-1 max-w-7xl mx-auto w-full p-4 sm:p-8 flex items-center justify-center">
+
+        <!-- SLIDE 1: Cover Slide -->
+        <section class="slide active-slide w-full h-[80vh] bg-gradient-to-br from-slate-900 via-brand-dark to-slate-950 border border-slate-800 rounded-2xl p-8 sm:p-14 flex flex-col justify-between relative overflow-hidden shadow-2xl">
+            <div class="absolute top-0 right-0 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl -mr-20 -mt-20"></div>
+            
+            <div class="flex justify-between items-start z-10">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-lg bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 font-black text-xl">P</div>
+                    <div>
+                        <h3 class="text-sm font-bold tracking-wider text-slate-200 uppercase">Ptah Real Estate</h3>
+                        <p class="text-[10px] text-slate-400">Powered by Sans Mercantile (Pty) Ltd</p>
+                    </div>
+                </div>
+                <span class="text-xs font-mono bg-slate-800 text-amber-400 border border-amber-500/30 px-3 py-1 rounded-full">PRE-SEED INVESTMENT DECK</span>
+            </div>
+
+            <div class="my-auto z-10 max-w-3xl">
+                <span class="text-xs font-semibold tracking-widest text-amber-400 uppercase">Enterprise PropTech Operating Platform</span>
+                <h1 class="text-3xl sm:text-5xl font-black text-white tracking-tight mt-2 leading-tight">
+                    Autonomous Multi-Agent Infrastructure for Real Estate
+                </h1>
+                <p class="text-base sm:text-lg text-slate-300 mt-4 leading-relaxed font-light">
+                    Automating complex property workflows, unifying fragmented market data, and accelerating transaction execution for agencies, developers, and institutional asset owners.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-6 border-t border-slate-800/80 z-10 text-xs">
+                <div>
+                    <span class="text-slate-500 block text-[10px] uppercase">Stage</span>
+                    <strong class="text-slate-200 font-semibold">Pre-Seed</strong>
+                </div>
+                <div>
+                    <span class="text-slate-500 block text-[10px] uppercase">Target Raise</span>
+                    <strong class="text-amber-400 font-semibold">$250,000 USD</strong>
+                </div>
+                <div>
+                    <span class="text-slate-500 block text-[10px] uppercase">Valuation</span>
+                    <strong class="text-slate-200 font-semibold">$2,500,000 USD</strong>
+                </div>
+                <div>
+                    <span class="text-slate-500 block text-[10px] uppercase">Core Engine</span>
+                    <strong class="text-slate-200 font-semibold">23 Compute Nodes (AI)</strong>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 2: Problem -->
+        <section class="slide hidden-slide w-full h-[80vh] bg-slate-900 border border-slate-800 rounded-2xl p-8 sm:p-14 flex flex-col justify-between shadow-2xl">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-4">
+                <span class="text-xs font-bold text-amber-400 tracking-widest uppercase">01 / THE PROBLEM</span>
+                <span class="text-xs text-slate-500 font-mono">Ptah Real Estate</span>
+            </div>
+
+            <div class="my-auto">
+                <h2 class="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
+                    The $10B Enterprise Friction: Broken Workflows & Fragmented Data
+                </h2>
+                <p class="text-sm sm:text-base text-slate-400 mt-2 max-w-3xl">
+                    Real estate agencies, property managers, and institutional developers operate in a heavily fragmented tech stack that bleeds margin and slows execution.
+                </p>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+                    <div class="bg-slate-950/80 border border-slate-800 p-6 rounded-xl">
+                        <div class="w-8 h-8 bg-red-500/10 rounded-lg flex items-center justify-center text-red-400 font-bold mb-4">1</div>
+                        <h3 class="text-base font-bold text-white mb-2">Fragmented Data Silos</h3>
+                        <p class="text-xs text-slate-400 leading-relaxed">
+                            Property data, listing feeds, tenant details, and compliance records exist in isolated databases requiring manual middleware and double-data entry.
+                        </p>
+                    </div>
+
+                    <div class="bg-slate-950/80 border border-slate-800 p-6 rounded-xl">
+                        <div class="w-8 h-8 bg-red-500/10 rounded-lg flex items-center justify-center text-red-400 font-bold mb-4">2</div>
+                        <h3 class="text-base font-bold text-white mb-2">Manual Transaction Delays</h3>
+                        <p class="text-xs text-slate-400 leading-relaxed">
+                            Lease executions, offer-to-purchase documentation, and onboarding take weeks due to fragmented communication and manual approval loops.
+                        </p>
+                    </div>
+
+                    <div class="bg-slate-950/80 border border-slate-800 p-6 rounded-xl">
+                        <div class="w-8 h-8 bg-red-500/10 rounded-lg flex items-center justify-center text-red-400 font-bold mb-4">3</div>
+                        <h3 class="text-base font-bold text-white mb-2">Zero Predictive Governance</h3>
+                        <p class="text-xs text-slate-400 leading-relaxed">
+                            Asset managers lack real-time portfolio insights, relying on static spreadsheets that fail to detect yield leaks or tenant churn risks early.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-xs text-slate-500 pt-4 border-t border-slate-800/80">
+                Industry Insight: Over 65% of real estate operational time is spent on administrative and manual data reconciliation.
+            </div>
+        </section>
+
+        <!-- SLIDE 3: Solution -->
+        <section class="slide hidden-slide w-full h-[80vh] bg-slate-900 border border-slate-800 rounded-2xl p-8 sm:p-14 flex flex-col justify-between shadow-2xl">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-4">
+                <span class="text-xs font-bold text-amber-400 tracking-widest uppercase">02 / THE SOLUTION</span>
+                <span class="text-xs text-slate-500 font-mono">Ptah Operating Platform</span>
+            </div>
+
+            <div class="my-auto">
+                <h2 class="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
+                    An Autonomous Enterprise Operating System
+                </h2>
+                <p class="text-sm sm:text-base text-slate-400 mt-2 max-w-3xl">
+                    Ptah Real Estate unifies the entire property lifecycle—from agency pipeline management to institutional portfolio governance—into a single self-orchestrating platform.
+                </p>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+                    <div class="bg-slate-950/80 border border-amber-500/30 p-6 rounded-xl relative overflow-hidden">
+                        <div class="w-8 h-8 bg-amber-500/20 rounded-lg flex items-center justify-center text-amber-400 font-bold mb-4">A</div>
+                        <h3 class="text-base font-bold text-white mb-2">Autonomous Multi-Agent AI</h3>
+                        <p class="text-xs text-slate-400 leading-relaxed">
+                            23 specialized compute nodes execute routine workflows, route client inquiries, automate lease renewals, and reconcile data without human intervention.
+                        </p>
+                    </div>
+
+                    <div class="bg-slate-950/80 border border-amber-500/30 p-6 rounded-xl relative overflow-hidden">
+                        <div class="w-8 h-8 bg-amber-500/20 rounded-lg flex items-center justify-center text-amber-400 font-bold mb-4">B</div>
+                        <h3 class="text-base font-bold text-white mb-2">Unified Data Layer</h3>
+                        <p class="text-xs text-slate-400 leading-relaxed">
+                            Consolidates market feeds, property listings, buyer/tenant profiles, and financial metrics into a single real-time source of truth.
+                        </p>
+                    </div>
+
+                    <div class="bg-slate-950/80 border border-amber-500/30 p-6 rounded-xl relative overflow-hidden">
+                        <div class="w-8 h-8 bg-amber-500/20 rounded-lg flex items-center justify-center text-amber-400 font-bold mb-4">C</div>
+                        <h3 class="text-base font-bold text-white mb-2">Accelerated Execution</h3>
+                        <p class="text-xs text-slate-400 leading-relaxed">
+                            Automated offer-to-purchase trafficking, digital document execution, and compliance verification reduce deal cycles from weeks to hours.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-xs text-amber-400 font-semibold pt-4 border-t border-slate-800/80 flex justify-between">
+                <span>Value Prop: 70% Reduction in Administrative Overhead</span>
+                <span>3x Faster Lead-to-Lease Velocity</span>
+            </div>
+        </section>
+
+        <!-- SLIDE 4: Technology Architecture -->
+        <section class="slide hidden-slide w-full h-[80vh] bg-slate-900 border border-slate-800 rounded-2xl p-8 sm:p-14 flex flex-col justify-between shadow-2xl">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-4">
+                <span class="text-xs font-bold text-amber-400 tracking-widest uppercase">03 / TECHNICAL ARCHITECTURE</span>
+                <span class="text-xs text-slate-500 font-mono">Multi-Agent Engine</span>
+            </div>
+
+            <div class="my-auto">
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                    Proprietary Multi-Agent & Dual AI/AGI Core
+                </h2>
+                <p class="text-xs sm:text-sm text-slate-400 mt-1">
+                    Architected on Sans Mercantile's distributed compute system featuring 23 active operational kernels.
+                </p>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                    <div class="bg-slate-950 p-6 rounded-xl border border-slate-800">
+                        <h3 class="text-sm font-bold text-amber-400 uppercase tracking-wider mb-3">Distributed Node Clusters</h3>
+                        <ul class="space-y-2.5 text-xs text-slate-300">
+                            <li class="flex items-start gap-2">
+                                <span class="text-amber-500 font-bold">•</span>
+                                <span><strong>Ingestion Nodes:</strong> Real-time indexing of market pricing, land registries, and MLS streams.</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <span class="text-amber-500 font-bold">•</span>
+                                <span><strong>Workflow Orchestrators:</strong> Autonomous agentic assignment of tasks to brokers, legal desks, and tenants.</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <span class="text-amber-500 font-bold">•</span>
+                                <span><strong>Risk & Compliance Nodes:</strong> Automated POPIA, FICA, and regulatory compliance validation.</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="bg-slate-950 p-6 rounded-xl border border-slate-800">
+                        <h3 class="text-sm font-bold text-amber-400 uppercase tracking-wider mb-3">Enterprise Security & Integration</h3>
+                        <ul class="space-y-2.5 text-xs text-slate-300">
+                            <li class="flex items-start gap-2">
+                                <span class="text-amber-500 font-bold">•</span>
+                                <span><strong>Gated Data Sandbox:</strong> Granular access control protecting sensitive third-party market data.</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <span class="text-amber-500 font-bold">•</span>
+                                <span><strong>API-First Architecture:</strong> Seamless bidirectional sync with ERPs, accounting systems, and CRMs.</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <span class="text-amber-500 font-bold">•</span>
+                                <span><strong>Audit Trail Ledger:</strong> Immutable transaction logs for institutional asset managers and auditors.</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-slate-950/60 p-3 rounded-lg border border-slate-800 text-[11px] text-slate-400 flex items-center justify-between">
+                <span>Core Engine: Dual AI + AGI Micro-kernels</span>
+                <span class="text-amber-400">Deployed & Operational Across 23 Compute Nodes</span>
+            </div>
+        </section>
+
+        <!-- SLIDE 5: Product Capabilities -->
+        <section class="slide hidden-slide w-full h-[80vh] bg-slate-900 border border-slate-800 rounded-2xl p-8 sm:p-14 flex flex-col justify-between shadow-2xl">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-4">
+                <span class="text-xs font-bold text-amber-400 tracking-widest uppercase">04 / PRODUCT MODULES</span>
+                <span class="text-xs text-slate-500 font-mono">Full-Lifecycle Scope</span>
+            </div>
+
+            <div class="my-auto">
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight mb-6">
+                    End-to-End Enterprise Module Suite
+                </h2>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="bg-slate-950 p-5 rounded-xl border border-slate-800 hover:border-amber-500/40 transition">
+                        <span class="text-amber-400 font-bold text-xs uppercase block mb-2">Module 01</span>
+                        <h3 class="text-sm font-bold text-white mb-1">Agency OS</h3>
+                        <p class="text-[11px] text-slate-400 leading-relaxed">
+                            Automated listing distribution, buyer matching, agent pipeline management, and commission tracking.
+                        </p>
+                    </div>
+
+                    <div class="bg-slate-950 p-5 rounded-xl border border-slate-800 hover:border-amber-500/40 transition">
+                        <span class="text-amber-400 font-bold text-xs uppercase block mb-2">Module 02</span>
+                        <h3 class="text-sm font-bold text-white mb-1">Construction Lifecycle</h3>
+                        <p class="text-[11px] text-slate-400 leading-relaxed">
+                            Physical project tracking, milestone management, contractor workflows, and budget allocations for developers.
+                        </p>
+                    </div>
+
+                    <div class="bg-slate-950 p-5 rounded-xl border border-slate-800 hover:border-amber-500/40 transition">
+                        <span class="text-amber-400 font-bold text-xs uppercase block mb-2">Module 03</span>
+                        <h3 class="text-sm font-bold text-white mb-1">Asset Governance</h3>
+                        <p class="text-[11px] text-slate-400 leading-relaxed">
+                            Institutional portfolio oversight, lease management, automated collection alerts, and yield analytics.
+                        </p>
+                    </div>
+
+                    <div class="bg-slate-950 p-5 rounded-xl border border-slate-800 hover:border-amber-500/40 transition">
+                        <span class="text-amber-400 font-bold text-xs uppercase block mb-2">Module 04</span>
+                        <h3 class="text-sm font-bold text-white mb-1">Transaction Hub</h3>
+                        <p class="text-[11px] text-slate-400 leading-relaxed">
+                            Digital offer-to-purchase execution, automated conveyancing prep, and ecosystem referral tracking.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-xs text-slate-500 border-t border-slate-800/80 pt-3">
+                All modules accessible via central Web Platform, API integrations, and mobile agent portals.
+            </div>
+        </section>
+
+        <!-- SLIDE 6: Market Opportunity -->
+        <section class="slide hidden-slide w-full h-[80vh] bg-slate-900 border border-slate-800 rounded-2xl p-8 sm:p-14 flex flex-col justify-between shadow-2xl">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-4">
+                <span class="text-xs font-bold text-amber-400 tracking-widest uppercase">05 / MARKET OPPORTUNITY</span>
+                <span class="text-xs text-slate-500 font-mono">Pan-African & Emerging Markets</span>
+            </div>
+
+            <div class="my-auto">
+                <h2 class="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
+                    Addressing a High-Growth $12B+ PropTech Market
+                </h2>
+                <p class="text-xs sm:text-sm text-slate-400 mt-2 max-w-2xl">
+                    Rapid urbanization across Africa and MEA region combined with legacy system obsolescence creates an urgent demand for modern enterprise SaaS infrastructure.
+                </p>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+                    <div class="bg-slate-950 p-6 rounded-xl border border-slate-800 text-center">
+                        <span class="text-slate-500 text-xs font-bold uppercase block mb-1">TAM (Global Emerging PropTech)</span>
+                        <h3 class="text-3xl font-black text-white">$12.5B+</h3>
+                        <p class="text-[11px] text-slate-400 mt-2">Enterprise software and workflow management across high-growth developing markets.</p>
+                    </div>
+
+                    <div class="bg-slate-950 p-6 rounded-xl border border-amber-500/30 text-center">
+                        <span class="text-amber-400 text-xs font-bold uppercase block mb-1">SAM (Pan-African & MEA Market)</span>
+                        <h3 class="text-3xl font-black text-amber-400">$1.8B</h3>
+                        <p class="text-[11px] text-slate-400 mt-2">Real estate agency groups, asset managers, and property development firms in MEA.</p>
+                    </div>
+
+                    <div class="bg-slate-950 p-6 rounded-xl border border-slate-800 text-center">
+                        <span class="text-slate-500 text-xs font-bold uppercase block mb-1">SOM (Initial Target Capture)</span>
+                        <h3 class="text-3xl font-black text-white">$45M</h3>
+                        <p class="text-[11px] text-slate-400 mt-2">Core focus on South African enterprise agency networks, franchise groups, and commercial funds.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-xs text-slate-400 border-t border-slate-800/80 pt-3">
+                Expansion Vectors: Initial launch in South Africa $\rightarrow$ Expansion into UAE/Saudi Arabia, Kenya, Nigeria, and Pan-African corridors.
+            </div>
+        </section>
+
+        <!-- SLIDE 7: Business Model -->
+        <section class="slide hidden-slide w-full h-[80vh] bg-slate-900 border border-slate-800 rounded-2xl p-8 sm:p-14 flex flex-col justify-between shadow-2xl">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-4">
+                <span class="text-xs font-bold text-amber-400 tracking-widest uppercase">06 / BUSINESS MODEL</span>
+                <span class="text-xs text-slate-500 font-mono">B2B SaaS + Transaction Fees</span>
+            </div>
+
+            <div class="my-auto">
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight mb-2">
+                    Dual-Stream Monetization Engine
+                </h2>
+                <p class="text-xs sm:text-sm text-slate-400 mb-6">High-margin recurring SaaS retainers paired with transactional ecosystem upside.</p>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-slate-950 p-6 rounded-xl border border-slate-800">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-base font-bold text-amber-400">1. Enterprise Monthly Subscriptions</h3>
+                            <span class="text-xs bg-amber-500/20 text-amber-300 font-mono px-2 py-0.5 rounded">Recurring</span>
+                        </div>
+                        <p class="text-xs text-slate-300 leading-relaxed mb-4">
+                            Tiered enterprise SaaS licensing for agencies, property management firms, and asset owners based on portfolio size and active agent seats.
+                        </p>
+                        <div class="space-y-2 text-xs font-mono text-slate-400 border-t border-slate-800 pt-3">
+                            <div class="flex justify-between"><span>Agency Tier:</span> <strong class="text-white">$3,000 / month</strong></div>
+                            <div class="flex justify-between"><span>Corporate Tier:</span> <strong class="text-white">$7,500 / month</strong></div>
+                            <div class="flex justify-between"><span>Institutional Tier:</span> <strong class="text-amber-400">$15,000+ / month</strong></div>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-950 p-6 rounded-xl border border-slate-800">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-base font-bold text-amber-400">2. Transaction & Ecosystem Fees</h3>
+                            <span class="text-xs bg-blue-500/20 text-blue-300 font-mono px-2 py-0.5 rounded">Usage-Based</span>
+                        </div>
+                        <p class="text-xs text-slate-300 leading-relaxed mb-4">
+                            Value-add processing fees generated across listing distribution networks, automated document execution, and ecosystem referral partners.
+                        </p>
+                        <div class="space-y-2 text-xs font-mono text-slate-400 border-t border-slate-800 pt-3">
+                            <div class="flex justify-between"><span>Listing Distribution:</span> <strong class="text-white">Per-listing fee</strong></div>
+                            <div class="flex justify-between"><span>Document Execution:</span> <strong class="text-white">Per-contract fee</strong></div>
+                            <div class="flex justify-between"><span>Capital Referral Share:</span> <strong class="text-amber-400">2% - 5% success fee</strong></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-xs text-slate-400 border-t border-slate-800/80 pt-3 flex justify-between">
+                <span>Gross Margin Target: > 82%</span>
+                <span>Net Retention Target: 125%</span>
+            </div>
+        </section>
+
+        <!-- SLIDE 8: Traction & Go-To-Market -->
+        <section class="slide hidden-slide w-full h-[80vh] bg-slate-900 border border-slate-800 rounded-2xl p-8 sm:p-14 flex flex-col justify-between shadow-2xl">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-4">
+                <span class="text-xs font-bold text-amber-400 tracking-widest uppercase">07 / TRACTION & ROADMAP</span>
+                <span class="text-xs text-slate-500 font-mono">Commercial Deployment</span>
+            </div>
+
+            <div class="my-auto">
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight mb-2">
+                    Commercialization & Pilot Pipeline
+                </h2>
+                <p class="text-xs sm:text-sm text-slate-400 mb-6">Transitioning from bootstrapped R&D into active commercial pilot retainers.</p>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-slate-950 p-5 rounded-xl border border-slate-800">
+                        <span class="text-xs text-amber-400 font-mono font-bold block mb-1">PHASE 1 (CURRENT)</span>
+                        <h3 class="text-sm font-bold text-white mb-2">Pilot Deployment</h3>
+                        <p class="text-xs text-slate-400 leading-relaxed">
+                            Active demo sandboxes deployed across key partner agencies (e.g. Cockpit Real Estate). Referral frameworks established with broker networks.
+                        </p>
+                    </div>
+
+                    <div class="bg-slate-950 p-5 rounded-xl border border-slate-800">
+                        <span class="text-xs text-amber-400 font-mono font-bold block mb-1">PHASE 2 (Q4 2026)</span>
+                        <h3 class="text-sm font-bold text-white mb-2">Commercial Conversion</h3>
+                        <p class="text-xs text-slate-400 leading-relaxed">
+                            Converting pilot sandboxes into paid enterprise retainers ($3k-$15k/mo ARR basis). Launching PR campaign with Swell PR.
+                        </p>
+                    </div>
+
+                    <div class="bg-slate-950 p-5 rounded-xl border border-slate-800">
+                        <span class="text-xs text-amber-400 font-mono font-bold block mb-1">PHASE 3 (2027)</span>
+                        <h3 class="text-sm font-bold text-white mb-2">Regional Expansion</h3>
+                        <p class="text-xs text-slate-400 leading-relaxed">
+                            Scaling enterprise sales force across South Africa and launching Middle East / Silicon Valley venture growth corridors.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-slate-950/80 p-3 rounded-lg border border-slate-800 text-xs text-slate-300 flex items-center justify-between">
+                <span>Bootstrapped R&D Capital To Date: <strong>$25,000</strong></span>
+                <span class="text-amber-400 font-semibold">100% IP Ownership Held Cleanly</span>
+            </div>
+        </section>
+
+        <!-- SLIDE 9: Competitive Moat -->
+        <section class="slide hidden-slide w-full h-[80vh] bg-slate-900 border border-slate-800 rounded-2xl p-8 sm:p-14 flex flex-col justify-between shadow-2xl">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-4">
+                <span class="text-xs font-bold text-amber-400 tracking-widest uppercase">08 / COMPETITIVE LANDSCAPE</span>
+                <span class="text-xs text-slate-500 font-mono">Defensibility & Moat</span>
+            </div>
+
+            <div class="my-auto">
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight mb-6">
+                    Why Ptah Wins: Multi-Agent Moat vs. Single-Point SaaS
+                </h2>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs">
+                        <thead>
+                            <tr class="border-b border-slate-800 text-slate-400 font-mono uppercase text-[10px]">
+                                <th class="py-3 px-4">Feature / Capability</th>
+                                <th class="py-3 px-4 text-amber-400 font-bold bg-amber-500/10">Ptah Real Estate</th>
+                                <th class="py-3 px-4">Legacy PropTech CRMs</th>
+                                <th class="py-3 px-4">Manual / Excel Workflows</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-800/60 text-slate-300">
+                            <tr>
+                                <td class="py-3 px-4 font-semibold text-white">Autonomous Agentic AI Engine</td>
+                                <td class="py-3 px-4 font-bold text-emerald-400 bg-amber-500/5">✓ 23 Compute Nodes</td>
+                                <td class="py-3 px-4 text-slate-500">✗ Basic Rules Only</td>
+                                <td class="py-3 px-4 text-slate-500">✗ None</td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 px-4 font-semibold text-white">Unified Developer + Agency Scope</td>
+                                <td class="py-3 px-4 font-bold text-emerald-400 bg-amber-500/5">✓ Full Lifecycle</td>
+                                <td class="py-3 px-4 text-slate-500">✗ Fragmented</td>
+                                <td class="py-3 px-4 text-slate-500">✗ Manual Sync</td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 px-4 font-semibold text-white">Automated Document Execution</td>
+                                <td class="py-3 px-4 font-bold text-emerald-400 bg-amber-500/5">✓ Native Workflow</td>
+                                <td class="py-3 px-4 text-slate-500">△ Third-Party Plugin</td>
+                                <td class="py-3 px-4 text-slate-500">✗ Physical / Email</td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 px-4 font-semibold text-white">POPIA & Regulatory Data Gate</td>
+                                <td class="py-3 px-4 font-bold text-emerald-400 bg-amber-500/5">✓ Enterprise Built-in</td>
+                                <td class="py-3 px-4 text-slate-500">△ Partial</td>
+                                <td class="py-3 px-4 text-slate-500">✗ High Compliance Risk</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="text-xs text-slate-400 border-t border-slate-800/80 pt-3">
+                Proprietary Moat: Deeply embedded multi-agent workflow algorithms make switching costs exceptionally high once agency pipelines adopt Ptah.
+            </div>
+        </section>
+
+        <!-- SLIDE 10: Executive Leadership -->
+        <section class="slide hidden-slide w-full h-[80vh] bg-slate-900 border border-slate-800 rounded-2xl p-8 sm:p-14 flex flex-col justify-between shadow-2xl">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-4">
+                <span class="text-xs font-bold text-amber-400 tracking-widest uppercase">09 / LEADERSHIP & GOVERNANCE</span>
+                <span class="text-xs text-slate-500 font-mono">Executive Team</span>
+            </div>
+
+            <div class="my-auto">
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight mb-6">
+                    Led by Founder-Execution & Global Expertise
+                </h2>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-slate-950 p-6 rounded-xl border border-slate-800">
+                        <div class="flex items-center gap-4 mb-4">
+                            <div class="w-12 h-12 rounded-full bg-amber-500/20 border border-amber-500 flex items-center justify-center text-amber-400 font-black text-lg">
+                                MK
+                            </div>
+                            <div>
+                                <h3 class="text-base font-bold text-white">Mezzoforte Privilège Khoza Sr.</h3>
+                                <p class="text-xs text-amber-400 font-mono">Founder & CEO — Sans Mercantile</p>
+                                <p class="text-[10px] text-slate-400">MBA, EMEL</p>
+                            </div>
+                        </div>
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            Serial founder and enterprise architect. Spearheaded the technical architecture of Ptah's autonomous multi-agent engine and manages global holding operations across South Africa, Japan, and Hong Kong.
+                        </p>
+                    </div>
+
+                    <div class="bg-slate-950 p-6 rounded-xl border border-slate-800">
+                        <div class="flex items-center gap-4 mb-4">
+                            <div class="w-12 h-12 rounded-full bg-blue-500/20 border border-blue-500 flex items-center justify-center text-blue-400 font-black text-lg">
+                                CB
+                            </div>
+                            <div>
+                                <h3 class="text-base font-bold text-white">Incoming CBDO</h3>
+                                <p class="text-xs text-blue-400 font-mono">Chief Business Development Officer</p>
+                                <p class="text-[10px] text-slate-400">Silicon Valley Ecosystem Veteran</p>
+                            </div>
+                        </div>
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            Veteran venture executive leading global institutional partnerships, North American investor relations, and enterprise expansion across international commercial real estate markets.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-xs text-slate-400 border-t border-slate-800/80 pt-3 flex justify-between">
+                <span>Global Operating Presence: South Africa | Japan | Hong Kong</span>
+                <span>Powered by Dual AI+AGI Cores</span>
+            </div>
+        </section>
+
+        <!-- SLIDE 11: Financials & Ask -->
+        <section class="slide hidden-slide w-full h-[80vh] bg-slate-900 border border-slate-800 rounded-2xl p-8 sm:p-14 flex flex-col justify-between shadow-2xl">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-4">
+                <span class="text-xs font-bold text-amber-400 tracking-widest uppercase">10 / THE OFFERING</span>
+                <span class="text-xs text-slate-500 font-mono">Pre-Seed Round</span>
+            </div>
+
+            <div class="my-auto">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-6">
+                    <div>
+                        <span class="text-xs font-semibold text-amber-400 uppercase tracking-widest block">Capital Raise</span>
+                        <h2 class="text-3xl sm:text-5xl font-black text-white tracking-tight">$250,000 USD</h2>
+                    </div>
+                    <div class="text-left md:text-right font-mono text-xs text-slate-400">
+                        <div>Post-Money Valuation: <strong class="text-white">$2,500,000 USD</strong></div>
+                        <div>Target Runway: <strong class="text-amber-400">12 Months</strong></div>
+                        <div>Monthly Burn Rate: <strong class="text-white">$2,500 USD</strong></div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-slate-950 p-5 rounded-xl border border-slate-800">
+                        <span class="text-amber-400 font-bold text-lg block mb-1">50%</span>
+                        <h3 class="text-xs font-bold text-white uppercase mb-2">Commercial Deployment</h3>
+                        <p class="text-xs text-slate-400 leading-relaxed">
+                            Dedicated customer success, pilot onboarding teams, and agency network acquisition across target markets.
+                        </p>
+                    </div>
+
+                    <div class="bg-slate-950 p-5 rounded-xl border border-slate-800">
+                        <span class="text-amber-400 font-bold text-lg block mb-1">30%</span>
+                        <h3 class="text-xs font-bold text-white uppercase mb-2">Engineering & AI Nodes</h3>
+                        <p class="text-xs text-slate-400 leading-relaxed">
+                            Expanding compute node capacity, API integrations, and developer micro-kernels.
+                        </p>
+                    </div>
+
+                    <div class="bg-slate-950 p-5 rounded-xl border border-slate-800">
+                        <span class="text-amber-400 font-bold text-lg block mb-1">20%</span>
+                        <h3 class="text-xs font-bold text-white uppercase mb-2">GTM PR & Operations</h3>
+                        <p class="text-xs text-slate-400 leading-relaxed">
+                            Institutional PR launches, regulatory compliance maintenance, and working capital.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-xs text-slate-400 border-t border-slate-800/80 pt-3 flex justify-between">
+                <span>Co-Investment Available: SAFE / Equity Options</span>
+                <span>Minimum Check: $10,000 USD</span>
+            </div>
+        </section>
+
+        <!-- SLIDE 12: Vision & Contact -->
+        <section class="slide hidden-slide w-full h-[80vh] bg-gradient-to-br from-slate-950 via-brand-dark to-slate-900 border border-slate-800 rounded-2xl p-8 sm:p-14 flex flex-col justify-between shadow-2xl relative overflow-hidden">
+            <div class="absolute bottom-0 right-0 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl -mr-20 -mb-20"></div>
+
+            <div class="flex justify-between items-center border-b border-slate-800 pb-4 z-10">
+                <span class="text-xs font-bold text-amber-400 tracking-widest uppercase">11 / JOIN US</span>
+                <span class="text-xs text-slate-500 font-mono">Ptah Real Estate</span>
+            </div>
+
+            <div class="my-auto z-10 max-w-3xl">
+                <h2 class="text-3xl sm:text-5xl font-black text-white tracking-tight leading-tight">
+                    Building the Operating Infrastructure for Tomorrow's Real Estate
+                </h2>
+                <p class="text-sm sm:text-base text-slate-300 mt-4 leading-relaxed font-light">
+                    We invite forward-thinking investors and ecosystem partners to join us as we commercialize autonomous multi-agent infrastructure across high-growth global markets.
+                </p>
+
+                <div class="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-950/80 p-6 rounded-xl border border-slate-800">
+                    <div>
+                        <span class="text-[10px] text-slate-500 uppercase block font-mono">Main Founder Contact</span>
+                        <strong class="text-sm font-bold text-white block mt-0.5">Mezzoforte Privilège Khoza Sr.</strong>
+                        <a href="mailto:mezzoforte@sansmercantile.com" class="text-xs text-amber-400 hover:underline">mezzoforte@sansmercantile.com</a>
+                    </div>
+                    <div>
+                        <span class="text-[10px] text-slate-500 uppercase block font-mono">Official Corporate Site</span>
+                        <strong class="text-sm font-bold text-white block mt-0.5">Sans Mercantile (Pty) Ltd</strong>
+                        <a href="https://sansmercantile.com" target="_blank" class="text-xs text-amber-400 hover:underline">sansmercantile.com</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="z-10 text-xs text-slate-500 border-t border-slate-800/80 pt-3 flex justify-between items-center">
+                <span>© 2026 Ptah Real Estate (Pty) Ltd. Confidential.</span>
+                <span>Global Offices: South Africa | Japan | Hong Kong</span>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Slide Navigation Footer Controls (No Print) -->
+    <footer class="no-print bg-slate-900 border-t border-slate-800 px-6 py-4 flex items-center justify-between sticky bottom-0 z-50">
+        <button id="prevBtn" onclick="changeSlide(-1)" class="bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed text-white text-xs font-semibold px-4 py-2 rounded-lg transition flex items-center gap-1 border border-slate-700">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+            Previous
+        </button>
+
+        <div class="flex items-center gap-2">
+            <!-- Slide Dots -->
+            <div id="slideDots" class="flex gap-1.5"></div>
+        </div>
+
+        <button id="nextBtn" onclick="changeSlide(1)" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs px-5 py-2 rounded-lg transition flex items-center gap-1 shadow">
+            Next
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+        </button>
+    </footer>
+
+    <!-- Interactive Navigation Script -->
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+
+        // Initialize Dots
+        const dotsContainer = document.getElementById('slideDots');
+        slides.forEach((_, idx) => {
+            const dot = document.createElement('button');
+            dot.className = `w-2.5 h-2.5 rounded-full transition-all ${idx === 0 ? 'bg-amber-500 w-6' : 'bg-slate-700 hover:bg-slate-500'}`;
+            dot.onclick = () => goToSlide(idx);
+            dotsContainer.appendChild(dot);
+        });
+
+        function updateSlideUI() {
+            slides.forEach((slide, idx) => {
+                if (idx === currentSlide) {
+                    slide.classList.remove('hidden-slide');
+                    slide.classList.add('active-slide');
+                } else {
+                    slide.classList.remove('active-slide');
+                    slide.classList.add('hidden-slide');
+                }
+            });
+
+            // Update Counter & Select
+            document.getElementById('currentSlideNum').innerText = currentSlide + 1;
+            document.getElementById('slideSelect').value = currentSlide;
+
+            // Update Dots
+            const dots = dotsContainer.querySelectorAll('button');
+            dots.forEach((dot, idx) => {
+                if (idx === currentSlide) {
+                    dot.className = 'w-6 h-2.5 rounded-full bg-amber-500 transition-all';
+                } else {
+                    dot.className = 'w-2.5 h-2.5 rounded-full bg-slate-700 hover:bg-slate-500 transition-all';
+                }
+            });
+
+            // Button states
+            document.getElementById('prevBtn').disabled = currentSlide === 0;
+            document.getElementById('nextBtn').disabled = currentSlide === totalSlides - 1;
+        }
+
+        function changeSlide(direction) {
+            const target = currentSlide + direction;
+            if (target >= 0 && target < totalSlides) {
+                currentSlide = target;
+                updateSlideUI();
+            }
+        }
+
+        function goToSlide(slideIdx) {
+            if (slideIdx >= 0 && slideIdx < totalSlides) {
+                currentSlide = slideIdx;
+                updateSlideUI();
+            }
+        }
+
+        // Keyboard Arrow Key Navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === 'Space') {
+                changeSlide(1);
+            } else if (e.key === 'ArrowLeft') {
+                changeSlide(-1);
+            }
+        });
+
+        updateSlideUI();
+    </script>
+</body>
+</html>
