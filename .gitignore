@@ -22,3 +22,6 @@ __pycache__/
 # must never be committed to this repo.
 _backend_src/
 _backend_src.zip
+_verify4.zip
+_final_check.zip
+_build_log.txt
