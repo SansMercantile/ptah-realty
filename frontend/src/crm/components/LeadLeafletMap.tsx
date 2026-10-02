@@ -42,6 +42,10 @@ interface LeadLeafletMapProps {
   leads: Lead[];
   onSelectLead?: (lead: Lead) => void;
   defaultVisualizationMode?: 'pins' | 'heatmap' | 'hybrid';
+  // Live positions of teammates currently door-knocking/canvassing --
+  // see api/crm.py's list_agent_locations. Optional and additive: the
+  // map works exactly as before when this is omitted.
+  liveAgents?: LiveAgentLocation[];
 }
 
 // Available Tile Layers for Real Basemaps & Cadastral Overlays
