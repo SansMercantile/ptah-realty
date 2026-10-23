@@ -1036,20 +1036,51 @@ export async function verifyCorporateKyc(
   });
 }
 
+export type DeedsQueryType =
+  | 'title_deed'
+  | 'owner'
+  | 'erf'
+  | 'address'
+  | 'suburb'
+  | 'eua'
+  | 'national';
+
+// One external deeds-office provider match (services/deeds_providers/
+// DeedsOfficeRecord) -- only fields the registry actually publishes are
+// populated; owner/title stay null where the source omits them.
+export interface DeedsProviderRecord {
+  source_provider: string;
+  country_code: string;
+  property_description?: string | null;
+  purchase_price?: number | null;
+  purchase_date?: string | null;
+  raw?: Record<string, unknown> | null;
+}
+
 export interface DeedsQueryResult {
   query_type: string;
   query_value: string;
   matches: any[];
   generated_at: string;
+  provider_records?: DeedsProviderRecord[];
+  // e.g. { hmlr: 'success', windeed: 'pending: ...', us_counties: 'pending: ...' }
+  provider_status?: Record<string, string>;
 }
 
 export async function queryDeeds(
-  queryType: 'title_deed' | 'owner' | 'erf' | 'eua' | 'national',
-  queryValue: string
+  queryType: DeedsQueryType,
+  queryValue: string,
+  countryCode?: string
 ): Promise<DeedsQueryResult> {
   return authJsonAbs<DeedsQueryResult>('/api/v1/intelligence/deeds/query', {
     method: 'POST',
-    body: JSON.stringify({ query_type: queryType, query_value: queryValue }),
+    body: JSON.stringify({
+      query_type: queryType,
+      query_value: queryValue,
+      // Drives the backend's provider selection (get_deeds_provider);
+      // omitted for legacy callers -> backend default ZA.
+      ...(countryCode ? { country_code: countryCode } : {}),
+    }),
   });
 }
 

@@ -54,6 +54,10 @@ interface KYCModalProps {
   initialOwnerName?: string;
   initialOwnerId?: string;
   onOpenCreditsModal?: () => void;
+  // Active jurisdiction country id (ZA/GB/US/AU/AE) -- sent as
+  // country_code so the backend picks the right deeds provider
+  // (services/deeds_providers/ PROVIDER_REGISTRY).
+  countryCode?: string;
 }
 
 export type MainKYCTab = 'FICA_COMPLIANCE' | 'PERSON' | 'ADDRESS' | 'COMPANY' | 'TRUST' | 'PROPERTY_REPORTS' | 'AUDIT_HISTORY';
@@ -147,8 +151,10 @@ export const KYCModal: React.FC<KYCModalProps> = ({
   onClose,
   initialOwnerName = '',
   initialOwnerId = '',
-  onOpenCreditsModal
+  onOpenCreditsModal,
+  countryCode
 }) => {
+  const isZaJurisdiction = !countryCode || countryCode === 'ZA';
   const [mainTab, setMainTab] = useState<MainKYCTab>('FICA_COMPLIANCE');
   
   // -------------------------------------------------------------
@@ -433,17 +439,30 @@ export const KYCModal: React.FC<KYCModalProps> = ({
 
   // Address Find -- real backend round trip against the tenant's own
   // deeds/property records (services/kyc.py's query_deeds, which searches
-  // this tenant's `properties` collection by erf/owner/title deed).
+  // this tenant's `properties` collection AND -- additively -- the real
+  // external deeds provider for the active jurisdiction: HM Land
+  // Registry for GB, WinDeed for ZA, honest "pending" for US/AU/AE).
   const handleFindAddress = async () => {
     setIsLoading(true);
 
     const erfMatch = addressSearch.match(/erf\s*(\d+)/i) || addressSearch.match(/^(\d{3,5})\b/);
+    // ZA keeps its legacy erf/owner typing (erf numbers and owner names
+    // are ZA deeds concepts); every other jurisdiction sends the free
+    // text as an address query so the GB/US/AU/AE providers see what
+    // they can actually answer with (isZaJurisdiction, top of component).
     let backendMatches: any[] = [];
+    let registryStatus: Record<string, string> = {};
+    let registryRecords: any[] = [];
     try {
-      const result = erfMatch
-        ? await queryDeeds('erf', erfMatch[1])
-        : await queryDeeds('owner', addressSearch || 'PIER MANE TRUST');
+      const result =
+        isZaJurisdiction && erfMatch
+          ? await queryDeeds('erf', erfMatch[1], countryCode)
+          : isZaJurisdiction
+            ? await queryDeeds('owner', addressSearch || 'PIER MANE TRUST', countryCode)
+            : await queryDeeds('address', addressSearch || 'PIER MANE TRUST', countryCode);
       backendMatches = result.matches;
+      registryStatus = result.provider_status || {};
+      registryRecords = result.provider_records || [];
     } catch (err) {
       console.error('Deeds query failed, showing local cadastral profile only:', err);
     }
@@ -469,7 +488,9 @@ export const KYCModal: React.FC<KYCModalProps> = ({
         occupants: [
           { name: 'Dr. Michael Pier', role: 'Trustee / Primary Contact', phone: '082 491 8820', email: 'piermane.trust@capeproperty.co.za' }
         ],
-        backendDeedsMatches: backendMatches
+        backendDeedsMatches: backendMatches,
+        registryStatus,
+        registryRecords
       });
       setIsLoading(false);
   };
@@ -1419,6 +1440,55 @@ export const KYCModal: React.FC<KYCModalProps> = ({
                       Extent: {addressResult.cadastralExtentM2} m²
                     </span>
                   </div>
+
+                  {/* External deeds registry lookup (additive, honest) --
+                      real HM Land Registry rows when available, otherwise
+                      the per-provider pending/unsupported/error status. */}
+                  {(Object.keys(addressResult.registryStatus || {}).length > 0 || (addressResult.registryRecords || []).length > 0) && (
+                    <div className="bg-slate-50 border border-slate-200 rounded p-3 space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-slate-700 text-[11px] uppercase tracking-wider">
+                          External Registry Lookup
+                        </span>
+                        <span className="text-[10px] text-slate-400">
+                          {isZaJurisdiction ? 'ZA deeds office' : `${countryCode || '—'} registry`}
+                        </span>
+                      </div>
+                      {Object.entries(addressResult.registryStatus || {}).map(([pid, status]) => (
+                        <div
+                          key={pid}
+                          className={`text-[11px] ${
+                            String(status).startsWith('success')
+                              ? 'text-emerald-700'
+                              : String(status).startsWith('pending')
+                                ? 'text-amber-700'
+                                : String(status).startsWith('unsupported')
+                                  ? 'text-slate-600'
+                                  : 'text-red-600'
+                          }`}
+                        >
+                          <span className="font-mono font-bold">{pid}</span>: {String(status)}
+                        </div>
+                      ))}
+                      {(addressResult.registryRecords || []).slice(0, 5).map((rec: any, idx: number) => (
+                        <div key={idx} className="text-[11px] text-slate-700 flex flex-wrap gap-x-2">
+                          <span className="font-semibold">{rec.property_description || '(address not published)'}</span>
+                          {rec.purchase_price != null && (
+                            <span className="font-mono">
+                              {rec.source_provider === 'hmlr' ? '£' : ''}
+                              {Number(rec.purchase_price).toLocaleString()}
+                            </span>
+                          )}
+                          {rec.purchase_date && <span className="font-mono text-slate-500">{String(rec.purchase_date).slice(0, 10)}</span>}
+                        </div>
+                      ))}
+                      {(addressResult.registryRecords || []).length > 5 && (
+                        <div className="text-[10px] text-slate-400">
+                          +{addressResult.registryRecords.length - 5} more record(s)
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
                     <div className="bg-slate-50 p-3 rounded border border-slate-200 space-y-1.5">

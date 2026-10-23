@@ -674,6 +674,7 @@ export function App() {
         initialOwnerName={kycTarget.name}
         initialOwnerId={kycTarget.id}
         onOpenCreditsModal={() => setIsCreditsTopUpOpen(true)}
+        countryCode={countryId}
       />
 
       {/* 6. Structural Accommodation Editor Modal */}
