@@ -95,6 +95,29 @@ export async function login(email: string, password: string): Promise<AuthUser> 
   return data.user;
 }
 
+/**
+ * Self-serve signup. Creates a `member` account in the current tenant and
+ * returns a token (auto-login, same shape as login()). Grants the trial
+ * credit allowance server-side so a new account can generate a report
+ * immediately. Gated server-side by SELF_SERVE_SIGNUP_ENABLED -- a 403 here
+ * means registration is invite-only.
+ */
+export async function register(name: string, email: string, password: string): Promise<AuthUser> {
+  const res = await fetch('/api/v1/realty/auth/register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, email, password }),
+  });
+  if (!res.ok) {
+    const detail = await res.json().catch(() => ({}));
+    throw new Error(extractErrorMessage(detail.detail, 'Could not create the account.'));
+  }
+  const data = await res.json();
+  localStorage.setItem(TOKEN_KEY, data.access_token);
+  localStorage.setItem(USER_KEY, JSON.stringify(data.user));
+  return data.user;
+}
+
 async function authFetch(path: string, options: RequestInit = {}): Promise<Response> {
   const token = getToken();
   const headers: Record<string, string> = {
@@ -726,6 +749,72 @@ export async function generateReport(propertyId: string, valuationSnapshotId: st
 
 export function reportDownloadUrl(reportId: string): string {
   return `/api/v1/realty/reports/${reportId}/download`;
+}
+
+// ---------------------------------------------------------------------
+// Credits & billing (monetization). Money-in rail is a bank transfer into
+// our own FNB account -- buy a pack, get a unique PTR-XXXXXXXX reference +
+// our account details, EFT with that reference, and credits unlock once the
+// transfer is reconciled (bank statement match / admin confirm).
+// ---------------------------------------------------------------------
+
+export interface CreditPack {
+  id: string;
+  label: string;
+  credits: number;
+  amount_rand: string;
+  blurb: string;
+}
+
+export interface SettlementInstructions {
+  account_holder: string;
+  bank: string;
+  account_number: string;
+  branch_code: string;
+  swift: string;
+  account_type: string;
+  amount_rand: string;
+  reference: string;
+  reference_warning: string;
+  description: string;
+}
+
+export interface CreditPurchase {
+  order_reference: string;
+  status: string;
+  credits: number;
+  amount_rand: string;
+  pay_via: string;
+  settlement: SettlementInstructions | null;
+  sansbank_invoice_ref: string | null;
+}
+
+export interface CreditLedgerEntry {
+  id: string;
+  kind: string;
+  delta: number;
+  balance_after: number;
+  reason: string;
+  reference: string | null;
+  created_at: string | null;
+}
+
+/** Public -- no auth needed, so the packs can be shown before login. */
+export async function listCreditPacks(): Promise<{ currency: string; packs: CreditPack[] }> {
+  const res = await fetch('/api/v1/realty/billing/credit-packs');
+  if (!res.ok) throw new Error(`Could not load credit packs (${res.status}).`);
+  return res.json();
+}
+
+export async function getCredits(): Promise<{ balance: number; ledger: CreditLedgerEntry[] }> {
+  return authJson('/billing/credits');
+}
+
+export async function purchaseCredits(packId: string, method: 'bank_transfer' | 'payfast' = 'bank_transfer'): Promise<CreditPurchase> {
+  return authJson('/billing/credits/purchase', {
+    method: 'POST',
+    body: JSON.stringify({ pack_id: packId, method }),
+  });
 }
 
 // ---------------------------------------------------------------------

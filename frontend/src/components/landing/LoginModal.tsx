@@ -17,7 +17,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { GLOBAL_COUNTRIES_DATA } from '../../services/jurisdictionsData';
-import { login, type AuthUser } from '../../services/api';
+import { login, register, type AuthUser } from '../../services/api';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -35,6 +35,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
   const [authMode, setAuthMode] = useState<'signin' | 'demo' | 'signup'>('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [fullName, setFullName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [selectedCountry, setSelectedCountry] = useState('ZA');
@@ -57,6 +58,32 @@ export const LoginModal: React.FC<LoginModalProps> = ({
       onClose();
     } catch (err: any) {
       setErrorMessage(err?.message || 'Invalid email or password.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Real self-serve signup -- creates a `member` account via the backend's
+  // /auth/register (trial credits granted server-side) and logs the user in.
+  // A 403 here means SELF_SERVE_SIGNUP_ENABLED is off (invite-only).
+  const handleSignupSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!fullName.trim() || !email.trim() || !password.trim()) {
+      setErrorMessage('Please enter your name, work email and a password.');
+      return;
+    }
+    if (password.length < 8) {
+      setErrorMessage('Password must be at least 8 characters.');
+      return;
+    }
+    setErrorMessage('');
+    setIsLoading(true);
+    try {
+      const user = await register(fullName.trim(), email, password);
+      onLoginSuccess(user);
+      onClose();
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'Could not create the account.');
     } finally {
       setIsLoading(false);
     }
@@ -351,44 +378,87 @@ export const LoginModal: React.FC<LoginModalProps> = ({
             </div>
           )}
 
-          {/* Mode 3: Create Account / Lead Capture redirect */}
+          {/* Mode 3: Real self-serve Create Account (POST /auth/register) */}
           {authMode === 'signup' && (
-            <div className="space-y-4 text-xs animate-fade-in text-slate-600">
+            <form onSubmit={handleSignupSubmit} className="space-y-4 text-xs animate-fade-in text-slate-600">
               <div className="p-3 bg-cyan-50 border border-cyan-200 rounded-xl text-cyan-950 leading-relaxed">
                 <span className="font-bold block mb-1 text-cyan-900 flex items-center gap-1.5">
-                  <ShieldCheck className="w-4 h-4 text-cyan-700" /> Statutory Practitioner Onboarding
+                  <ShieldCheck className="w-4 h-4 text-cyan-700" /> Create your workspace
                 </span>
-                Ptah Real Estate verifies professional licensing status across 196 statutory land & real estate regulatory authorities.
+                Instant self-serve account with free trial credits — generate your first CMA report before you pay a cent.
               </div>
 
-              <div className="space-y-2">
-                <div className="flex items-start gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                  <span>14-day full platform access with 250 complimentary Title Deeds & Cadastral credits.</span>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Full name</label>
+                <div className="relative">
+                  <UserCheck className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    required
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    placeholder="Your name"
+                    className="w-full pl-9 pr-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00bcd4] focus:border-transparent font-medium"
+                  />
                 </div>
-                <div className="flex items-start gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                  <span>Integrated FICA/KYC verification, automated CMA engines & PDF generation.</span>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Work email</label>
+                <div className="relative">
+                  <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@agency.com"
+                    className="w-full pl-9 pr-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00bcd4] focus:border-transparent font-medium"
+                  />
                 </div>
-                <div className="flex items-start gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                  <span>Zero setup fees; activate immediately with single-sign-on or practitioner ID.</span>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Password</label>
+                <div className="relative">
+                  <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="At least 8 characters"
+                    className="w-full pl-9 pr-9 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00bcd4] focus:border-transparent font-medium"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  >
+                    {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                  </button>
                 </div>
               </div>
 
               <button
-                id="btn-signup-lead-redirect"
-                type="button"
-                onClick={() => {
-                  onClose();
-                  if (onOpenLeadModal) onOpenLeadModal();
-                }}
-                className="w-full py-2.5 px-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold rounded-lg text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+                id="btn-submit-signup"
+                type="submit"
+                disabled={isLoading}
+                className="w-full py-2.5 px-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold rounded-lg text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
               >
-                <span>Complete Practitioner Registration Form</span>
-                <ArrowRight className="w-4 h-4" />
+                {isLoading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <span>Creating your workspace...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Create Free Account</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
               </button>
-            </div>
+            </form>
           )}
 
           {/* Security & Regulatory footer */}

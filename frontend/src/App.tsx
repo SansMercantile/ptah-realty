@@ -825,10 +825,6 @@ export function App() {
       <CreditsTopUpModal
         isOpen={isCreditsTopUpOpen}
         onClose={() => setIsCreditsTopUpOpen(false)}
-        currentDataCredits={dataCredits}
-        currentFicaCredits={ficaCredits}
-        currentTrustCredits={trustCredits}
-        onTopUpSuccess={handleTopUpSuccess}
       />
 
       {/* 19. Search History & 72-Hour NCA/POPIA Audit Log */}
