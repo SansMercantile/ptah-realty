@@ -41,6 +41,7 @@ let portalListingsStore: Record<string, PortalListingPayload[]> = JSON.parse(JSO
 // credential chain (e.g. `aws configure` / shared credentials file) --
 // no API key is stored in this repo.
 const PTAH_AI_MODEL_CHAIN = [
+  "us.moonshotai.kimi-k3",
   "moonshotai.kimi-k2.5",
   "deepseek.v3.2",
   "qwen.qwen3-32b-v1:0",
@@ -49,6 +50,8 @@ const PTAH_AI_MODEL_CHAIN = [
 
 const RETRYABLE_PTAH_AI_ERRORS = new Set([
   "ThrottlingException",
+  "AccessDeniedException",
+  "ResourceNotFoundException",
   "ServiceUnavailableException",
   "ModelTimeoutException",
   "ModelNotReadyException",
@@ -77,7 +80,10 @@ async function generatePtahAiJson(prompt: string, systemPrompt: string, maxToken
         modelId,
         messages,
         system: [{ text: systemPrompt }],
-        inferenceConfig: { maxTokens, temperature: 0.4 },
+        inferenceConfig: {
+          maxTokens: modelId.toLowerCase().includes("kimi-k3") ? Math.max(16, maxTokens) : maxTokens,
+          temperature: 0.4,
+        },
       }));
       const text = response.output?.message?.content?.[0]?.text || "{}";
       const cleaned = text.replace(/```json/g, "").replace(/```/g, "").trim();
